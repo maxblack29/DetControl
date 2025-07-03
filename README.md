@@ -12,3 +12,6 @@ talk about connects (COM ports for alicat, knowing mfc corresponding letters, ni
 
 This is a new message!
 
+
+Message from the LapTop! Woohoo!
+
