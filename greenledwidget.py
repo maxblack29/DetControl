@@ -18,7 +18,7 @@ class GreenLed(QWidget):
         if self.is_on:
             color = QColor(0, 255, 0)  # bright green
         else:
-            color = QColor(0, 50, 0)   # dim green (off)
+            color = QColor(255, 0, 0)   # red (off)
         
         brush = QBrush(color)
         painter.setBrush(brush)

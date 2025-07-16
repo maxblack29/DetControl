@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication, QDialog
+from PySide6.QtWidgets import QApplication, QDialog, QLabel
 from PySide6.QtCore import QTimer
 from combustionchamber import Ui_Dialog
 from plumbingdiagram import Ui_plumbingdiagram
@@ -9,6 +9,7 @@ import nicontrol
 from nicontrol import set_digital_output
 import alicatcontrol
 import asyncio
+import diagram_rc
 
 '''This calls the python file that was created FROM the .ui file (combustionchamber.py). 
 When updating gui in qt designer, must update the PYTHON file to see the updates.'''
@@ -167,13 +168,13 @@ class PlumbingDiagram(QDialog):
         self.ui.setupUi(self)
 
         solenoid_positions = [
-        (186, 370),  # S1
-        (353, 190),  # S2
-        (500, 409),  # S3
-        (834, 475),  # S4
-        (870, 338),  # S5
-        (780, 138),  # S6
-        (862, 110),  # S7
+        (215, 415),  # S1
+        (407, 218),  # S2
+        (560, 473),  # S3
+        (895, 607),  # S4
+        (1000, 392),  # S5
+        (813, 161),  # S6
+        (997, 150),  # S7
         ]
 
         self.leds = []
@@ -182,6 +183,17 @@ class PlumbingDiagram(QDialog):
             led.move(x, y)
             led.show()
             self.leds.append(led)
+
+        self.led_open = GreenLed(self, diameter=22)
+        self.led_open.move(1185, 450)  # Adjust position as needed
+        self.led_open.turn_on()
+        self.led_open.show()
+
+        # Red (Closed)
+        self.led_closed = GreenLed(self, diameter=22)
+        self.led_closed.move(1185,495)  # Adjust position as needed
+        self.led_closed.turn_off()
+        self.led_closed.show()
 
     def set_solenoid_led(self, index, on):
         """Turn the LED for a given solenoid on or off."""
