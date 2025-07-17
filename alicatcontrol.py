@@ -35,6 +35,11 @@ async def zero():
             else:
                 print('All controllers reset to 0.0 SLPM') #continues to loop 3 times, figure out later after user input list
 
+async def set_gas(unit, gas):
+    async with FlowController(address = 'COM3', unit = unit) as mfc:
+        await mfc.set_gas(gas)
+        print(f'Set gas for controller {unit} to {gas}')
+
 if __name__ == '__main__':
     #Global settings for the flow controllers
     asyncio.run(get())

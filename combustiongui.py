@@ -51,7 +51,12 @@ class MyDialog(QDialog):
         self.ui.mfcBsetpoint.returnPressed.connect(lambda: self.choosegas('B', float(self.ui.mfcBsetpoint.text())))
         self.ui.mfcCsetpoint.returnPressed.connect(lambda: self.choosegas('C', float(self.ui.mfcCsetpoint.text())))
         self.ui.mfcDsetpoint.returnPressed.connect(lambda: self.choosegas('D', float(self.ui.mfcDsetpoint.text())))
-        #Retrieving the gas setpoints from the GUI
+        
+        #Retrieves the gas type from the GUI
+        self.ui.mfcAgas.currentTextChanged.connect(self.change_gas)
+        self.ui.mfcBgas.currentTextChanged.connect(self.change_gas)
+        self.ui.mfcCgas.currentTextChanged.connect(self.change_gas)
+        #self.ui.mfcDgas.currentTextChanged.connect(self.change_gas)
 
         #Connects the automation and purge buttons
         self.ui.testautomation.clicked.connect(self.auto_purge)
@@ -71,16 +76,16 @@ class MyDialog(QDialog):
         QTimer.singleShot(500, lambda:set_flow_button.setStyleSheet(""))
 
         self.ui.mfcAsetpoint.text()
-        #asyncio.run(alicatcontrol.change_rate('A', float(self.ui.mfcAsetpoint.text())))
+        asyncio.run(alicatcontrol.change_rate('A', float(self.ui.mfcAsetpoint.text())))
         print(f"Controller A set to {self.ui.mfcAsetpoint.text()} SLPM.")
         self.ui.mfcBsetpoint.text()
-        #asyncio.run(alicatcontrol.change_rate('B', float(self.ui.mfcAsetpoint.text())))
+        asyncio.run(alicatcontrol.change_rate('B', float(self.ui.mfcBsetpoint.text())))
         print(f"Controller B set to {self.ui.mfcBsetpoint.text()} SLPM.")
         self.ui.mfcCsetpoint.text()
-        #asyncio.run(alicatcontrol.change_rate('C', float(self.ui.mfcAsetpoint.text())))
+        asyncio.run(alicatcontrol.change_rate('C', float(self.ui.mfcCsetpoint.text())))
         print(f"Controller C set to {self.ui.mfcCsetpoint.text()} SLPM.")
         self.ui.mfcDsetpoint.text()
-        #asyncio.run(alicatcontrol.change_rate('D', float(self.ui.mfcAsetpoint.text())))
+        #asyncio.run(alicatcontrol.change_rate('D', float(self.ui.mfcDsetpoint.text())))
         #Commented out until mfc D is connected to alicat hub
         print(f"Controller D set to {self.ui.mfcDsetpoint.text()} SLPM.")
 
@@ -100,11 +105,24 @@ class MyDialog(QDialog):
         self.ui.mfcBsetpoint.setText("0.0")
         self.ui.mfcCsetpoint.setText("0.0")
         self.ui.mfcDsetpoint.setText("0.0")
-        #asyncio.run(alicatcontrol.change_rate('A', 0.0))
-        #asyncio.run(alicatcontrol.change_rate('B', 0.0))
-        #asyncio.run(alicatcontrol.change_rate('C', 0.0))
+        asyncio.run(alicatcontrol.change_rate('A', 0.0))
+        asyncio.run(alicatcontrol.change_rate('B', 0.0))
+        asyncio.run(alicatcontrol.change_rate('C', 0.0))
         #asyncio.run(alicatcontrol.change_rate('D', 0.0)) #Commented out until mfc D is connected to alicat hub
         print("All gas setpoints reset to 0.0 SLPM.")
+    
+
+    #Figure out how to do a change_gas function
+    def change_gas(self):
+        #This function will change the gas type for each controller
+        self.ui.mfcAgas.currentText()
+        self.ui.mfcBgas.currentText()
+        self.ui.mfcCgas.currentText()
+        #self.ui.mfcDgas.currentTextChanged()
+        asyncio.run(alicatcontrol.set_gas('A', self.ui.mfcAgas.currentText()))
+        asyncio.run(alicatcontrol.set_gas('B', self.ui.mfcBgas.currentText()))
+        asyncio.run(alicatcontrol.set_gas('C', self.ui.mfcCgas.currentText()))
+        #asyncio.run(alicatcontrol.change_gas('D', self.ui.mfcDgas.currentText())) #Commented out until mfc D is connected to alicat hub
 
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
     def toggle_solenoid(self, index, state):
@@ -126,7 +144,7 @@ class MyDialog(QDialog):
         if 0 <= index < 7:  # Only 7 LEDs
             self.plumbing_diagram.set_solenoid_led(index, state)
         
-        #nicontrol.set_digital_output(self.solenoids) #commented out until I can test it with lab computer
+        nicontrol.set_digital_output(self.solenoids) #commented out until I can test it with lab computer
         print(f"Solenoid S{index+1} {'opened' if state else 'closed'}.")
 
     #This function will eventually handle the automation of the purge sequence, testing, and emergency purge sequence
@@ -207,7 +225,10 @@ if __name__ == "__main__":
     def load_stylesheet(filename):
         with open(filename, "r") as f:
             return f.read()
-    stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
+    stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
+    #stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
+    #for lab computer, use: stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
+    #for personal computer, use: stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     app = QApplication(sys.argv)
     app.setStyleSheet(stylesheet)
     dialog2 = PlumbingDiagram()
