@@ -14,13 +14,15 @@ b = coefficients[1]
 print(f"Linear fit coefficients: m = {m:.4f}, b = {b:.4f}, y = {m:.4f}x+{b:.4f}")
 
 y = m*np.array(transducer_output)+b
-
 plt.scatter(transducer_output, applied_pressure, color='r', label='Data Points')
 plt.plot(transducer_output, y, color = 'blue')
-plt.xlabel("Applied Pressure (psi)")
-plt.ylabel("Transducer Output (VDC)")
+plt.xlabel("Transducer Output (VDC)")
+plt.ylabel("Applied Pressure (psi)")
 plt.title("Setra Static Pressure Transducer Calibration Data")
 
 plt.grid(True)
 
 plt.show()
+
+x=(1.45-b)/m 
+print(f"Voltage at 1.45 psi: {x:.4f} volts")
