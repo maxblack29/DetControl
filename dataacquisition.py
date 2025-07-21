@@ -18,3 +18,14 @@ from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
 with nidaqmx.Task() as task:
     '''
 #AIChannel(name=cDAQ9188-169338EMod6/port0/ai0) 
+
+def data_acq_static():
+    with nidaqmx.Task() as task:
+        task.ai_channels.add_ai_voltage_chan("cDAQ9188-169338EMod6/port0/ai0", min_val = -10, max_val = 10)
+        task.timing.cfg_samp_clk_timing(1000, sample_mode= AcquisitionType.FINITE, samps_per_chan=1000)
+        data = task.read(READ_ALL_AVAILABLE)
+        plt.plot(data)
+        plt.ylabel("Voltage")
+        plt.xlabel("Sample Number")
+        plt.title("Static Pressure Data Acquisition")
+        plt.show()

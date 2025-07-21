@@ -2,14 +2,20 @@ import sys
 from PySide6.QtWidgets import QApplication, QDialog, QLabel
 from PySide6.QtCore import QTimer
 from combustionchamber import Ui_Dialog
+import combustionchamber
 from plumbingdiagram import Ui_plumbingdiagram
 from greenledwidget import GreenLed
 import nidaqmx #might not be needed since I imported nicontrol
 import nicontrol
 from nicontrol import set_digital_output
+from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
 import alicatcontrol
 import asyncio
 import diagram_rc
+#import dataacquisition
+import numpy as np
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 '''This calls the python file that was created FROM the .ui file (combustionchamber.py). 
 When updating gui in qt designer, must update the PYTHON file to see the updates.'''
@@ -23,6 +29,35 @@ class MyDialog(QDialog):
         self.plumbing_diagram = plumbing_diagram
         
         self.solenoids = [False, False, False, True, False, True, False, False] #Sets a bool array for 8 channels, last channel is empty
+
+        # Example: connect a button to show the plot
+        #self.ui.somePlotButton.clicked.connect(self.data_acq_static)
+
+    def data_acq_static(self):
+        import nidaqmx
+        from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
+
+        with nidaqmx.Task() as task:
+            task.ai_channels.add_ai_voltage_chan("cDAQ9188-169338EMod6/port0/ai0", min_val=-10, max_val=10)
+            task.timing.cfg_samp_clk_timing(1000, sample_mode=AcquisitionType.FINITE, samps_per_chan=1000)
+            data = task.read(READ_ALL_AVAILABLE)
+
+        # Use the OO API, not pyplot
+        fig = Figure()
+        ax = fig.add_subplot(111)
+        ax.plot(data)
+        ax.set_ylabel("Voltage")
+        ax.set_xlabel("Sample Number")
+        ax.set_title("Static Pressure Data Acquisition")
+
+        canvas = FigureCanvas(fig)
+        # Remove any previous plot if needed
+        for i in reversed(range(self.ui.plotLayout.count())):
+            widget_to_remove = self.ui.plotLayout.itemAt(i).widget()
+            self.ui.plotLayout.removeWidget(widget_to_remove)
+            widget_to_remove.setParent(None)
+        self.ui.plotLayout.addWidget(canvas)
+
 
         #Connect each open and close button
         self.ui.openS1.clicked.connect(lambda: self.toggle_solenoid(0,True))
