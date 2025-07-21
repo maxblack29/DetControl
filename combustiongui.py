@@ -77,17 +77,14 @@ class MyDialog(QDialog):
 
         self.ui.mfcAsetpoint.text()
         asyncio.run(alicatcontrol.change_rate('A', float(self.ui.mfcAsetpoint.text())))
-        print(f"Controller A set to {self.ui.mfcAsetpoint.text()} SLPM.")
+
         self.ui.mfcBsetpoint.text()
         asyncio.run(alicatcontrol.change_rate('B', float(self.ui.mfcBsetpoint.text())))
-        print(f"Controller B set to {self.ui.mfcBsetpoint.text()} SLPM.")
         self.ui.mfcCsetpoint.text()
         asyncio.run(alicatcontrol.change_rate('C', float(self.ui.mfcCsetpoint.text())))
-        print(f"Controller C set to {self.ui.mfcCsetpoint.text()} SLPM.")
         self.ui.mfcDsetpoint.text()
         #asyncio.run(alicatcontrol.change_rate('D', float(self.ui.mfcDsetpoint.text())))
         #Commented out until mfc D is connected to alicat hub
-        print(f"Controller D set to {self.ui.mfcDsetpoint.text()} SLPM.")
 
         self.ui.updatesetpoints.clicked.connect(self.update_setpoints)
 
@@ -160,21 +157,18 @@ class MyDialog(QDialog):
             self.ui.emergencypurge.setStyleSheet("")
             self.ui.standardpurge.setStyleSheet("")
             QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
-            print("Beginning testing sequence...")
             #Will add the automation sequence here once we're ready
         elif pressed_button == self.ui.emergencypurge:
             pressed_button.setStyleSheet("background-color: green; color: white;")
             self.ui.testautomation.setStyleSheet("")
             self.ui.standardpurge.setStyleSheet("")
             QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
-            print("Emergency purge sequence initiated")
             #Will add the automation sequence here once we're ready
         else: 
             pressed_button.setStyleSheet("background-color: green; color: white;")
             self.ui.testautomation.setStyleSheet("")
             self.ui.emergencypurge.setStyleSheet("")
             QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
-            print("Standard purge sequence initiated")
             #Will add the automation sequence here once we're ready
 
         #How can I get print statements to not loop?

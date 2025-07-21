@@ -21,11 +21,10 @@ async def change_rate(unit, setpoint):
         #if gas not in 
         #create if loop to check if gas is in a user inputed gas list. Make gas list in GUI so that user can choose gasses
         await mfc.set_flow_rate(setpoint) # In units of SLPM
-        print(f'Set to {setpoint} SLPM for controller {unit}')
-        await asyncio.sleep(1) #allows for time in between update so that excpetion isn't thrown for moving too fast
+        #await asyncio.sleep(1) #might not need this
 
 async def zero():
-    controller = ['A', 'B', 'C']
+    controller = ['A', 'B', 'C'] #Add D when the controller is in place
     for unit in ['A', 'B', 'C']:
         async with FlowController(address = 'COM3', unit = unit) as mfc:
             x = mfc.set_flow_rate(0.0)
