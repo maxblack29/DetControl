@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'combustionchamberQwFZVh.ui'
+## Form generated from reading UI file 'combustionchamberTuFpaF.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -18,6 +18,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QComboBox, QDialog, QFrame,
     QLCDNumber, QLabel, QLineEdit, QPushButton,
     QSizePolicy, QWidget)
+
+from pyqtgraph import PlotWidget
 import diagram_rc
 
 class Ui_Dialog(object):
@@ -2331,6 +2333,9 @@ class Ui_Dialog(object):
         self.line_4.setGeometry(QRect(0, 550, 1261, 16))
         self.line_4.setFrameShape(QFrame.Shape.HLine)
         self.line_4.setFrameShadow(QFrame.Shadow.Sunken)
+        self.test_plot = PlotWidget(Dialog)
+        self.test_plot.setObjectName(u"test_plot")
+        self.test_plot.setGeometry(QRect(430, 320, 441, 191))
         self.line.raise_()
         self.mfcAgas.raise_()
         self.mfccontrollerlabel.raise_()
@@ -2386,6 +2391,7 @@ class Ui_Dialog(object):
         self.mfcDsetpoint.raise_()
         self.standardpurge.raise_()
         self.line_4.raise_()
+        self.test_plot.raise_()
 
         self.retranslateUi(Dialog)
 

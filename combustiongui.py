@@ -17,6 +17,11 @@ import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+
+import pdb
+import pyqtgraph as pg
+import matplotlib.pyplot as plt
+
 '''This calls the python file that was created FROM the .ui file (combustionchamber.py). 
 When updating gui in qt designer, must update the PYTHON file to see the updates.'''
 
@@ -29,9 +34,29 @@ class MyDialog(QDialog):
         self.plumbing_diagram = plumbing_diagram
         
         self.solenoids = [False, False, False, False, False, False, False, False] #Sets a bool array for 8 channels, last channel is empty
-
-        canvas = FigureCanvasQTAgg(fig)
-        layout.addWidget(canvas)
+        '''
+        fig = Figure(figsize=(4,4))
+        canvas = FigureCanvas(fig)
+        self.plot_layout = QVBoxLayout(self.ui.plotWidget)
+        self.plot_layout.addWidget(canvas)
+        '''
+        self.xx = np.linspace(0, 2*np.pi, 100)
+        self.yy = np.sin(self.xx)
+        self.ui.test_plot.clear()
+        self.ui.test_plot.setBackground('w')
+        #self.curve = pg.PlotCurveItem(self.xx, self.yy, pen='g')
+        self.curve = pg.PlotDataItem()
+        pen = pg.mkPen(color='r', width=2)
+        self.curve.setData(self.xx, self.yy, pen=pen)
+        self.ui.test_plot.addItem(self.curve)
+        self.ui.test_plot.getViewBox().autoRange()
+   
+        #self.ui.test_plot.getPlotItem.draw()
+        #self.ui.test_plot.show()
+        #self.ui.test_plot.update()
+       
+     
+        #self.ui.test_plot.fig.show()
 
         #Connect each open and close button
         self.ui.openS1.clicked.connect(lambda: self.toggle_solenoid(0,True))
@@ -78,15 +103,16 @@ class MyDialog(QDialog):
         reset_button = self.ui.resetmfc
         set_flow_button = self.ui.updatesetpoints
 
-        if set_flow_button.isEnabled():
-            set_flow_button.setStyleSheet("background-color: green; color: white;")
-            reset_button.setStyleSheet("")
+        #if set_flow_button.isEnabled():
+            #print("This works.")
+            #set_flow_button.setStyleSheet("background-color: green; color: white;")
+            
+            #reset_button.setStyleSheet("")
 
         QTimer.singleShot(500, lambda:set_flow_button.setStyleSheet(""))
 
         self.ui.mfcAsetpoint.text()
         asyncio.run(alicatcontrol.change_rate('A', float(self.ui.mfcAsetpoint.text())))
-
         self.ui.mfcBsetpoint.text()
         asyncio.run(alicatcontrol.change_rate('B', float(self.ui.mfcBsetpoint.text())))
         self.ui.mfcCsetpoint.text()
@@ -101,9 +127,9 @@ class MyDialog(QDialog):
     def reset_flow(self):
         reset_button = self.ui.resetmfc
         set_flow_button = self.ui.updatesetpoints
-        if reset_button.isEnabled():
-            reset_button.setStyleSheet("background-color: green; color: white;")
-            set_flow_button.setStyleSheet("")
+        #if reset_button.isEnabled():
+        #   reset_button.setStyleSheet("background-color: green; color: white;")
+        #   set_flow_button.setStyleSheet("")
 
         QTimer.singleShot(500, lambda: reset_button.setStyleSheet(""))
 
@@ -150,7 +176,7 @@ class MyDialog(QDialog):
         if 0 <= index < 7:  # Only 7 LEDs
             self.plumbing_diagram.set_solenoid_led(index, state)
         
-        #nicontrol.set_digital_output(self.solenoids) #commented out until I can test it with lab computer
+        nicontrol.set_digital_output(self.solenoids) #commented out until I can test it with lab computer
         print(f"Solenoid S{index+1} {'opened' if state else 'closed'}.")
 
     #This function will eventually handle the automation of the purge sequence, testing, and emergency purge sequence
@@ -181,14 +207,16 @@ class MyDialog(QDialog):
             #Will add the automation sequence here once we're ready
 
         #How can I get print statements to not loop?
-    def data_acquisition(self):
+        '''
+        def data_acquisition(self):
         with nidaqmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan("cDAQ9188-169338EMod6/port0/ai0", min_val = -10, max_val = 10)
             task.timing.cfg_samp_clk_timing(1000, sample_mode= AcquisitionType.FINITE, samps_per_chan=1000)
             data = task.read(READ_ALL_AVAILABLE)
-            fig = Figure()
-            ax = fig.add_subplot()
-            ax.plot(data)
+            #fig = Figure(figsize=(4,4))
+            #ax = fig.add_subplot()
+            #ax.plot(data)
+        '''
 
 
 class PlumbingDiagram(QDialog):
@@ -240,8 +268,8 @@ if __name__ == "__main__":
     def load_stylesheet(filename):
         with open(filename, "r") as f:
             return f.read()
-    #stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
-    stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
+    stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
+    #stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     #for lab computer, use: stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
     #for personal computer, use: stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     app = QApplication(sys.argv)
@@ -250,4 +278,23 @@ if __name__ == "__main__":
     dialog = MyDialog(dialog2)
     dialog.show()
     dialog2.show()
+
+    dialog.ui.test_plot.setXRange(0, 2*np.pi)
+    dialog.ui.test_plot.setYRange(-1, 1)
+    dialog.ui.test_plot.showGrid(True, True)
+    dialog.curve.setData(dialog.xx, dialog.yy)
+    #dialog.ui.test_plot.clear()
+    #dialog.ui.test_plot.repaint()
+    #dialog.ui.test_plot.update()
+    #dialog.curve.setZValue(1000)
+    #print(dialog.curve.isVisible())
+    #data = dialog.curve.getData()
+    #print(data[0])
+    #print(data[1])
+    #plt.plot(data[0], data[1])
+    #plt.show()
+    #dialog.ui.test_plot.update()
+    #QApplication.processEvents()
+    #dialog.curve.update()
+    dialog.ui.test_plot.show()
     sys.exit(app.exec())

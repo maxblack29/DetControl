@@ -11,3 +11,10 @@ async def auto():
         
 if __name__== '__main__':
     asyncio.run(auto())
+
+
+#first test - 1.009
+#second test - 1.000
+#third test - 0.998
+#fourth test - 1.000
+#

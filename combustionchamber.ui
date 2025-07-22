@@ -3320,6 +3320,16 @@ QProgressBar::chunk
     <enum>Qt::Orientation::Horizontal</enum>
    </property>
   </widget>
+  <widget class="PlotWidget" name="test_plot" native="true">
+   <property name="geometry">
+    <rect>
+     <x>430</x>
+     <y>320</y>
+     <width>441</width>
+     <height>191</height>
+    </rect>
+   </property>
+  </widget>
   <zorder>line</zorder>
   <zorder>mfcAgas</zorder>
   <zorder>mfccontrollerlabel</zorder>
@@ -3375,7 +3385,16 @@ QProgressBar::chunk
   <zorder>mfcDsetpoint</zorder>
   <zorder>standardpurge</zorder>
   <zorder>line_4</zorder>
+  <zorder>test_plot</zorder>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QWidget</extends>
+   <header>pyqtgraph</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="diagram.qrc"/>
  </resources>
