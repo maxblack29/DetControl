@@ -28,36 +28,10 @@ class MyDialog(QDialog):
         self.ui.setupUi(self)
         self.plumbing_diagram = plumbing_diagram
         
-        self.solenoids = [False, False, False, True, False, True, False, False] #Sets a bool array for 8 channels, last channel is empty
+        self.solenoids = [False, False, False, False, False, False, False, False] #Sets a bool array for 8 channels, last channel is empty
 
-        # Example: connect a button to show the plot
-        #self.ui.somePlotButton.clicked.connect(self.data_acq_static)
-
-    def data_acq_static(self):
-        import nidaqmx
-        from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
-
-        with nidaqmx.Task() as task:
-            task.ai_channels.add_ai_voltage_chan("cDAQ9188-169338EMod6/port0/ai0", min_val=-10, max_val=10)
-            task.timing.cfg_samp_clk_timing(1000, sample_mode=AcquisitionType.FINITE, samps_per_chan=1000)
-            data = task.read(READ_ALL_AVAILABLE)
-
-        # Use the OO API, not pyplot
-        fig = Figure()
-        ax = fig.add_subplot(111)
-        ax.plot(data)
-        ax.set_ylabel("Voltage")
-        ax.set_xlabel("Sample Number")
-        ax.set_title("Static Pressure Data Acquisition")
-
-        canvas = FigureCanvas(fig)
-        # Remove any previous plot if needed
-        for i in reversed(range(self.ui.plotLayout.count())):
-            widget_to_remove = self.ui.plotLayout.itemAt(i).widget()
-            self.ui.plotLayout.removeWidget(widget_to_remove)
-            widget_to_remove.setParent(None)
-        self.ui.plotLayout.addWidget(canvas)
-
+        canvas = FigureCanvasQTAgg(fig)
+        layout.addWidget(canvas)
 
         #Connect each open and close button
         self.ui.openS1.clicked.connect(lambda: self.toggle_solenoid(0,True))
@@ -176,7 +150,7 @@ class MyDialog(QDialog):
         if 0 <= index < 7:  # Only 7 LEDs
             self.plumbing_diagram.set_solenoid_led(index, state)
         
-        nicontrol.set_digital_output(self.solenoids) #commented out until I can test it with lab computer
+        #nicontrol.set_digital_output(self.solenoids) #commented out until I can test it with lab computer
         print(f"Solenoid S{index+1} {'opened' if state else 'closed'}.")
 
     #This function will eventually handle the automation of the purge sequence, testing, and emergency purge sequence
@@ -207,6 +181,15 @@ class MyDialog(QDialog):
             #Will add the automation sequence here once we're ready
 
         #How can I get print statements to not loop?
+    def data_acquisition(self):
+        with nidaqmx.Task() as task:
+            task.ai_channels.add_ai_voltage_chan("cDAQ9188-169338EMod6/port0/ai0", min_val = -10, max_val = 10)
+            task.timing.cfg_samp_clk_timing(1000, sample_mode= AcquisitionType.FINITE, samps_per_chan=1000)
+            data = task.read(READ_ALL_AVAILABLE)
+            fig = Figure()
+            ax = fig.add_subplot()
+            ax.plot(data)
+
 
 class PlumbingDiagram(QDialog):
     def __init__(self):
@@ -230,6 +213,10 @@ class PlumbingDiagram(QDialog):
             led.move(x, y)
             led.show()
             self.leds.append(led)
+            if i == 3:
+                led.turn_on()
+            if i == 5:
+                led.turn_on()
 
         self.led_open = GreenLed(self, diameter=22)
         self.led_open.move(1185, 450)  # Adjust position as needed
@@ -243,19 +230,18 @@ class PlumbingDiagram(QDialog):
         self.led_closed.show()
 
     def set_solenoid_led(self, index, on):
-        """Turn the LED for a given solenoid on or off."""
         if 0 <= index < len(self.leds):
             if on:
                 self.leds[index].turn_on()
             else:
                 self.leds[index].turn_off()
-            
+        
 if __name__ == "__main__":
     def load_stylesheet(filename):
         with open(filename, "r") as f:
             return f.read()
-    stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
-    #stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
+    #stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
+    stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     #for lab computer, use: stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
     #for personal computer, use: stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     app = QApplication(sys.argv)
