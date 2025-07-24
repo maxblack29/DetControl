@@ -16,7 +16,8 @@ import diagram_rc
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-
+import initiator
+from initiator import test_initiator
 
 import pdb
 import pyqtgraph as pg
@@ -34,29 +35,7 @@ class MyDialog(QDialog):
         self.plumbing_diagram = plumbing_diagram
         
         self.solenoids = [False, False, False, False, False, False, False, False] #Sets a bool array for 8 channels, last channel is empty
-        '''
-        fig = Figure(figsize=(4,4))
-        canvas = FigureCanvas(fig)
-        self.plot_layout = QVBoxLayout(self.ui.plotWidget)
-        self.plot_layout.addWidget(canvas)
-        '''
-        self.xx = np.linspace(0, 2*np.pi, 100)
-        self.yy = np.sin(self.xx)
-        self.ui.test_plot.clear()
-        self.ui.test_plot.setBackground('w')
-        #self.curve = pg.PlotCurveItem(self.xx, self.yy, pen='g')
-        self.curve = pg.PlotDataItem()
-        pen = pg.mkPen(color='r', width=2)
-        self.curve.setData(self.xx, self.yy, pen=pen)
-        self.ui.test_plot.addItem(self.curve)
-        self.ui.test_plot.getViewBox().autoRange()
-   
-        #self.ui.test_plot.getPlotItem.draw()
-        #self.ui.test_plot.show()
-        #self.ui.test_plot.update()
        
-     
-        #self.ui.test_plot.fig.show()
 
         #Connect each open and close button
         self.ui.openS1.clicked.connect(lambda: self.toggle_solenoid(0,True))
@@ -75,10 +54,10 @@ class MyDialog(QDialog):
         self.ui.closeS7.clicked.connect(lambda: self.toggle_solenoid(6, False))
 
         #Connects the update setpoints button
-        self.ui.updatesetpoints.clicked.connect(self.update_setpoints)
+        self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
 
         #Connects the reset flow button 
-        self.ui.resetmfc.clicked.connect(self.reset_flow)
+        self.ui.resetmfc.clicked.connect(self.reset_flow) #Might not need this
 
         #Retrieves the gas setpoints from the GUI 
         self.ui.mfcAsetpoint.returnPressed.connect(lambda: self.choosegas('A', float(self.ui.mfcAsetpoint.text())))
@@ -97,39 +76,32 @@ class MyDialog(QDialog):
         self.ui.emergencypurge.clicked.connect(self.auto_purge)
         self.ui.standardpurge.clicked.connect(self.auto_purge)
     
-    def update_setpoints(self):
+    def save_setpoints(self):
         #This function can be used to update the setpoints
-
         reset_button = self.ui.resetmfc
         set_flow_button = self.ui.updatesetpoints
 
-        #if set_flow_button.isEnabled():
-            #print("This works.")
-            #set_flow_button.setStyleSheet("background-color: green; color: white;")
-            
-            #reset_button.setStyleSheet("")
+        if set_flow_button.isEnabled():
+            set_flow_button.setStyleSheet("background-color: green; color: white;")
+        
+            reset_button.setStyleSheet("")
 
         QTimer.singleShot(500, lambda:set_flow_button.setStyleSheet(""))
 
         self.ui.mfcAsetpoint.text()
-        asyncio.run(alicatcontrol.change_rate('A', float(self.ui.mfcAsetpoint.text())))
         self.ui.mfcBsetpoint.text()
-        asyncio.run(alicatcontrol.change_rate('B', float(self.ui.mfcBsetpoint.text())))
         self.ui.mfcCsetpoint.text()
-        asyncio.run(alicatcontrol.change_rate('C', float(self.ui.mfcCsetpoint.text())))
-        self.ui.mfcDsetpoint.text()
-        #asyncio.run(alicatcontrol.change_rate('D', float(self.ui.mfcDsetpoint.text())))
-        #Commented out until mfc D is connected to alicat hub
+        #self.ui.mfcDsetpoint.text()
 
-        self.ui.updatesetpoints.clicked.connect(self.update_setpoints)
+        self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
 
     #This function will reset the flow setpoints to 0.0 SLPM for all gas controllers. 
     def reset_flow(self):
         reset_button = self.ui.resetmfc
         set_flow_button = self.ui.updatesetpoints
-        #if reset_button.isEnabled():
-        #   reset_button.setStyleSheet("background-color: green; color: white;")
-        #   set_flow_button.setStyleSheet("")
+        if reset_button.isEnabled():
+           reset_button.setStyleSheet("background-color: green; color: white;")
+           set_flow_button.setStyleSheet("")
 
         QTimer.singleShot(500, lambda: reset_button.setStyleSheet(""))
 
@@ -150,7 +122,7 @@ class MyDialog(QDialog):
         self.ui.mfcAgas.currentText()
         self.ui.mfcBgas.currentText()
         self.ui.mfcCgas.currentText()
-        #self.ui.mfcDgas.currentTextChanged()
+        #self.ui.mfcDgas.currentText()
         asyncio.run(alicatcontrol.set_gas('A', self.ui.mfcAgas.currentText()))
         asyncio.run(alicatcontrol.set_gas('B', self.ui.mfcBgas.currentText()))
         asyncio.run(alicatcontrol.set_gas('C', self.ui.mfcCgas.currentText()))
@@ -192,7 +164,14 @@ class MyDialog(QDialog):
             self.ui.emergencypurge.setStyleSheet("")
             self.ui.standardpurge.setStyleSheet("")
             QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
-            #
+            #Initiator automation here:
+            setpointA = float(self.ui.mfcAsetpoint.text())
+            setpointB = float(self.ui.mfcBsetpoint.text())
+            setpointC = float(self.ui.mfcCsetpoint.text())
+
+            #test_initiator function takes three setpoints as arguments and then runs the automation sequence
+            self.initiator.test_initiator(setpointA, setpointB, setpointC)
+
         elif pressed_button == self.ui.emergencypurge:
             pressed_button.setStyleSheet("background-color: green; color: white;")
             self.ui.testautomation.setStyleSheet("")
@@ -278,23 +257,4 @@ if __name__ == "__main__":
     dialog = MyDialog(dialog2)
     dialog.show()
     dialog2.show()
-
-    dialog.ui.test_plot.setXRange(0, 2*np.pi)
-    dialog.ui.test_plot.setYRange(-1, 1)
-    dialog.ui.test_plot.showGrid(True, True)
-    dialog.curve.setData(dialog.xx, dialog.yy)
-    #dialog.ui.test_plot.clear()
-    #dialog.ui.test_plot.repaint()
-    #dialog.ui.test_plot.update()
-    #dialog.curve.setZValue(1000)
-    #print(dialog.curve.isVisible())
-    #data = dialog.curve.getData()
-    #print(data[0])
-    #print(data[1])
-    #plt.plot(data[0], data[1])
-    #plt.show()
-    #dialog.ui.test_plot.update()
-    #QApplication.processEvents()
-    #dialog.curve.update()
-    dialog.ui.test_plot.show()
     sys.exit(app.exec())
