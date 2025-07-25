@@ -81,10 +81,10 @@ class MyDialog(QDialog):
         self.ui.resetmfc.clicked.connect(self.reset_flow)
 
         #Retrieves the gas setpoints from the GUI 
-        self.ui.mfcAsetpoint.returnPressed.connect(lambda: self.choosegas('A', float(self.ui.mfcAsetpoint.text())))
-        self.ui.mfcBsetpoint.returnPressed.connect(lambda: self.choosegas('B', float(self.ui.mfcBsetpoint.text())))
-        self.ui.mfcCsetpoint.returnPressed.connect(lambda: self.choosegas('C', float(self.ui.mfcCsetpoint.text())))
-        self.ui.mfcDsetpoint.returnPressed.connect(lambda: self.choosegas('D', float(self.ui.mfcDsetpoint.text())))
+        self.ui.mfcAsetpoint.returnPressed.connect(lambda: self.update_setpoints('A', float(self.ui.mfcAsetpoint.text())))
+        self.ui.mfcBsetpoint.returnPressed.connect(lambda: self.update_setpoints('B', float(self.ui.mfcBsetpoint.text())))
+        self.ui.mfcCsetpoint.returnPressed.connect(lambda: self.update_setpoints('C', float(self.ui.mfcCsetpoint.text())))
+        self.ui.mfcDsetpoint.returnPressed.connect(lambda: self.update_setpoints('D', float(self.ui.mfcDsetpoint.text())))
         
         #Retrieves the gas type from the GUI
         self.ui.mfcAgas.currentTextChanged.connect(self.change_gas)
