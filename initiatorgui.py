@@ -170,7 +170,7 @@ class MyDialog(QDialog):
             setpointC = float(self.ui.mfcCsetpoint.text())
 
             #test_initiator function takes three setpoints as arguments and then runs the automation sequence
-            self.initiator.test_initiator(setpointA, setpointB, setpointC)
+            asyncio.run(initiator.test_initiator(setpointA, setpointB, setpointC))
 
         elif pressed_button == self.ui.emergencypurge:
             pressed_button.setStyleSheet("background-color: green; color: white;")
@@ -183,6 +183,8 @@ class MyDialog(QDialog):
             self.ui.testautomation.setStyleSheet("")
             self.ui.emergencypurge.setStyleSheet("")
             QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
+
+            asyncio.run(initiator.stanpurge())
             #Will add the automation sequence here once we're ready
 
         #How can I get print statements to not loop?
