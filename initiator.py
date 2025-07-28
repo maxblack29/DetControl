@@ -6,6 +6,7 @@ import asyncio
 import alicat 
 from alicat import FlowController
 from alicatcontrol import change_rate, zero
+import time
 
 
 async def connect(unit, setpoint):
@@ -19,6 +20,7 @@ async def test_initiator(setpointA, setpointB, setpointC):
     #Step 2, set the desired flow rate for the gas to the intiator
     solenoids1 = [True, False, False, False, False, False, False, False] #Begin testing solenoid states
     nicontrol.set_digital_output(solenoids1)
+    time.sleep(1)
 
     await asyncio.gather(
         connect('A', setpointA),
@@ -37,6 +39,7 @@ async def test_initiator(setpointA, setpointB, setpointC):
         connect('C', 0.0)
     )
 
+    print("Test Complete! You can now change the setpoints of each MFC.")
     #Exhaust line and purge line are controlled by DIFFERENT solenoids. Exhaust line is next to manifold and purge line is closest to the table with the computer
 
 async def stanpurge():

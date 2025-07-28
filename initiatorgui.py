@@ -172,6 +172,9 @@ class MyDialog(QDialog):
             #test_initiator function takes three setpoints as arguments and then runs the automation sequence
             asyncio.run(initiator.test_initiator(setpointA, setpointB, setpointC))
 
+            #while asyncio.run(initiator.test_initiator(setpointA, setpointB, setpointC)) == True:
+
+
         elif pressed_button == self.ui.emergencypurge:
             pressed_button.setStyleSheet("background-color: green; color: white;")
             self.ui.testautomation.setStyleSheet("")
@@ -249,8 +252,8 @@ if __name__ == "__main__":
     def load_stylesheet(filename):
         with open(filename, "r") as f:
             return f.read()
-    #stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
-    stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
+    stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
+    #stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     #for lab computer, use: stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
     #for personal computer, use: stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     app = QApplication(sys.argv)
