@@ -7,6 +7,7 @@ import alicat
 from alicat import FlowController
 from alicatcontrol import change_rate, zero
 import time
+#import os
 
 
 async def connect(unit, setpoint):
@@ -18,9 +19,6 @@ async def test_initiator(setpointA, setpointB, setpointC):
         #Step 1, control two solenoids to open and close right here that control the gas flow to the intiator and exhaust. Exhaust is closed
         #(normally open solenoid) and initator flow is open (normally closed solenoid)
     #Step 2, set the desired flow rate for the gas to the intiator
-    solenoids1 = [True, False, False, False, False, False, False, False] #Begin testing solenoid states
-    nicontrol.set_digital_output(solenoids1)
-    time.sleep(1)
 
     await asyncio.gather(
         connect('A', setpointA),
@@ -28,9 +26,14 @@ async def test_initiator(setpointA, setpointB, setpointC):
         connect('C', setpointC)
     )
 
+    await asyncio.sleep(1) 
+
+    solenoids1 = [True, True, False, False, False, False, False, False] #Solenoid States at the Beginning of the Test
+    nicontrol.set_digital_output(solenoids1)
+
     await asyncio.sleep(30)
 
-    solenoids2 = [False]*8
+    solenoids2 = [False]*8 #Purge solenoid states
     nicontrol.set_digital_output(solenoids2)
 
     await asyncio.gather(
@@ -50,6 +53,8 @@ async def stanpurge():
         connect('B', 0.0),
         connect('C', 0.0)
     )
+
+    print("Purge complete!")
 
     #Figure out the solenoid control based on how you plumb it today
 async def emerpurge():

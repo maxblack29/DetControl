@@ -172,8 +172,6 @@ class MyDialog(QDialog):
             #test_initiator function takes three setpoints as arguments and then runs the automation sequence
             asyncio.run(initiator.test_initiator(setpointA, setpointB, setpointC))
 
-            #while asyncio.run(initiator.test_initiator(setpointA, setpointB, setpointC)) == True:
-
 
         elif pressed_button == self.ui.emergencypurge:
             pressed_button.setStyleSheet("background-color: green; color: white;")
