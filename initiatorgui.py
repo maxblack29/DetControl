@@ -153,52 +153,25 @@ class MyDialog(QDialog):
 
     #This function will eventually handle the automation of the purge sequence, testing, and emergency purge sequence
     def auto_purge(self):
-        self.ui.testautomation.clicked.connect(self.auto_purge)
-        self.ui.emergencypurge.clicked.connect(self.auto_purge)
-        self.ui.standardpurge.clicked.connect(self.auto_purge)
-
-        pressed_button = getattr(self.ui, self.sender().objectName())
-
+        pressed_button = self.sender()
         if pressed_button == self.ui.testautomation:
-            pressed_button.setStyleSheet("background-color: green; color: white;")
-            self.ui.emergencypurge.setStyleSheet("")
-            self.ui.standardpurge.setStyleSheet("")
-            QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
-            #Initiator automation here:
-            setpointA = float(self.ui.mfcAsetpoint.text())
-            setpointB = float(self.ui.mfcBsetpoint.text())
-            setpointC = float(self.ui.mfcCsetpoint.text())
-
-            #test_initiator function takes three setpoints as arguments and then runs the automation sequence
-            asyncio.run(initiator.test_initiator(setpointA, setpointB, setpointC))
-
-
+            asyncio.create_task(self.run_testautomation(pressed_button))
         elif pressed_button == self.ui.emergencypurge:
-            pressed_button.setStyleSheet("background-color: green; color: white;")
-            self.ui.testautomation.setStyleSheet("")
-            self.ui.standardpurge.setStyleSheet("")
-            QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
-            #Will add the automation sequence here once we're ready
-        else: 
-            pressed_button.setStyleSheet("background-color: green; color: white;")
-            self.ui.testautomation.setStyleSheet("")
-            self.ui.emergencypurge.setStyleSheet("")
-            QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
+            # handle emergency purge
+            pass
+        else:
+            # handle standard purge
+            pass
 
-            asyncio.run(initiator.stanpurge())
-            #Will add the automation sequence here once we're ready
-
-        #How can I get print statements to not loop?
-        '''
-        def data_acquisition(self):
-        with nidaqmx.Task() as task:
-            task.ai_channels.add_ai_voltage_chan("cDAQ9188-169338EMod6/port0/ai0", min_val = -10, max_val = 10)
-            task.timing.cfg_samp_clk_timing(1000, sample_mode= AcquisitionType.FINITE, samps_per_chan=1000)
-            data = task.read(READ_ALL_AVAILABLE)
-            #fig = Figure(figsize=(4,4))
-            #ax = fig.add_subplot()
-            #ax.plot(data)
-        '''
+    async def run_testautomation(self, pressed_button):
+        pressed_button.setStyleSheet("background-color: green; color: white;")
+        self.ui.emergencypurge.setStyleSheet("")
+        self.ui.standardpurge.setStyleSheet("")
+        setpointA = float(self.ui.mfcAsetpoint.text())
+        setpointB = float(self.ui.mfcBsetpoint.text())
+        setpointC = float(self.ui.mfcCsetpoint.text())
+        await initiator.test_initiator(setpointA, setpointB, setpointC)
+        pressed_button.setStyleSheet("")
 
 
 class PlumbingDiagram(QDialog):

@@ -8,13 +8,13 @@ import time
 
 def set_all_digital_outputs(states):
     # states: list or array of 8 booleans
-    device_name = "cDAQ9188-169338EMod3/port0/line0:7"
+    device_name = "cDAQ9188-169338EMod4/port0/line0:7"
     with nidaqmx.Task() as task:
         task.do_channels.add_do_chan(device_name, line_grouping=LineGrouping.CHAN_PER_LINE)
         task.write(states)
 
 def set_digital_output(states):
-    device_name = "cDAQ9188-169338EMod3/port0/line0:7"
+    device_name = "cDAQ9188-169338EMod4/port0/line0:7"
     with nidaqmx.Task() as task:
         task.do_channels.add_do_chan(device_name, line_grouping=LineGrouping.CHAN_PER_LINE)
         task.write(states)
