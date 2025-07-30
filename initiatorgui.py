@@ -180,15 +180,18 @@ class MyDialog(QDialog):
             self.ui.testautomation.setStyleSheet("")
             self.ui.standardpurge.setStyleSheet("")
             QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
-            #Will add the automation sequence here once we're ready
-        else: 
-            pressed_button.setStyleSheet("background-color: green; color: white;")
-            self.ui.testautomation.setStyleSheet("")
-            self.ui.emergencypurge.setStyleSheet("")
-            QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
-
             asyncio.run(initiator.stanpurge())
-            #Will add the automation sequence here once we're ready
+
+        #Will add the automation sequence here once we're ready
+        
+        # else: 
+        #     pressed_button.setStyleSheet("background-color: green; color: white;")
+        #     self.ui.testautomation.setStyleSheet("")
+        #     self.ui.emergencypurge.setStyleSheet("")
+        #     QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
+
+        #     asyncio.run(initiator.stanpurge())
+        #     #Will add the automation sequence here once we're ready
 
         '''
         def data_acquisition(self):
@@ -251,8 +254,8 @@ if __name__ == "__main__":
     def load_stylesheet(filename):
         with open(filename, "r") as f:
             return f.read()
-    #stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
-    stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
+    stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
+    #stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     #for lab computer, use: stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
     #for personal computer, use: stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     app = QApplication(sys.argv)
