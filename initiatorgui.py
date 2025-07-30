@@ -1,6 +1,6 @@
 import sys
 from PySide6.QtWidgets import QApplication, QDialog, QLabel
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, QThread, Signal, QObject
 from combustionchamber import Ui_Dialog
 import combustionchamber
 from plumbingdiagram import Ui_plumbingdiagram
@@ -25,6 +25,20 @@ import matplotlib.pyplot as plt
 
 '''This calls the python file that was created FROM the .ui file (combustionchamber.py). 
 When updating gui in qt designer, must update the PYTHON file to see the updates.'''
+
+
+class AutomationWorker(QObject):
+    finished = Signal()
+    def __init__(self, setpointA, setpointB, setpointC):
+        super().__init__()
+        self.setpointA = setpointA
+        self.setpointB = setpointB
+        self.setpointC = setpointC
+
+    def run(self):
+        import initiator
+        asyncio.run(initiator.test_initiator(self.setpointA, self.setpointB, self.setpointC))
+        self.finished.emit()
 
 
 class MyDialog(QDialog):
@@ -155,23 +169,27 @@ class MyDialog(QDialog):
     def auto_purge(self):
         pressed_button = self.sender()
         if pressed_button == self.ui.testautomation:
-            asyncio.create_task(self.run_testautomation(pressed_button))
+            pressed_button.setStyleSheet("background-color: green; color: white;")
+            QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
+            self.ui.emergencypurge.setStyleSheet("")
+            self.ui.standardpurge.setStyleSheet("")
+            setpointA = float(self.ui.mfcAsetpoint.text())
+            setpointB = float(self.ui.mfcBsetpoint.text())
+            setpointC = float(self.ui.mfcCsetpoint.text())
+
+            self.worker = AutomationWorker(setpointA, setpointB, setpointC)
+            self.thread = QThread()
+            self.worker.moveToThread(self.thread)
+            self.thread.started.connect(self.worker.run)
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(lambda: pressed_button.setStyleSheet(""))
+            self.thread.start()
         elif pressed_button == self.ui.emergencypurge:
             # handle emergency purge
             pass
         else:
             # handle standard purge
             pass
-
-    async def run_testautomation(self, pressed_button):
-        pressed_button.setStyleSheet("background-color: green; color: white;")
-        self.ui.emergencypurge.setStyleSheet("")
-        self.ui.standardpurge.setStyleSheet("")
-        setpointA = float(self.ui.mfcAsetpoint.text())
-        setpointB = float(self.ui.mfcBsetpoint.text())
-        setpointC = float(self.ui.mfcCsetpoint.text())
-        await initiator.test_initiator(setpointA, setpointB, setpointC)
-        pressed_button.setStyleSheet("")
 
 
 class PlumbingDiagram(QDialog):
