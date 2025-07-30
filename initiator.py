@@ -46,7 +46,7 @@ async def test_initiator(setpointA, setpointB, setpointC):
 async def stanpurge():
     solenoids = [False] * 8
     nicontrol.set_digital_output(solenoids)
-    asyncio.gather(
+    await asyncio.gather(
         connect('A', 0.0),
         connect('B', 0.0),
         connect('C', 0.0)
