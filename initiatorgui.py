@@ -3,6 +3,9 @@ from PySide6.QtWidgets import QApplication, QDialog, QLabel
 from PySide6.QtCore import QTimer, QThread, Signal, QObject
 from combustionchamber import Ui_Dialog
 import combustionchamber
+from PySide6.QtCore import QTimer
+from initiatortesting import Ui_Initiatorgui
+import initiatortesting
 from plumbingdiagram import Ui_plumbingdiagram
 from greenledwidget import GreenLed
 import nidaqmx #might not be needed since I imported nicontrol
@@ -44,7 +47,7 @@ class AutomationWorker(QObject):
 class MyDialog(QDialog):
     def __init__(self, plumbing_diagram):
         super().__init__()
-        self.ui = Ui_Dialog()
+        self.ui = Ui_Initiatorgui()
         self.ui.setupUi(self)
         self.plumbing_diagram = plumbing_diagram
         
@@ -56,16 +59,6 @@ class MyDialog(QDialog):
         self.ui.closeS1.clicked.connect(lambda: self.toggle_solenoid(0, False))
         self.ui.openS2.clicked.connect(lambda: self.toggle_solenoid(1, True))
         self.ui.closeS2.clicked.connect(lambda: self.toggle_solenoid(1, False))
-        self.ui.openS3.clicked.connect(lambda: self.toggle_solenoid(2, True))
-        self.ui.closeS3.clicked.connect(lambda: self.toggle_solenoid(2, False))
-        self.ui.openS4.clicked.connect(lambda: self.toggle_solenoid(3, True))
-        self.ui.closeS4.clicked.connect(lambda: self.toggle_solenoid(3, False))
-        self.ui.openS5.clicked.connect(lambda: self.toggle_solenoid(4,True))
-        self.ui.closeS5.clicked.connect(lambda: self.toggle_solenoid(4, False))
-        self.ui.openS6.clicked.connect(lambda: self.toggle_solenoid(5, True))
-        self.ui.closeS6.clicked.connect(lambda: self.toggle_solenoid(5, False)) 
-        self.ui.openS7.clicked.connect(lambda: self.toggle_solenoid(6, True))
-        self.ui.closeS7.clicked.connect(lambda: self.toggle_solenoid(6, False))
 
         #Connects the update setpoints button
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
@@ -77,13 +70,11 @@ class MyDialog(QDialog):
         self.ui.mfcAsetpoint.returnPressed.connect(lambda: self.save_setpoints('A', float(self.ui.mfcAsetpoint.text())))
         self.ui.mfcBsetpoint.returnPressed.connect(lambda: self.save_setpoints('B', float(self.ui.mfcBsetpoint.text())))
         self.ui.mfcCsetpoint.returnPressed.connect(lambda: self.choosegas('C', float(self.ui.mfcCsetpoint.text())))
-        self.ui.mfcDsetpoint.returnPressed.connect(lambda: self.choosegas('D', float(self.ui.mfcDsetpoint.text())))
         
         #Retrieves the gas type from the GUI
         self.ui.mfcAgas.currentTextChanged.connect(self.change_gas)
         self.ui.mfcBgas.currentTextChanged.connect(self.change_gas)
         self.ui.mfcCgas.currentTextChanged.connect(self.change_gas)
-        #self.ui.mfcDgas.currentTextChanged.connect(self.change_gas)
 
         #Connects the automation and purge buttons
         self.ui.testautomation.clicked.connect(self.auto_purge)
@@ -105,7 +96,6 @@ class MyDialog(QDialog):
         self.ui.mfcAsetpoint.text()
         self.ui.mfcBsetpoint.text()
         self.ui.mfcCsetpoint.text()
-        #self.ui.mfcDsetpoint.text()
 
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
 
@@ -122,11 +112,9 @@ class MyDialog(QDialog):
         self.ui.mfcAsetpoint.setText("0.0")
         self.ui.mfcBsetpoint.setText("0.0")
         self.ui.mfcCsetpoint.setText("0.0")
-        self.ui.mfcDsetpoint.setText("0.0")
         asyncio.run(alicatcontrol.change_rate('A', 0.0))
         asyncio.run(alicatcontrol.change_rate('B', 0.0))
         asyncio.run(alicatcontrol.change_rate('C', 0.0))
-        #asyncio.run(alicatcontrol.change_rate('D', 0.0)) #Commented out until mfc D is connected to alicat hub
         print("All gas setpoints reset to 0.0 SLPM.")
     
 
@@ -136,11 +124,9 @@ class MyDialog(QDialog):
         self.ui.mfcAgas.currentText()
         self.ui.mfcBgas.currentText()
         self.ui.mfcCgas.currentText()
-        #self.ui.mfcDgas.currentText()
         asyncio.run(alicatcontrol.set_gas('A', self.ui.mfcAgas.currentText()))
         asyncio.run(alicatcontrol.set_gas('B', self.ui.mfcBgas.currentText()))
         asyncio.run(alicatcontrol.set_gas('C', self.ui.mfcCgas.currentText()))
-        #asyncio.run(alicatcontrol.change_gas('D', self.ui.mfcDgas.currentText())) #Commented out until mfc D is connected to alicat hub
 
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
     def toggle_solenoid(self, index, state):
@@ -190,6 +176,30 @@ class MyDialog(QDialog):
         else:
             # handle standard purge
             pass
+            pressed_button.setStyleSheet("background-color: green; color: white;")
+            self.ui.testautomation.setStyleSheet("")
+            self.ui.standardpurge.setStyleSheet("")
+            QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
+            #Will add the automation sequence here once we're ready
+        else: 
+            pressed_button.setStyleSheet("background-color: green; color: white;")
+            self.ui.testautomation.setStyleSheet("")
+            self.ui.emergencypurge.setStyleSheet("")
+            QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
+
+            asyncio.run(initiator.stanpurge())
+            #Will add the automation sequence here once we're ready
+
+        '''
+        def data_acquisition(self):
+        with nidaqmx.Task() as task:
+            task.ai_channels.add_ai_voltage_chan("cDAQ9188-169338EMod6/port0/ai0", min_val = -10, max_val = 10)
+            task.timing.cfg_samp_clk_timing(1000, sample_mode= AcquisitionType.FINITE, samps_per_chan=1000)
+            data = task.read(READ_ALL_AVAILABLE)
+            #fig = Figure(figsize=(4,4))
+            #ax = fig.add_subplot()
+            #ax.plot(data)
+        '''
 
 
 class PlumbingDiagram(QDialog):
@@ -241,8 +251,8 @@ if __name__ == "__main__":
     def load_stylesheet(filename):
         with open(filename, "r") as f:
             return f.read()
-    stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
-    #stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
+    #stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
+    stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     #for lab computer, use: stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
     #for personal computer, use: stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     app = QApplication(sys.argv)

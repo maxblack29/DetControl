@@ -2697,7 +2697,7 @@ QProgressBar::chunk
     <string>Solenoid States:</string>
    </property>
   </widget>
-  <widget class="QLabel" name="fuellabel">
+  <widget class="QLabel" name="purgelabel">
    <property name="geometry">
     <rect>
      <x>420</x>
@@ -2710,7 +2710,7 @@ QProgressBar::chunk
     <string>Purge Valve</string>
    </property>
   </widget>
-  <widget class="QLabel" name="drivergaslabel">
+  <widget class="QLabel" name="exhaustlabel">
    <property name="geometry">
     <rect>
      <x>400</x>
@@ -2801,7 +2801,7 @@ QProgressBar::chunk
    <property name="geometry">
     <rect>
      <x>930</x>
-     <y>200</y>
+     <y>120</y>
      <width>151</width>
      <height>61</height>
     </rect>
@@ -2814,7 +2814,7 @@ QProgressBar::chunk
    <property name="geometry">
     <rect>
      <x>930</x>
-     <y>120</y>
+     <y>200</y>
      <width>151</width>
      <height>61</height>
     </rect>

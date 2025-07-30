@@ -15,10 +15,8 @@ async def connect(unit, setpoint):
         await mfc.set_flow_rate(setpoint)
 
 async def test_initiator(setpointA, setpointB, setpointC):
-    #with nidaqmx.Task() as task:
-        #Step 1, control two solenoids to open and close right here that control the gas flow to the intiator and exhaust. Exhaust is closed
-        #(normally open solenoid) and initator flow is open (normally closed solenoid)
-    #Step 2, set the desired flow rate for the gas to the intiator
+
+    print("Test starting")
 
     await asyncio.gather(
         connect('A', setpointA),
@@ -72,7 +70,4 @@ async def emerpurge():
     await asyncio.sleep(30)
 
     connect('B', 0.0) #Zero's the nitrogen
-
-
-# if __name__ == '__main__': function here? 
     
