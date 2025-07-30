@@ -56,18 +56,22 @@ async def stanpurge():
 
     #Figure out the solenoid control based on how you plumb it today
 async def emerpurge():
-    asyncio.gather(
-        connect('A', 3.0),
+
+    print("Emergency Purge Initiated")
+
+    await asyncio.gather(
+        connect('A', 0.000),
         connect('B', 10.000),
-    )
-    await asyncio.sleep(30)
+        connect('C', 0.000))
 
-    asyncio.gather(
-        connect('B', 10.000),
-        connect('C', 3.0)
-    )
+    await asyncio.sleep(1)
 
-    await asyncio.sleep(30)
+    solenoids = [False]*8
+    nicontrol.set_digital_output(solenoids)
 
-    connect('B', 0.0) #Zero's the nitrogen
+    await asyncio.sleep(10)
+
+    await connect('B', 0.000)
+
+    print("Emergency Purge Complete")
     

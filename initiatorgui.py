@@ -43,6 +43,20 @@ class AutomationWorker(QObject):
         asyncio.run(initiator.test_initiator(self.setpointA, self.setpointB, self.setpointC))
         self.finished.emit()
 
+class StandardPurgeWorker(QObject):
+    finished = Signal()
+    def run(self):
+        import initiator
+        asyncio.run(initiator.stanpurge())
+        self.finished.emit()
+
+class EmergencyPurgeWorker(QObject):
+    finished = Signal()
+    def run(self):
+        import initiator
+        asyncio.run(initiator.emerpurge())
+        self.finished.emit()
+
 
 class MyDialog(QDialog):
     def __init__(self, plumbing_diagram):
@@ -154,11 +168,15 @@ class MyDialog(QDialog):
     #This function will eventually handle the automation of the purge sequence, testing, and emergency purge sequence
     def auto_purge(self):
         pressed_button = self.sender()
+
+        pressed_button.setEnabled(False)
+        #pressed_button.clicked.disconnect(self.auto_purge)
+        #pressed_button.setStyleSheet("background-color: orange; color: white;")
+        self.ui.testautomation.setStyleSheet("")
+        self.ui.emergencypurge.setStyleSheet("")
+        self.ui.standardpurge.setStyleSheet("")
+        
         if pressed_button == self.ui.testautomation:
-            pressed_button.setStyleSheet("background-color: green; color: white;")
-            QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
-            self.ui.emergencypurge.setStyleSheet("")
-            self.ui.standardpurge.setStyleSheet("")
             setpointA = float(self.ui.mfcAsetpoint.text())
             setpointB = float(self.ui.mfcBsetpoint.text())
             setpointC = float(self.ui.mfcCsetpoint.text())
@@ -168,31 +186,29 @@ class MyDialog(QDialog):
             self.worker.moveToThread(self.thread)
             self.thread.started.connect(self.worker.run)
             self.worker.finished.connect(self.thread.quit)
-            self.worker.finished.connect(lambda: pressed_button.setStyleSheet(""))
+            #self.worker.finished.connect(lambda: pressed_button.setStyleSheet(""))
+            self.worker.finished.connect(lambda: self.reenable(pressed_button))
             self.thread.start()
         elif pressed_button == self.ui.emergencypurge:
-            # handle emergency purge
-            pass
+            self.eme_worker = EmergencyPurgeWorker()
+            self.eme_thread = QThread()
+            self.eme_worker.moveToThread(self.eme_thread)
+            self.eme_thread.started.connect(self.eme_worker.run)
+            self.eme_worker.finished.connect(self.eme_thread.quit)
+            self.eme_worker.finished.connect(lambda: self.reenable(pressed_button))
+            self.eme_thread.start()
+
         else:
-            # handle standard purge
-            pass
-            pressed_button.setStyleSheet("background-color: green; color: white;")
-            self.ui.testautomation.setStyleSheet("")
-            self.ui.standardpurge.setStyleSheet("")
-            QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
-            asyncio.run(initiator.stanpurge())
-
-        #Will add the automation sequence here once we're ready
-        
-        # else: 
-        #     pressed_button.setStyleSheet("background-color: green; color: white;")
-        #     self.ui.testautomation.setStyleSheet("")
-        #     self.ui.emergencypurge.setStyleSheet("")
-        #     QTimer.singleShot(500, lambda: pressed_button.setStyleSheet(""))
-
-        #     asyncio.run(initiator.stanpurge())
-        #     #Will add the automation sequence here once we're ready
-
+            self.std_worker = StandardPurgeWorker()
+            self.std_thread = QThread()
+            self.std_worker.moveToThread(self.std_thread)
+            self.std_thread.started.connect(self.std_worker.run)
+            self.std_worker.finished.connect(self.std_thread.quit)
+            self.std_worker.finished.connect(lambda: self.reenable(pressed_button))
+            self.std_thread.start()
+    def reenable(self, button):
+        button.setEnabled(True)
+        button.setStyleSheet("")
         '''
         def data_acquisition(self):
         with nidaqmx.Task() as task:
