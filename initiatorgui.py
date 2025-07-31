@@ -20,7 +20,7 @@ import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import initiator
-from initiator import test_initiator
+from initiator import test_initiator, stanpurge, emerpurge
 
 import pdb
 import pyqtgraph as pg
@@ -38,24 +38,32 @@ class AutomationWorker(QObject):
         self.setpointB = setpointB
         self.setpointC = setpointC
 
-    def run(self):
-        import initiator
+    def runauto(self):
         asyncio.run(initiator.test_initiator(self.setpointA, self.setpointB, self.setpointC))
         self.finished.emit()
 
-class StandardPurgeWorker(QObject):
-    finished = Signal()
-    def run(self):
-        import initiator
-        asyncio.run(initiator.stanpurge())
+    def runstanpurge(self):
+        asyncio.run(initiator.stanpurge(self.setpointA, self.setpointB, self.setpointC))
         self.finished.emit()
 
-class EmergencyPurgeWorker(QObject):
-    finished = Signal()
-    def run(self):
-        import initiator
-        asyncio.run(initiator.emerpurge())
+    def runemepurge(self):
+        asyncio.run(initiator.emerpurge(self.setpointA, self.setpointB, self.setpointC))
         self.finished.emit()
+
+
+# class StandardPurgeWorker(QObject):
+#     finished = Signal()
+#     def runstdpurge(self):
+#         import initiator
+#         asyncio.run(initiator.stanpurge())
+#         self.finished.emit()
+
+# class EmergencyPurgeWorker(QObject):
+#     finished = Signal()
+#     def runemepurge(self):
+#         import initiator
+#         asyncio.run(initiator.emerpurge())
+#         self.finished.emit()
 
 
 class MyDialog(QDialog):
@@ -91,9 +99,9 @@ class MyDialog(QDialog):
         self.ui.mfcCgas.currentTextChanged.connect(self.change_gas)
 
         #Connects the automation and purge buttons
-        self.ui.testautomation.clicked.connect(self.auto_purge)
-        self.ui.emergencypurge.clicked.connect(self.auto_purge)
-        self.ui.standardpurge.clicked.connect(self.auto_purge)
+        self.ui.testautomation.clicked.connect(self.begin_testing)
+        self.ui.standardpurge.clicked.connect(self.stan_purge)
+        self.ui.emergencypurge.clicked.connect(self.eme_purge)
     
     def save_setpoints(self):
         #This function can be used to update the setpoints
@@ -166,49 +174,123 @@ class MyDialog(QDialog):
         print(f"Solenoid S{index+1} {'opened' if state else 'closed'}.")
 
     #This function will eventually handle the automation of the purge sequence, testing, and emergency purge sequence
-    def auto_purge(self):
-        pressed_button = self.sender()
+    # def auto_purge(self):
+    #     pressed_button = self.sender()
 
-        pressed_button.setEnabled(False)
-        #pressed_button.clicked.disconnect(self.auto_purge)
-        #pressed_button.setStyleSheet("background-color: orange; color: white;")
+    #     pressed_button.setEnabled(False)
+    #     #pressed_button.clicked.disconnect(self.auto_purge)
+    #     #pressed_button.setStyleSheet("background-color: orange; color: white;")
+    #     self.ui.testautomation.setStyleSheet("")
+    #     self.ui.emergencypurge.setStyleSheet("")
+    #     self.ui.standardpurge.setStyleSheet("")
+        
+      
+    #     if pressed_button == self.ui.testautomation:
+    #         setpointA = float(self.ui.mfcAsetpoint.text())
+    #         setpointB = float(self.ui.mfcBsetpoint.text())
+    #         setpointC = float(self.ui.mfcCsetpoint.text())
+
+    #         self.worker = AutomationWorker(setpointA, setpointB, setpointC)
+    #         self.thread = QThread()
+    #         self.worker.moveToThread(self.thread)
+    #         self.thread.started.connect(self.worker.runauto)
+    #         self.worker.finished.connect(self.thread.quit)
+    #         #self.worker.finished.connect(lambda: pressed_button.setStyleSheet(""))
+    #         self.worker.finished.connect(lambda: self.reenable(pressed_button))
+    #         self.thread.start()
+    #     elif pressed_button == self.ui.emergencypurge:
+    #         setpointA = 0.0
+    #         setpointB = 10.0
+    #         setpointC = 0.0
+
+    #         self.eme_worker = AutomationWorker(setpointA, setpointB, setpointC)
+    #         self.eme_thread = QThread()
+    #         self.eme_worker.moveToThread(self.eme_thread)
+    #         self.eme_thread.started.connect(self.eme_worker.runemepurge)
+    #         self.eme_worker.finished.connect(self.eme_thread.quit)
+    #         self.eme_worker.finished.connect(lambda: self.reenable(pressed_button))
+    #         self.eme_thread.start()
+
+    #     else:
+    #         setpointA = 0.0
+    #         setpointB = 0.0
+    #         setpointC = 0.0
+
+    #         self.std_worker = AutomationWorker(setpointA, setpointB, setpointC)
+    #         self.std_worker = QThread()
+    #         self.std_worker.moveToThread(self.std_thread)
+    #         self.std_thread.started.connect(self.std_worker.runstanpurge)
+    #         self.std_worker.finished.connect(self.std_thread.quit)
+    #         self.std_worker.finished.connect(lambda: self.reenable(pressed_button))
+    #         self.std_thread.start()
+
+    def begin_testing(self):
+        button = self.ui.testautomation
+
+        button.setEnabled(False)
         self.ui.testautomation.setStyleSheet("")
         self.ui.emergencypurge.setStyleSheet("")
         self.ui.standardpurge.setStyleSheet("")
-        
-        if pressed_button == self.ui.testautomation:
-            setpointA = float(self.ui.mfcAsetpoint.text())
-            setpointB = float(self.ui.mfcBsetpoint.text())
-            setpointC = float(self.ui.mfcCsetpoint.text())
 
-            self.worker = AutomationWorker(setpointA, setpointB, setpointC)
-            self.thread = QThread()
-            self.worker.moveToThread(self.thread)
-            self.thread.started.connect(self.worker.run)
-            self.worker.finished.connect(self.thread.quit)
-            #self.worker.finished.connect(lambda: pressed_button.setStyleSheet(""))
-            self.worker.finished.connect(lambda: self.reenable(pressed_button))
-            self.thread.start()
-        elif pressed_button == self.ui.emergencypurge:
-            self.eme_worker = EmergencyPurgeWorker()
-            self.eme_thread = QThread()
-            self.eme_worker.moveToThread(self.eme_thread)
-            self.eme_thread.started.connect(self.eme_worker.run)
-            self.eme_worker.finished.connect(self.eme_thread.quit)
-            self.eme_worker.finished.connect(lambda: self.reenable(pressed_button))
-            self.eme_thread.start()
+        setpointA = float(self.ui.mfcAsetpoint.text())
+        setpointB = float(self.ui.mfcBsetpoint.text())
+        setpointC = float(self.ui.mfcCsetpoint.text())
 
-        else:
-            self.std_worker = StandardPurgeWorker()
-            self.std_thread = QThread()
-            self.std_worker.moveToThread(self.std_thread)
-            self.std_thread.started.connect(self.std_worker.run)
-            self.std_worker.finished.connect(self.std_thread.quit)
-            self.std_worker.finished.connect(lambda: self.reenable(pressed_button))
-            self.std_thread.start()
+        self.worker = AutomationWorker(setpointA, setpointB, setpointC)
+        self.thread = QThread()
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(self.worker.runauto)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(lambda: self.reenable(button))
+        self.thread.start()
+
+    def stan_purge(self):
+        button = self.ui.standardpurge
+
+        button.setEnabled(False)
+        self.ui.testautomation.setStyleSheet("")
+        self.ui.emergencypurge.setStyleSheet("")
+        self.ui.standardpurge.setStyleSheet("")
+
+        setpointA = 0.0
+        setpointB = 0.0
+        setpointC = 0.0
+
+        self.std_worker = AutomationWorker(setpointA, setpointB, setpointC)
+        self.std_thread = QThread()
+        self.std_worker.moveToThread(self.std_thread)
+        self.std_thread.started.connect(self.std_worker.runstanpurge)
+        self.std_worker.finished.connect(self.std_thread.quit)
+        self.std_worker.finished.connect(lambda: self.reenable(button))
+        self.std_thread.start()
+
+    def eme_purge(self):
+        button = self.ui.emergencypurge
+
+        button.setEnabled(False)
+        self.ui.testautomation.setStyleSheet("")
+        self.ui.emergencypurge.setStyleSheet("")
+        self.ui.standardpurge.setStyleSheet("")
+
+        setpointA = 0.0
+        setpointB = 10.0
+        setpointC = 0.0
+
+        self.eme_worker = AutomationWorker(setpointA, setpointB, setpointC)
+        self.eme_thread = QThread()
+        self.eme_worker.moveToThread(self.eme_thread)
+        self.eme_thread.started.connect(self.eme_worker.runemepurge)
+        self.eme_worker.finished.connect(self.eme_thread.quit)
+        self.eme_worker.finished.connect(lambda: self.reenable(button))
+        self.eme_thread.start()
+
     def reenable(self, button):
         button.setEnabled(True)
         button.setStyleSheet("")
+
+    def stop_test(self):
+
+
         '''
         def data_acquisition(self):
         with nidaqmx.Task() as task:
@@ -270,8 +352,8 @@ if __name__ == "__main__":
     def load_stylesheet(filename):
         with open(filename, "r") as f:
             return f.read()
-    #stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
-    stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
+    stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
+    #stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     #for lab computer, use: stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
     #for personal computer, use: stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     app = QApplication(sys.argv)

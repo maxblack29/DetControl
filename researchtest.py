@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import random
-import sandbox
+import nicontrol
 import pdb
 import alicatcontrol
 import asyncio

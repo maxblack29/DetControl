@@ -43,26 +43,27 @@ async def test_initiator(setpointA, setpointB, setpointC):
     print("Test Complete! You can now change the setpoints of each MFC.")
     #Exhaust line and purge line are controlled by DIFFERENT solenoids. Exhaust line is next to manifold and purge line is closest to the table with the computer
 
-async def stanpurge():
+async def stanpurge(setpointA, setpointB, setpointC):
     solenoids = [False] * 8
     nicontrol.set_digital_output(solenoids)
     await asyncio.gather(
-        connect('A', 0.0),
-        connect('B', 0.0),
-        connect('C', 0.0)
+        connect('A', setpointA),
+        connect('B', setpointB),
+        connect('C', setpointC)
     )
 
     print("Purge complete!")
 
     #Figure out the solenoid control based on how you plumb it today
-async def emerpurge():
+async def emerpurge(setpointA, setpointB, setpointC):
 
     print("Emergency Purge Initiated")
 
     await asyncio.gather(
-        connect('A', 0.000),
-        connect('B', 10.000),
-        connect('C', 0.000))
+        connect('A', setpointA),
+        connect('B', setpointB),
+        connect('C', setpointC)
+        )
 
     await asyncio.sleep(1)
 
