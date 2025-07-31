@@ -225,6 +225,7 @@ class MyDialog(QDialog):
     #         self.std_thread.start()
 
     def begin_testing(self):
+        self.stop_test = False
         button = self.ui.testautomation
 
         button.setEnabled(False)
@@ -238,11 +239,16 @@ class MyDialog(QDialog):
 
         self.worker = AutomationWorker(setpointA, setpointB, setpointC)
         self.thread = QThread()
-        self.worker.moveToThread(self.thread)
+        self.worker.moveToThread(self.thread)      
         self.thread.started.connect(self.worker.runauto)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(lambda: self.reenable(button))
-        self.thread.start()
+        if self.std_worker.moveToThread(self.std_thread) == True:
+            self.worker.finished.connect(self.thread.quit)
+        elif self.eme_worker.moveToThread(self.eme_thread) == True:
+            self.worker.finished.connect(self.thread.quit)
+        else:
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(lambda: self.reenable(button))
+            self.thread.start()
 
     def stan_purge(self):
         button = self.ui.standardpurge
@@ -289,6 +295,7 @@ class MyDialog(QDialog):
         button.setStyleSheet("")
 
     def stop_test(self):
+    
 
 
         '''
