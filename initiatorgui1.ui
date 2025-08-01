@@ -2729,11 +2729,11 @@ QProgressBar::chunk
      <x>540</x>
      <y>120</y>
      <width>92</width>
-     <height>24</height>
+     <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>Open</string>
+    <string>Actuate</string>
    </property>
    <property name="default">
     <bool>false</bool>
@@ -2745,11 +2745,11 @@ QProgressBar::chunk
      <x>540</x>
      <y>170</y>
      <width>92</width>
-     <height>24</height>
+     <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>Open</string>
+    <string>Actuate</string>
    </property>
   </widget>
   <widget class="QPushButton" name="closeS2">
@@ -2758,11 +2758,11 @@ QProgressBar::chunk
      <x>640</x>
      <y>170</y>
      <width>92</width>
-     <height>24</height>
+     <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>Close</string>
+    <string>Deactivate</string>
    </property>
    <property name="default">
     <bool>true</bool>
@@ -2774,11 +2774,11 @@ QProgressBar::chunk
      <x>640</x>
      <y>120</y>
      <width>92</width>
-     <height>24</height>
+     <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>Close</string>
+    <string>Deactivate</string>
    </property>
    <property name="default">
     <bool>true</bool>

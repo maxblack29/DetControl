@@ -1,6 +1,7 @@
 import sys
+from PyQt6.QtCore import QProcess
 from PySide6.QtWidgets import QApplication, QDialog, QLabel
-from PySide6.QtCore import QTimer, QThread, Signal, QObject
+from PySide6.QtCore import QTimer, QThread, Signal, QObject, Slot, QProcess
 from combustionchamber import Ui_Dialog
 import combustionchamber
 from PySide6.QtCore import QTimer
@@ -224,12 +225,9 @@ class MyDialog(QDialog):
     #         self.std_worker.finished.connect(lambda: self.reenable(pressed_button))
     #         self.std_thread.start()
     stop_test = False
-    #self.stop_test = False
 
-    def begin_testing(self):
-        global stop_test
-        stop_test = True
-        self.stop_test = False
+    def begin_testing(self, stop_test):
+
         button = self.ui.testautomation
 
         button.setEnabled(False)
@@ -241,23 +239,34 @@ class MyDialog(QDialog):
         setpointB = float(self.ui.mfcBsetpoint.text())
         setpointC = float(self.ui.mfcCsetpoint.text())
 
+        
         self.worker = AutomationWorker(setpointA, setpointB, setpointC)
         self.thread = QThread()
         self.worker.moveToThread(self.thread)      
         self.thread.started.connect(self.worker.runauto)
-        if self.std_worker.moveToThread(self.std_thread) == True:
-            self.worker.finished.connect(self.thread.quit)
-        elif self.eme_worker.moveToThread(self.eme_thread) == True:
-            self.worker.finished.connect(self.thread.quit)
-        else:
-            self.worker.finished.connect(self.thread.quit)
-            self.worker.finished.connect(lambda: self.reenable(button))
-            self.thread.start()
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(lambda: self.reenable(button))
+        self.thread.start()
+    # process1 = asyncio.run(initiator.initiator_testing(setpointA, setpointB, setpointC))
+    # def begin_test(self, process1):
+    #     button = self.ui.testautomation
+    #     button.setEnabled(False)
+    #     self.ui.testautomation.setStyleSheet("")
+    #     self.ui.emergencypurge.setStyleSheet("")
+    #     self.ui.standardpurge.setStyleSheet("")
 
+    #     setpointA = float(self.ui.mfcAsetpoint.text())
+    #     setpointB = float(self.ui.mfcBsetpoint.text())
+    #     setpointC = float(self.ui.mfcCsetpoint.text())
+
+    #     self.process() == QProcess()
+    #     self.process.setProcessChannelMode(QProcess.MergedChannels)
+    #     self.process.start("python", asyncio.run(initiator.initiator_testing(setpointA, setpointB, setpointC)))
     def stan_purge(self):
         button = self.ui.standardpurge
 
         button.setEnabled(False)
+        print(self.ui.testautomation.clicked.connect(self.begin_testing))
         self.ui.testautomation.setStyleSheet("")
         self.ui.emergencypurge.setStyleSheet("")
         self.ui.standardpurge.setStyleSheet("")
@@ -300,7 +309,7 @@ class MyDialog(QDialog):
         button.setStyleSheet("")
 
     def stop_test(self):
-    
+        
 
 
         '''

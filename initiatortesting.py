@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'initiatorgui1TKgiJe.ui'
+## Form generated from reading UI file 'initiatorgui1JajRGK.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -2197,16 +2197,16 @@ class Ui_Initiatorgui(object):
         self.exhaustlabel.setGeometry(QRect(400, 120, 91, 16))
         self.openS1 = QPushButton(Initiatorgui)
         self.openS1.setObjectName(u"openS1")
-        self.openS1.setGeometry(QRect(540, 120, 92, 24))
+        self.openS1.setGeometry(QRect(540, 120, 92, 31))
         self.openS2 = QPushButton(Initiatorgui)
         self.openS2.setObjectName(u"openS2")
-        self.openS2.setGeometry(QRect(540, 170, 92, 24))
+        self.openS2.setGeometry(QRect(540, 170, 92, 31))
         self.closeS2 = QPushButton(Initiatorgui)
         self.closeS2.setObjectName(u"closeS2")
-        self.closeS2.setGeometry(QRect(640, 170, 92, 24))
+        self.closeS2.setGeometry(QRect(640, 170, 92, 31))
         self.closeS1 = QPushButton(Initiatorgui)
         self.closeS1.setObjectName(u"closeS1")
-        self.closeS1.setGeometry(QRect(640, 120, 92, 24))
+        self.closeS1.setGeometry(QRect(640, 120, 92, 31))
         self.line_2 = QFrame(Initiatorgui)
         self.line_2.setObjectName(u"line_2")
         self.line_2.setGeometry(QRect(760, -10, 61, 561))
@@ -2345,10 +2345,10 @@ class Ui_Initiatorgui(object):
         self.solenoidstatelabel.setText(QCoreApplication.translate("Initiatorgui", u"Solenoid States:", None))
         self.purgelabel.setText(QCoreApplication.translate("Initiatorgui", u"Purge Valve", None))
         self.exhaustlabel.setText(QCoreApplication.translate("Initiatorgui", u"Exhaust System", None))
-        self.openS1.setText(QCoreApplication.translate("Initiatorgui", u"Open", None))
-        self.openS2.setText(QCoreApplication.translate("Initiatorgui", u"Open", None))
-        self.closeS2.setText(QCoreApplication.translate("Initiatorgui", u"Close", None))
-        self.closeS1.setText(QCoreApplication.translate("Initiatorgui", u"Close", None))
+        self.openS1.setText(QCoreApplication.translate("Initiatorgui", u"Actuate", None))
+        self.openS2.setText(QCoreApplication.translate("Initiatorgui", u"Actuate", None))
+        self.closeS2.setText(QCoreApplication.translate("Initiatorgui", u"Deactivate", None))
+        self.closeS1.setText(QCoreApplication.translate("Initiatorgui", u"Deactivate", None))
         self.standardpurge.setText(QCoreApplication.translate("Initiatorgui", u"Standard Purge", None))
         self.emergencypurge.setText(QCoreApplication.translate("Initiatorgui", u"Emergency Purge", None))
         self.testautomation.setText(QCoreApplication.translate("Initiatorgui", u"Begin Testing", None))
