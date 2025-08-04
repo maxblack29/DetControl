@@ -1,5 +1,5 @@
 import nidaqmx
-from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
+from nidaqmx.constants import AcquisitionType, LoggingMode, LoggingOperation, READ_ALL_AVAILABLE
 import matplotlib.pyplot as plt #Weird import stuff, this works
 with nidaqmx.Task() as task:
     task.ai_channels.add_ai_voltage_chan("cDAQ9188-169338EMod8/ai0", min_val = -10, max_val = 10)  # Creates channels to read voltage
@@ -29,3 +29,12 @@ def data_acq_static():
         plt.xlabel("Sample Number")
         plt.title("Static Pressure Data Acquisition")
         plt.show()
+
+def data_acq_dynamic():
+    k=1
+    with nidaqmx.Task() as task:
+        task.ai_channels.add_ai_voltage_chan(#Don't know the channel name yet, don't know the min and max val)
+        task.timing.cfg_samp_clk_timing(1000,sample_mode = AcquisitionType.FINITE, samps_per_chan = 1000)
+        task.in_stream.configure_logging(f"TestData{k}.tdms", LoggingMode.LOG_AND_READ, operation=LoggingOperation.CREATE_OR_REPLACE)
+        k += 1
+        data = task.read(READ_ALL_AVAILABLE)

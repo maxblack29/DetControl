@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'initiatorgui1JajRGK.ui'
+## Form generated from reading UI file 'initiatorgui1DFUxSW.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -2212,15 +2212,12 @@ class Ui_Initiatorgui(object):
         self.line_2.setGeometry(QRect(760, -10, 61, 561))
         self.line_2.setFrameShape(QFrame.Shape.VLine)
         self.line_2.setFrameShadow(QFrame.Shadow.Sunken)
-        self.standardpurge = QPushButton(Initiatorgui)
-        self.standardpurge.setObjectName(u"standardpurge")
-        self.standardpurge.setGeometry(QRect(930, 120, 151, 61))
-        self.emergencypurge = QPushButton(Initiatorgui)
-        self.emergencypurge.setObjectName(u"emergencypurge")
-        self.emergencypurge.setGeometry(QRect(930, 200, 151, 61))
+        self.purgebutton = QPushButton(Initiatorgui)
+        self.purgebutton.setObjectName(u"purgebutton")
+        self.purgebutton.setGeometry(QRect(930, 160, 151, 61))
         self.testautomation = QPushButton(Initiatorgui)
         self.testautomation.setObjectName(u"testautomation")
-        self.testautomation.setGeometry(QRect(930, 40, 151, 61))
+        self.testautomation.setGeometry(QRect(930, 70, 151, 61))
 
         self.retranslateUi(Initiatorgui)
 
@@ -2349,8 +2346,7 @@ class Ui_Initiatorgui(object):
         self.openS2.setText(QCoreApplication.translate("Initiatorgui", u"Actuate", None))
         self.closeS2.setText(QCoreApplication.translate("Initiatorgui", u"Deactivate", None))
         self.closeS1.setText(QCoreApplication.translate("Initiatorgui", u"Deactivate", None))
-        self.standardpurge.setText(QCoreApplication.translate("Initiatorgui", u"Standard Purge", None))
-        self.emergencypurge.setText(QCoreApplication.translate("Initiatorgui", u"Emergency Purge", None))
+        self.purgebutton.setText(QCoreApplication.translate("Initiatorgui", u"Purge", None))
         self.testautomation.setText(QCoreApplication.translate("Initiatorgui", u"Begin Testing", None))
     # retranslateUi
 

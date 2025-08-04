@@ -31,8 +31,10 @@ async def test_initiator(setpointA, setpointB, setpointC):
 
     await asyncio.sleep(30)
 
-    solenoids2 = [False]*8 #Purge solenoid states
+    solenoids2 = [False, True, False, False, False, False, False, False] #Purge solenoid states
     nicontrol.set_digital_output(solenoids2)
+
+    await asyncio.sleep(1)
 
     await asyncio.gather(
         connect('A', 0.0), 
@@ -40,17 +42,21 @@ async def test_initiator(setpointA, setpointB, setpointC):
         connect('C', 0.0)
     )
 
-    print("Test Complete! You can now change the setpoints of each MFC.")
+    print("Fill complete, Ignite and press the standard purge button")
     #Exhaust line and purge line are controlled by DIFFERENT solenoids. Exhaust line is next to manifold and purge line is closest to the table with the computer
 
 async def stanpurge(setpointA, setpointB, setpointC):
-    solenoids = [False] * 8
+    solenoids = [False, True, False, False, False, False, False, False]
     nicontrol.set_digital_output(solenoids)
     await asyncio.gather(
         connect('A', setpointA),
         connect('B', setpointB),
         connect('C', setpointC)
     )
+    await asyncio.sleep(5)
+
+    solenoids3 = [False, True, False, False, False, False, False, False]
+    nicontrol.set_digital_output(solenoids3)
 
     print("Purge complete!")
 
@@ -73,6 +79,9 @@ async def emerpurge(setpointA, setpointB, setpointC):
     await asyncio.sleep(10)
 
     await connect('B', 0.000)
+
+    solenoids3 = [False, True, False, False, False, False, False, False]
+    nicontrol.set_digital_output(solenoids3)
 
     print("Emergency Purge Complete")
     

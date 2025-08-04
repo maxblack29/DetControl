@@ -74,8 +74,8 @@ class MyDialog(QDialog):
         self.ui.setupUi(self)
         self.plumbing_diagram = plumbing_diagram
         
-        self.solenoids = [False, False, False, False, False, False, False, False] #Sets a bool array for 8 channels, last channel is empty
-       
+        self.solenoids = [False, True, False, False, False, False, False, False] #Sets a bool array for 8 channels, last channel is empty
+        nicontrol.set_digital_output(self.solenoids) #Sets the digital output to the solenoid states
 
         #Connect each open and close button
         self.ui.openS1.clicked.connect(lambda: self.toggle_solenoid(0,True))
@@ -101,8 +101,7 @@ class MyDialog(QDialog):
 
         #Connects the automation and purge buttons
         self.ui.testautomation.clicked.connect(self.begin_testing)
-        self.ui.standardpurge.clicked.connect(self.stan_purge)
-        self.ui.emergencypurge.clicked.connect(self.eme_purge)
+        self.ui.purgebutton.clicked.connect(self.stan_purge)
     
     def save_setpoints(self):
         #This function can be used to update the setpoints
@@ -262,7 +261,7 @@ class MyDialog(QDialog):
     #     self.process() == QProcess()
     #     self.process.setProcessChannelMode(QProcess.MergedChannels)
     #     self.process.start("python", asyncio.run(initiator.initiator_testing(setpointA, setpointB, setpointC)))
-    def stan_purge(self):
+    def purge(self):
         button = self.ui.standardpurge
 
         button.setEnabled(False)
@@ -272,7 +271,7 @@ class MyDialog(QDialog):
         self.ui.standardpurge.setStyleSheet("")
 
         setpointA = 0.0
-        setpointB = 0.0
+        setpointB = 10.000
         setpointC = 0.0
 
         self.std_worker = AutomationWorker(setpointA, setpointB, setpointC)

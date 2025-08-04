@@ -2797,37 +2797,24 @@ QProgressBar::chunk
     <enum>Qt::Orientation::Vertical</enum>
    </property>
   </widget>
-  <widget class="QPushButton" name="standardpurge">
+  <widget class="QPushButton" name="purgebutton">
    <property name="geometry">
     <rect>
      <x>930</x>
-     <y>120</y>
+     <y>160</y>
      <width>151</width>
      <height>61</height>
     </rect>
    </property>
    <property name="text">
-    <string>Standard Purge</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="emergencypurge">
-   <property name="geometry">
-    <rect>
-     <x>930</x>
-     <y>200</y>
-     <width>151</width>
-     <height>61</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Emergency Purge</string>
+    <string>Purge</string>
    </property>
   </widget>
   <widget class="QPushButton" name="testautomation">
    <property name="geometry">
     <rect>
      <x>930</x>
-     <y>40</y>
+     <y>70</y>
      <width>151</width>
      <height>61</height>
     </rect>
