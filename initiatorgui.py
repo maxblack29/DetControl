@@ -101,7 +101,7 @@ class MyDialog(QDialog):
 
         #Connects the automation and purge buttons
         self.ui.testautomation.clicked.connect(self.begin_testing)
-        self.ui.purgebutton.clicked.connect(self.stan_purge)
+        self.ui.purgebutton.clicked.connect(self.purge)
     
     def save_setpoints(self):
         #This function can be used to update the setpoints
