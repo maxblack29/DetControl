@@ -47,9 +47,9 @@ class AutomationWorker(QObject):
         asyncio.run(initiator.stanpurge(self.setpointA, self.setpointB, self.setpointC))
         self.finished.emit()
 
-    def runemepurge(self):
-        asyncio.run(initiator.emerpurge(self.setpointA, self.setpointB, self.setpointC))
-        self.finished.emit()
+    # def runemepurge(self):
+    #     asyncio.run(initiator.emerpurge(self.setpointA, self.setpointB, self.setpointC))
+    #     self.finished.emit()
 
 class SolenoidWorker(QObject):
     finished = Signal()
@@ -78,11 +78,12 @@ class SolenoidWorker(QObject):
 
 
 class MyDialog(QDialog):
-    def __init__(self, plumbing_diagram):
+    def __init__(self, plumbing_diagram=None):
+        #MyDialog starts the GUI. this first secion is for initializing and connecting buttons. 
         super().__init__()
         self.ui = Ui_Initiatorgui()
         self.ui.setupUi(self)
-        self.plumbing_diagram = plumbing_diagram
+        #self.plumbing_diagram = plumbing_diagram
         
         self.solenoids = [False, True, False, False, False, False, False, False] #Sets a bool array for 8 channels, last channel is empty
         nicontrol.set_digital_output(self.solenoids) #Sets the digital output to the solenoid states
@@ -182,8 +183,8 @@ class MyDialog(QDialog):
             QTimer.singleShot(500, lambda: close_button.setStyleSheet(""))
 
         #Control the LED state for each solenoid    
-        if 0 <= index < 7:  # Only 7 LEDs
-            self.plumbing_diagram.set_solenoid_led(index, state)
+        # if 0 <= index < 7:  # Only 7 LEDs
+        #     self.plumbing_diagram.set_solenoid_led(index, state)
 
         self.worker = SolenoidWorker(self.solenoids)
         self.thread = QThread()
@@ -325,50 +326,50 @@ class MyDialog(QDialog):
         '''
 
 
-class PlumbingDiagram(QDialog):
-    def __init__(self):
-        super().__init__()
-        self.ui = Ui_plumbingdiagram()
-        self.ui.setupUi(self)
+# class PlumbingDiagram(QDialog):
+#     def __init__(self):
+#         super().__init__()
+#         self.ui = Ui_plumbingdiagram()
+#         self.ui.setupUi(self)
 
-        solenoid_positions = [
-        (215, 415),  # S1
-        (407, 218),  # S2
-        (560, 473),  # S3
-        (895, 607),  # S4
-        (1000, 392),  # S5
-        (813, 161),  # S6
-        (997, 150),  # S7
-        ]
+#         solenoid_positions = [
+#         (215, 415),  # S1
+#         (407, 218),  # S2
+#         (560, 473),  # S3
+#         (895, 607),  # S4
+#         (1000, 392),  # S5
+#         (813, 161),  # S6
+#         (997, 150),  # S7
+#         ]
 
-        self.leds = []
-        for i, (x, y) in enumerate(solenoid_positions):
-            led = GreenLed(self, diameter=20)
-            led.move(x, y)
-            led.show()
-            self.leds.append(led)
-            if i == 3:
-                led.turn_on()
-            if i == 5:
-                led.turn_on()
+#         self.leds = []
+#         for i, (x, y) in enumerate(solenoid_positions):
+#             led = GreenLed(self, diameter=20)
+#             led.move(x, y)
+#             led.show()
+#             self.leds.append(led)
+#             if i == 3:
+#                 led.turn_on()
+#             if i == 5:
+#                 led.turn_on()
 
-        self.led_open = GreenLed(self, diameter=22)
-        self.led_open.move(1185, 450)  # Adjust position as needed
-        self.led_open.turn_on()
-        self.led_open.show()
+#         self.led_open = GreenLed(self, diameter=22)
+#         self.led_open.move(1185, 450)  # Adjust position as needed
+#         self.led_open.turn_on()
+#         self.led_open.show()
 
-        # Red (Closed)
-        self.led_closed = GreenLed(self, diameter=22)
-        self.led_closed.move(1185,495)  # Adjust position as needed
-        self.led_closed.turn_off()
-        self.led_closed.show()
+#         # Red (Closed)
+#         self.led_closed = GreenLed(self, diameter=22)
+#         self.led_closed.move(1185,495)  # Adjust position as needed
+#         self.led_closed.turn_off()
+#         self.led_closed.show()
 
-    def set_solenoid_led(self, index, on):
-        if 0 <= index < len(self.leds):
-            if on:
-                self.leds[index].turn_on()
-            else:
-                self.leds[index].turn_off()
+#     def set_solenoid_led(self, index, on):
+#         if 0 <= index < len(self.leds):
+#             if on:
+#                 self.leds[index].turn_on()
+#             else:
+#                 self.leds[index].turn_off()
         
 if __name__ == "__main__":
     def load_stylesheet(filename):
@@ -380,8 +381,8 @@ if __name__ == "__main__":
     #for personal computer, use: stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     app = QApplication(sys.argv)
     app.setStyleSheet(stylesheet)
-    dialog2 = PlumbingDiagram()
-    dialog = MyDialog(dialog2)
+    #dialog2 = PlumbingDiagram()
+    dialog = MyDialog()
     dialog.show()
-    dialog2.show()
+    #dialog2.show()
     sys.exit(app.exec())
