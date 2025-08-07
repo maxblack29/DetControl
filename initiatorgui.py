@@ -21,7 +21,7 @@ import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import initiator
-from initiator import test_initiator, stanpurge, emerpurge
+from initiator import test_initiator, stanpurge
 
 import pdb
 import pyqtgraph as pg
@@ -231,8 +231,7 @@ class MyDialog(QDialog):
 
         button.setEnabled(False)
         self.ui.testautomation.setStyleSheet("")
-        self.ui.emergencypurge.setStyleSheet("")
-        self.ui.standardpurge.setStyleSheet("")
+        self.ui.purgebutton.setStyleSheet("")
 
         setpointA = float(self.ui.mfcAsetpoint.text())
         setpointB = float(self.ui.mfcBsetpoint.text())
@@ -262,13 +261,12 @@ class MyDialog(QDialog):
     #     self.process.setProcessChannelMode(QProcess.MergedChannels)
     #     self.process.start("python", asyncio.run(initiator.initiator_testing(setpointA, setpointB, setpointC)))
     def purge(self):
-        button = self.ui.standardpurge
+        button = self.ui.purgebutton
 
         button.setEnabled(False)
         print(self.ui.testautomation.clicked.connect(self.begin_testing))
         self.ui.testautomation.setStyleSheet("")
-        self.ui.emergencypurge.setStyleSheet("")
-        self.ui.standardpurge.setStyleSheet("")
+        self.ui.purgebutton.setStyleSheet("")
 
         setpointA = 0.0
         setpointB = 10.000
@@ -282,26 +280,6 @@ class MyDialog(QDialog):
         self.std_worker.finished.connect(self.std_thread.quit)
         self.std_worker.finished.connect(lambda: self.reenable(button))
         self.std_thread.start()
-
-    def eme_purge(self):
-        button = self.ui.emergencypurge
-
-        button.setEnabled(False)
-        self.ui.testautomation.setStyleSheet("")
-        self.ui.emergencypurge.setStyleSheet("")
-        self.ui.standardpurge.setStyleSheet("")
-
-        setpointA = 0.0
-        setpointB = 10.0
-        setpointC = 0.0
-
-        self.eme_worker = AutomationWorker(setpointA, setpointB, setpointC)
-        self.eme_thread = QThread()
-        self.eme_worker.moveToThread(self.eme_thread)
-        self.eme_thread.started.connect(self.eme_worker.runemepurge)
-        self.eme_worker.finished.connect(self.eme_thread.quit)
-        self.eme_worker.finished.connect(lambda: self.reenable(button))
-        self.eme_thread.start()
 
     def reenable(self, button):
         button.setEnabled(True)
