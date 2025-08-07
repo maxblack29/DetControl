@@ -51,6 +51,16 @@ class AutomationWorker(QObject):
         asyncio.run(initiator.emerpurge(self.setpointA, self.setpointB, self.setpointC))
         self.finished.emit()
 
+class SolenoidWorker(QObject):
+    finished = Signal()
+    def __init__(self, states):
+        super().__init__()
+        self.states = states
+
+    def runsolenoid(self):
+        nicontrol.set_digital_output(self.states)
+        self.finished.emit()
+
 
 # class StandardPurgeWorker(QObject):
 #     finished = Signal()
@@ -115,9 +125,12 @@ class MyDialog(QDialog):
 
         QTimer.singleShot(500, lambda:set_flow_button.setStyleSheet(""))
 
-        self.ui.mfcAsetpoint.text()
-        self.ui.mfcBsetpoint.text()
-        self.ui.mfcCsetpoint.text()
+        setpointA = float(self.ui.mfcAsetpoint.text())
+        setpointB = float(self.ui.mfcBsetpoint.text())
+        setpointC = float(self.ui.mfcCsetpoint.text())
+        asyncio.run(alicatcontrol.change_rate('A', setpointA))
+        asyncio.run(alicatcontrol.change_rate('B', setpointB))
+        asyncio.run(alicatcontrol.change_rate('C', setpointC))
 
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
 
@@ -160,17 +173,28 @@ class MyDialog(QDialog):
             open_button.setStyleSheet("background-color: green; color: white;")
             QTimer.singleShot(500, lambda: open_button.setStyleSheet(""))
             if open_button.isEnabled():
+                open_button.setEnabled(False)
                 close_button.setStyleSheet("")
         else:
             open_button.setStyleSheet("")
+            close_button.setEnabled(False)
             close_button.setStyleSheet("background-color: green; color: white;")
             QTimer.singleShot(500, lambda: close_button.setStyleSheet(""))
 
         #Control the LED state for each solenoid    
         if 0 <= index < 7:  # Only 7 LEDs
             self.plumbing_diagram.set_solenoid_led(index, state)
+
+        self.worker = SolenoidWorker(self.solenoids)
+        self.thread = QThread()
+        self.worker.moveToThread(self.thread)      
+        self.thread.started.connect(self.worker.runsolenoid)
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(lambda: self.reenable(open_button))
+        self.worker.finished.connect(lambda: self.reenable(close_button))
+        self.thread.start()
         
-        nicontrol.set_digital_output(self.solenoids) #commented out until I can test it with lab computer
+        #nicontrol.set_digital_output(self.solenoids) #commented out until I can test it with lab computer
         print(f"Solenoid S{index+1} {'opened' if state else 'closed'}.")
 
     #This function will eventually handle the automation of the purge sequence, testing, and emergency purge sequence
@@ -269,7 +293,7 @@ class MyDialog(QDialog):
         self.ui.purgebutton.setStyleSheet("")
 
         setpointA = 0.0
-        setpointB = 10.000
+        setpointB = 0.0
         setpointC = 0.0
 
         self.std_worker = AutomationWorker(setpointA, setpointB, setpointC)
