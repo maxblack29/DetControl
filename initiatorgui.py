@@ -1,5 +1,4 @@
 import sys
-from PyQt6.QtCore import QProcess
 from PySide6.QtWidgets import QApplication, QDialog, QLabel
 from PySide6.QtCore import QTimer, QThread, Signal, QObject, Slot, QProcess
 from combustionchamber import Ui_Dialog
@@ -182,20 +181,21 @@ class MyDialog(QDialog):
             close_button.setStyleSheet("background-color: green; color: white;")
             QTimer.singleShot(500, lambda: close_button.setStyleSheet(""))
 
-        #Control the LED state for each solenoid    
-        # if 0 <= index < 7:  # Only 7 LEDs
-        #     self.plumbing_diagram.set_solenoid_led(index, state)
+        #Michael change: gives solenoid its own worker/thread so it doesn't share with automation
+        solenoid_worker = SolenoidWorker(self.solenoids)
+        solenoid_thread = QThread()
+        solenoid_worker.moveToThread(solenoid_thread)
+        solenoid_thread.started.connect(solenoid_worker.runsolenoid)
+        solenoid_worker.finished.connect(solenoid_thread.quit)
+        solenoid_worker.finished.connect(lambda: self.reenable(open_button))
+        solenoid_worker.finished.connect(lambda: self.reenable(close_button))
 
-        self.worker = SolenoidWorker(self.solenoids)
-        self.thread = QThread()
-        self.worker.moveToThread(self.thread)      
-        self.thread.started.connect(self.worker.runsolenoid)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(lambda: self.reenable(open_button))
-        self.worker.finished.connect(lambda: self.reenable(close_button))
-        self.thread.start()
-        
-        #nicontrol.set_digital_output(self.solenoids) #commented out until I can test it with lab computer
+        # keep the worker alive so it's not garbage collected while running 
+        if not hasattr(self, "_solenoid_threads"): 
+            self._solenoid_threads = []
+        self._solenoid_threads.append((solenoid_thread, solenoid_worker))
+
+        solenoid_thread.start()
         print(f"Solenoid S{index+1} {'opened' if state else 'closed'}.")
 
     #This function will eventually handle the automation of the purge sequence, testing, and emergency purge sequence
@@ -251,9 +251,7 @@ class MyDialog(QDialog):
     stop_test = False
 
     def begin_testing(self, stop_test):
-
         button = self.ui.testautomation
-
         button.setEnabled(False)
         self.ui.testautomation.setStyleSheet("")
         self.ui.purgebutton.setStyleSheet("")
@@ -262,14 +260,20 @@ class MyDialog(QDialog):
         setpointB = float(self.ui.mfcBsetpoint.text())
         setpointC = float(self.ui.mfcCsetpoint.text())
 
-        
-        self.worker = AutomationWorker(setpointA, setpointB, setpointC)
-        self.thread = QThread()
-        self.worker.moveToThread(self.thread)      
-        self.thread.started.connect(self.worker.runauto)
-        self.worker.finished.connect(self.thread.quit)
-        self.worker.finished.connect(lambda: self.reenable(button))
-        self.thread.start()
+        #Michael change: now gives automation its own worker/thread
+        automation_worker = AutomationWorker(setpointA, setpointB, setpointC)
+        automation_thread = QThread()
+        automation_worker.moveToThread(automation_thread)
+        automation_thread.started.connect(automation_worker.runauto)
+        automation_worker.finished.connect(automation_thread.quit)
+        automation_worker.finished.connect(lambda: self.reenable(button))
+
+        #keep the worker alive so it's not garbage collected while running 
+        if not hasattr(self, "_automation_threads"):
+            self._automation_threads = []
+        self._automation_threads.append((automation_thread, automation_worker))
+
+        automation_thread.start()
     # process1 = asyncio.run(initiator.initiator_testing(setpointA, setpointB, setpointC))
     # def begin_test(self, process1):
     #     button = self.ui.testautomation

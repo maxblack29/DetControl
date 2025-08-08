@@ -19,6 +19,9 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QDialog, QFrame,
     QLCDNumber, QLabel, QLineEdit, QPushButton,
     QSizePolicy, QWidget)
 
+import os
+os.environ["PYQTGRAPH_QT_LIB"] = "PySide6" #ensures that PyQtGraph uses PySide6 for rendering
+
 from pyqtgraph import PlotWidget
 import diagram_rc
 
