@@ -7,6 +7,7 @@ import alicat
 from alicat import FlowController
 from alicatcontrol import change_rate, zero
 import time
+import gc 
 #import os
 
 
@@ -53,10 +54,13 @@ async def stanpurge(setpointA, setpointB, setpointC):
         connect('B', setpointB),
         connect('C', setpointC)
     )
+
+    print("Purging...")
     await asyncio.sleep(5)
 
     solenoids3 = [False, True, False, False, False, False, False, False]
     nicontrol.set_digital_output(solenoids3)
+
 
     await asyncio.gather(
         connect('A', 0.0),
@@ -65,6 +69,8 @@ async def stanpurge(setpointA, setpointB, setpointC):
     )
 
     print("Purge complete!")
+
+    gc.collect()
 
     #Figure out the solenoid control based on how you plumb it today
     

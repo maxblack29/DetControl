@@ -46,6 +46,8 @@ class AutomationWorker(QObject):
         asyncio.run(initiator.stanpurge(self.setpointA, self.setpointB, self.setpointC))
         self.finished.emit()
 
+
+
     # def runemepurge(self):
     #     asyncio.run(initiator.emerpurge(self.setpointA, self.setpointB, self.setpointC))
     #     self.finished.emit()
@@ -181,7 +183,7 @@ class MyDialog(QDialog):
             close_button.setStyleSheet("background-color: green; color: white;")
             QTimer.singleShot(500, lambda: close_button.setStyleSheet(""))
 
-        #Michael change: gives solenoid its own worker/thread so it doesn't share with automation
+        #Michael change: gives solenoid its own worker/thread variable so it doesn't share with automation
         solenoid_worker = SolenoidWorker(self.solenoids)
         solenoid_thread = QThread()
         solenoid_worker.moveToThread(solenoid_thread)
@@ -196,7 +198,13 @@ class MyDialog(QDialog):
         self._solenoid_threads.append((solenoid_thread, solenoid_worker))
 
         solenoid_thread.start()
-        print(f"Solenoid S{index+1} {'opened' if state else 'closed'}.")
+        #print(f"Solenoid S{index+1} {'actuated' if state else 'disabled'}.")
+
+        #Michael: fixed to better match initiator solenoids 
+        if(index == 0):
+            print(f"Solenoid S{index+1} {'To Initiator' if state else 'Exhausting'}.")
+        if(index == 1):
+            print(f"Solenoid S{index+1} {'Purging' if state else 'Closed'}.")
 
     #This function will eventually handle the automation of the purge sequence, testing, and emergency purge sequence
     # def auto_purge(self):
@@ -293,7 +301,6 @@ class MyDialog(QDialog):
         button = self.ui.purgebutton
 
         button.setEnabled(False)
-        print(self.ui.testautomation.clicked.connect(self.begin_testing))
         self.ui.testautomation.setStyleSheet("")
         self.ui.purgebutton.setStyleSheet("")
 
@@ -301,14 +308,19 @@ class MyDialog(QDialog):
         setpointB = 0.0
         setpointC = 0.0
 
-        self.std_worker = AutomationWorker(setpointA, setpointB, setpointC)
-        self.std_thread = QThread()
-        self.stop_test == True
-        self.std_worker.moveToThread(self.std_thread)
-        self.std_thread.started.connect(self.std_worker.runstanpurge)
-        self.std_worker.finished.connect(self.std_thread.quit)
-        self.std_worker.finished.connect(lambda: self.reenable(button))
-        self.std_thread.start()
+        purge_worker = AutomationWorker(setpointA, setpointB, setpointC)
+        purge_thread = QThread()
+        purge_worker.moveToThread(purge_thread)
+        purge_thread.started.connect(purge_worker.runstanpurge)
+        purge_worker.finished.connect(purge_thread.quit)
+        purge_worker.finished.connect(lambda: self.reenable(button))
+
+        # keep a reference so it's not garbage collected and prematurely closed 
+        if not hasattr(self, "_automation_threads"):
+            self._automation_threads = []
+        self._automation_threads.append((purge_thread, purge_worker))
+
+        purge_thread.start()
 
     def reenable(self, button):
         button.setEnabled(True)
