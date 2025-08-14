@@ -63,7 +63,7 @@ class SolenoidWorker(QObject):
         self.finished.emit()
     
     def runignite(self):
-        nicontrol.set_ignite_read_pressure(self.states) 
+        nicontrol.set_ignite_read_pressure(self.states, self.testcount) 
         self.finished.emit()
    
 
@@ -94,6 +94,8 @@ class MyDialog(QDialog):
         
         self.solenoids = [False, True, False, False, False, False, False, False] #Sets a bool array for 8 channels, last channel is empty
         nicontrol.set_digital_output(self.solenoids) #Sets the digital output to the solenoid states
+
+        self.testcount = 0 #zeroes the test count for data acquisition when gui is opened
 
         #Connect each open and close button
         self.ui.openS1.clicked.connect(lambda: self.toggle_solenoid(0,True))

@@ -22,7 +22,7 @@ def set_digital_output(states):
 
 
 #had to write separate function because this one is on Mod2 
-def set_ignite_read_pressure(on_states): 
+def set_ignite_read_pressure(on_states, testcount): 
     ignite_device = "cDAQ9188-169338EMod2/port0/line0:7"
     ai_channel =  "cDAQ9188-169338EMod6/ai0"  # Replace with your actual AI channel name
     off_states  = [False] * len(on_states)  
@@ -31,18 +31,19 @@ def set_ignite_read_pressure(on_states):
     with nidaqmx.Task() as do_task:
         do_task.do_channels.add_do_chan(ignite_device, line_grouping=LineGrouping.CHAN_PER_LINE)
         do_task.write(on_states)
-        time.sleep(0.003) 
+        time.sleep(0.1) 
         do_task.write(off_states)
 
     # #read pressure transducers 
     # sample_rate = 1000
     # duration = 5
     # samples = sample_rate * duration
-
+    #testcount += 1
     # with nidaqmx.Task() as ai_task:
     #     ai_task.ai_channels.add_ai_voltage_chan(ai_channel, min_val=-10, max_val=10)
     #     ai_task.timing.cfg_samp_clk_timing(sample_rate, sample_mode=AcquisitionType.FINITE,samps_per_chan=samples)
-    #     ai_task.in_stream.configure_logging("TestData.tdms", LoggingMode.LOG_AND_READ, operation=LoggingOperation.CREATE_OR_REPLACE)
+    #     filename = f"TestData{testcount}.tdms"
+    #     ai_task.in_stream.configure_logging(filename, LoggingMode.LOG_AND_READ, operation=LoggingOperation.CREATE_OR_REPLACE)
 
     #     data = ai_task.read(number_of_samples_per_channel=samples)
        
