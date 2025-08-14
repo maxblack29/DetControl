@@ -61,6 +61,12 @@ class SolenoidWorker(QObject):
     def runsolenoid(self):
         nicontrol.set_digital_output(self.states)
         self.finished.emit()
+    
+    def runignite(self):
+        nicontrol.set_ignite_read_pressure(self.states) 
+        self.finished.emit()
+   
+
 
 
 # class StandardPurgeWorker(QObject):
@@ -114,6 +120,7 @@ class MyDialog(QDialog):
         #Connects the automation and purge buttons
         self.ui.testautomation.clicked.connect(self.begin_testing)
         self.ui.purgebutton.clicked.connect(self.purge)
+        self.ui.igniteButton.clicked.connect(self.ignite)
     
     def save_setpoints(self):
         #This function can be used to update the setpoints
@@ -282,6 +289,31 @@ class MyDialog(QDialog):
         self._automation_threads.append((automation_thread, automation_worker))
 
         automation_thread.start()
+    
+    def ignite(self): 
+        button = self.ui.igniteButton
+        button.setEnabled(False)
+        self.ui.testautomation.setStyleSheet("")
+        self.ui.purgebutton.setStyleSheet("")
+        self.ui.igniteButton.setStyleSheet("")
+
+        ignite_state = [True, False, False, False, False, False, False, False] #Set the ignite solenoid state to True
+
+        ignite_worker = SolenoidWorker(ignite_state)
+        ignite_thread = QThread()
+        ignite_worker.moveToThread(ignite_thread)
+        ignite_thread.started.connect(ignite_worker.runignite)
+        ignite_worker.finished.connect(ignite_thread.quit)
+        ignite_worker.finished.connect(lambda: self.reenable(button))
+
+        # keep the worker alive so it's not garbage collected while running 
+        if not hasattr(self, "_solenoid_threads"): 
+            self._ignite_threads = []
+        self._ignite_threads.append((ignite_thread, ignite_worker))
+
+        ignite_thread.start()
+
+
     # process1 = asyncio.run(initiator.initiator_testing(setpointA, setpointB, setpointC))
     # def begin_test(self, process1):
     #     button = self.ui.testautomation
@@ -326,20 +358,18 @@ class MyDialog(QDialog):
         button.setEnabled(True)
         button.setStyleSheet("")
 
-    def stop_test(self):
         
 
 
-        '''
-        def data_acquisition(self):
-        with nidaqmx.Task() as task:
-            task.ai_channels.add_ai_voltage_chan("cDAQ9188-169338EMod6/port0/ai0", min_val = -10, max_val = 10)
-            task.timing.cfg_samp_clk_timing(1000, sample_mode= AcquisitionType.FINITE, samps_per_chan=1000)
-            data = task.read(READ_ALL_AVAILABLE)
-            #fig = Figure(figsize=(4,4))
-            #ax = fig.add_subplot()
-            #ax.plot(data)
-        '''
+    # def data_acquisition(self):
+    #     with nidaqmx.Task() as task:
+    #         task.ai_channels.add_ai_voltage_chan("cdaq9188-169338emod6/port0/ai0", min_val = -10, max_val = 10)
+    #         task.timing.cfg_samp_clk_timing(1000, sample_mode= acquisitiontype.finite, samps_per_chan=1000)
+    #         data = task.read(read_all_available)
+    #         fig = figure(figsize=(4,4))
+    #         ax = fig.add_subplot()
+    #         ax.plot(data)
+        
 
 
 # class PlumbingDiagram(QDialog):

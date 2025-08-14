@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'initiatorgui1DFUxSW.ui'
+## Form generated from reading UI file 'initiatorgui1.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -2214,10 +2214,13 @@ class Ui_Initiatorgui(object):
         self.line_2.setFrameShadow(QFrame.Shadow.Sunken)
         self.purgebutton = QPushButton(Initiatorgui)
         self.purgebutton.setObjectName(u"purgebutton")
-        self.purgebutton.setGeometry(QRect(930, 160, 151, 61))
+        self.purgebutton.setGeometry(QRect(930, 220, 151, 61))
         self.testautomation = QPushButton(Initiatorgui)
         self.testautomation.setObjectName(u"testautomation")
-        self.testautomation.setGeometry(QRect(930, 70, 151, 61))
+        self.testautomation.setGeometry(QRect(930, 40, 151, 61))
+        self.igniteButton = QPushButton(Initiatorgui)
+        self.igniteButton.setObjectName(u"igniteButton")
+        self.igniteButton.setGeometry(QRect(930, 130, 151, 61))
 
         self.retranslateUi(Initiatorgui)
 
@@ -2348,5 +2351,6 @@ class Ui_Initiatorgui(object):
         self.closeS1.setText(QCoreApplication.translate("Initiatorgui", u"Deactivate", None))
         self.purgebutton.setText(QCoreApplication.translate("Initiatorgui", u"Purge", None))
         self.testautomation.setText(QCoreApplication.translate("Initiatorgui", u"Begin Testing", None))
+        self.igniteButton.setText(QCoreApplication.translate("Initiatorgui", u"Ignite", None))
     # retranslateUi
 

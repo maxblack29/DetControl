@@ -73,4 +73,3 @@ async def stanpurge(setpointA, setpointB, setpointC):
     gc.collect()
 
     #Figure out the solenoid control based on how you plumb it today
-    
