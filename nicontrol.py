@@ -31,7 +31,7 @@ def set_ignite_read_pressure(on_states, testcount):
     with nidaqmx.Task() as do_task:
         do_task.do_channels.add_do_chan(ignite_device, line_grouping=LineGrouping.CHAN_PER_LINE)
         do_task.write(on_states)
-        time.sleep(0.1) 
+        time.sleep(0.003) 
         do_task.write(off_states)
 
     # #read pressure transducers 
@@ -46,7 +46,10 @@ def set_ignite_read_pressure(on_states, testcount):
     #     ai_task.in_stream.configure_logging(filename, LoggingMode.LOG_AND_READ, operation=LoggingOperation.CREATE_OR_REPLACE)
 
     #     data = ai_task.read(number_of_samples_per_channel=samples)
-       
+   
+    
+
+
 #  '''
 # k = 0
 # while k < 5:

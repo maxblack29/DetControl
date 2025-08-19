@@ -54,9 +54,10 @@ class AutomationWorker(QObject):
 
 class SolenoidWorker(QObject):
     finished = Signal()
-    def __init__(self, states):
+    def __init__(self, states, testcount):
         super().__init__()
         self.states = states
+        self.testcount = testcount
 
     def runsolenoid(self):
         nicontrol.set_digital_output(self.states)
@@ -300,8 +301,8 @@ class MyDialog(QDialog):
         self.ui.igniteButton.setStyleSheet("")
 
         ignite_state = [True, False, False, False, False, False, False, False] #Set the ignite solenoid state to True
-
-        ignite_worker = SolenoidWorker(ignite_state)
+        testcount = self.testcount 
+        ignite_worker = SolenoidWorker(ignite_state, testcount)
         ignite_thread = QThread()
         ignite_worker.moveToThread(ignite_thread)
         ignite_thread.started.connect(ignite_worker.runignite)
