@@ -30,7 +30,15 @@ async def test_initiator(setpointA, setpointB, setpointC):
     solenoids1 = [True, True, False, False, False, False, False, False] #Solenoid States at the Beginning of the Test
     nicontrol.set_digital_output(solenoids1)
 
-    await asyncio.sleep(30)
+    await asyncio.sleep(15)
+    #nicontrol.warning_sound()
+    speaker = "cDAQ9188-169338EMod2/port0/line0:7"
+    speakerstate = [False, True, False, False, False, False, False, False]
+    with nidaqmx.Task() as task:
+        task.do_channels.add_do_chan(speaker, line_grouping=LineGrouping.CHAN_PER_LINE)
+        task.write(speakerstate)
+
+    await asyncio.sleep(15) 
 
     solenoids2 = [False, True, False, False, False, False, False, False] #Purge solenoid states
     nicontrol.set_digital_output(solenoids2)
@@ -45,6 +53,7 @@ async def test_initiator(setpointA, setpointB, setpointC):
 
     print("Fill complete, Ignite and press the standard purge button")
     #Exhaust line and purge line are controlled by DIFFERENT solenoids. Exhaust line is next to manifold and purge line is closest to the table with the computer
+
 
 async def stanpurge(setpointA, setpointB, setpointC):
     solenoids = [False, False, False, False, False, False, False, False]
@@ -61,6 +70,11 @@ async def stanpurge(setpointA, setpointB, setpointC):
     solenoids3 = [False, True, False, False, False, False, False, False]
     nicontrol.set_digital_output(solenoids3)
 
+    speaker = "cDAQ9188-169338EMod2/port0/line0:7"
+    speakerstate = [False] * 8
+    with nidaqmx.Task() as task:
+        task.do_channels.add_do_chan(speaker, line_grouping=LineGrouping.CHAN_PER_LINE)
+        task.write(speakerstate)
 
     await asyncio.gather(
         connect('A', 0.0),
@@ -69,7 +83,5 @@ async def stanpurge(setpointA, setpointB, setpointC):
     )
 
     print("Purge complete!")
-
-    gc.collect()
 
     #Figure out the solenoid control based on how you plumb it today

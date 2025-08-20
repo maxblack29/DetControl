@@ -300,7 +300,7 @@ class MyDialog(QDialog):
         self.ui.purgebutton.setStyleSheet("")
         self.ui.igniteButton.setStyleSheet("")
 
-        ignite_state = [True, False, False, False, False, False, False, False] #Set the ignite solenoid state to True
+        ignite_state = [True, True, False, False, False, False, False, False] #Set the ignite solenoid state to True
         testcount = self.testcount 
         ignite_worker = SolenoidWorker(ignite_state, testcount)
         ignite_thread = QThread()

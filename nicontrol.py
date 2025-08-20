@@ -31,12 +31,22 @@ def set_ignite_read_pressure(on_states, testcount):
     with nidaqmx.Task() as do_task:
         do_task.do_channels.add_do_chan(ignite_device, line_grouping=LineGrouping.CHAN_PER_LINE)
         do_task.write(on_states)
-        time.sleep(0.003) 
+        time.sleep(15) 
         do_task.write(off_states)
+        
+def warning_sound():
+    speaker = "cDAQ9188-169338EMod2/port0/line0:7"
+    speakerstate = [False, True, False, False, False, False, False, False]
+    with nidaqmx.Task() as task:
+        task.do_channels.add_do_chan(speaker, line_grouping=LineGrouping.CHAN_PER_LINE)
+        task.write(speakerstate)
+        time.sleep(22) #Play sound for 15 seconds
+        task.write([False]*8) #Turn off the speaker
+
 
     # #read pressure transducers 
-    # sample_rate = 1000
-    # duration = 5
+    # sample_rate = 125 * 10^6 #125 MS/s
+    # duration = 8 * 10^-3  # 8 milliseconds
     # samples = sample_rate * duration
     #testcount += 1
     # with nidaqmx.Task() as ai_task:
