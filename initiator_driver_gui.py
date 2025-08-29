@@ -4,8 +4,8 @@ from PySide6.QtCore import QTimer, QThread, Signal, QObject, Slot, QProcess
 from combustionchamber import Ui_Dialog
 import combustionchamber
 from PySide6.QtCore import QTimer
-from initiatortesting import Ui_Initiatorgui
-import initiatortesting
+from initiator_driver_gui_script import Ui_Initiatorgui
+import initiator_driver_gui_script
 from plumbingdiagram import Ui_plumbingdiagram
 from greenledwidget import GreenLed
 import nidaqmx #might not be needed since I imported nicontrol
@@ -32,18 +32,20 @@ When updating gui in qt designer, must update the PYTHON file to see the updates
 
 class AutomationWorker(QObject):
     finished = Signal()
-    def __init__(self, setpointA, setpointB, setpointC):
+    def __init__(self, setpointA, setpointB, setpointC, setpointD, setpointC_driver):
         super().__init__()
         self.setpointA = setpointA
         self.setpointB = setpointB
         self.setpointC = setpointC
+        self.setpointD = setpointD
+        self.setpointC_driver = setpointC_driver
 
     def runauto(self):
-        asyncio.run(initiator.test_initiator(self.setpointA, self.setpointB, self.setpointC))
+        asyncio.run(initiator.test_initiator_driver(self.setpointA, self.setpointB, self.setpointC, self.setpointD, self.setpointC_driver))
         self.finished.emit()
 
     def runstanpurge(self):
-        asyncio.run(initiator.stanpurge(self.setpointA, self.setpointB, self.setpointC))
+        asyncio.run(initiator.driver_purge(self.setpointA, self.setpointB, self.setpointC))
         self.finished.emit()
 
 
@@ -113,12 +115,15 @@ class MyDialog(QDialog):
         #Retrieves the gas setpoints from the GUI 
         self.ui.mfcAsetpoint.returnPressed.connect(lambda: self.save_setpoints('A', float(self.ui.mfcAsetpoint.text())))
         self.ui.mfcBsetpoint.returnPressed.connect(lambda: self.save_setpoints('B', float(self.ui.mfcBsetpoint.text())))
-        self.ui.mfcCsetpoint.returnPressed.connect(lambda: self.choosegas('C', float(self.ui.mfcCsetpoint.text())))
+        self.ui.mfcCsetpoint.returnPressed.connect(lambda: self.save_setpoints('C', float(self.ui.mfcCsetpoint.text())))
+        self.ui.mfcDsetpoint.returnPressed.connect(lambda: self.save_setpoints('D', float(self.ui.mfcDsetpoint.text())))
+
         
         #Retrieves the gas type from the GUI
         self.ui.mfcAgas.currentTextChanged.connect(self.change_gas)
         self.ui.mfcBgas.currentTextChanged.connect(self.change_gas)
         self.ui.mfcCgas.currentTextChanged.connect(self.change_gas)
+        self.ui.mfcDgas.currentTextChanged.connect(self.change_gas)
 
         #Connects the automation and purge buttons
         self.ui.testautomation.clicked.connect(self.begin_testing)
@@ -140,9 +145,11 @@ class MyDialog(QDialog):
         setpointA = float(self.ui.mfcAsetpoint.text())
         setpointB = float(self.ui.mfcBsetpoint.text())
         setpointC = float(self.ui.mfcCsetpoint.text())
+        setpointD = float(self.ui.mfcDsetpoint.text())
         asyncio.run(alicatcontrol.change_rate('A', setpointA))
         asyncio.run(alicatcontrol.change_rate('B', setpointB))
         asyncio.run(alicatcontrol.change_rate('C', setpointC))
+        asyncio.run(alicatcontrol.change_rate('D', setpointD))
 
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
 
@@ -159,9 +166,11 @@ class MyDialog(QDialog):
         self.ui.mfcAsetpoint.setText("0.0")
         self.ui.mfcBsetpoint.setText("0.0")
         self.ui.mfcCsetpoint.setText("0.0")
+        self.ui.mfcDsetpoint.setText("0.0")
         asyncio.run(alicatcontrol.change_rate('A', 0.0))
         asyncio.run(alicatcontrol.change_rate('B', 0.0))
         asyncio.run(alicatcontrol.change_rate('C', 0.0))
+        asyncio.run(alicatcontrol.change_rate('D', 0.0))
         print("All gas setpoints reset to 0.0 SLPM.")
     
 
@@ -171,9 +180,12 @@ class MyDialog(QDialog):
         self.ui.mfcAgas.currentText()
         self.ui.mfcBgas.currentText()
         self.ui.mfcCgas.currentText()
+        self.ui.mfcDgas.currentText()
+
         asyncio.run(alicatcontrol.set_gas('A', self.ui.mfcAgas.currentText()))
         asyncio.run(alicatcontrol.set_gas('B', self.ui.mfcBgas.currentText()))
         asyncio.run(alicatcontrol.set_gas('C', self.ui.mfcCgas.currentText()))
+        asyncio.run(alicatcontrol.set_gas('D', self.ui.mfcDgas.currentText()))
 
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
     def toggle_solenoid(self, index, state):
@@ -277,9 +289,12 @@ class MyDialog(QDialog):
         setpointA = float(self.ui.mfcAsetpoint.text())
         setpointB = float(self.ui.mfcBsetpoint.text())
         setpointC = float(self.ui.mfcCsetpoint.text())
+        setpointC2 = float(self.ui.mfcCsetpoint_2.text())
+        setpointD = float(self.ui.mfcDsetpoint.text())
+
 
         #Michael change: now gives automation its own worker/thread
-        automation_worker = AutomationWorker(setpointA, setpointB, setpointC)
+        automation_worker = AutomationWorker(setpointA, setpointB, setpointC, setpointD, setpointC2)
         automation_thread = QThread()
         automation_worker.moveToThread(automation_thread)
         automation_thread.started.connect(automation_worker.runauto)
@@ -342,8 +357,10 @@ class MyDialog(QDialog):
         setpointA = 0.0
         setpointB = 0.0
         setpointC = 0.0
+        setpointC2 = 0.0
+        setpointD = 0.0
 
-        purge_worker = AutomationWorker(setpointA, setpointB, setpointC)
+        purge_worker = AutomationWorker(setpointA, setpointB, setpointC, setpointD, setpointC2)
         purge_thread = QThread()
         purge_worker.moveToThread(purge_thread)
         purge_thread.started.connect(purge_worker.runstanpurge)
