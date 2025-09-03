@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1421</width>
+    <width>1525</width>
     <height>336</height>
    </rect>
   </property>
@@ -1008,18 +1008,18 @@ QProgressBar::chunk
     <rect>
      <x>10</x>
      <y>130</y>
-     <width>49</width>
+     <width>91</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>MFC B:</string>
+    <string>MFC B: Dilutent</string>
    </property>
   </widget>
   <widget class="QLabel" name="setpointlabel3">
    <property name="geometry">
     <rect>
-     <x>160</x>
+     <x>200</x>
      <y>170</y>
      <width>49</width>
      <height>16</height>
@@ -1047,18 +1047,18 @@ QProgressBar::chunk
     <rect>
      <x>10</x>
      <y>90</y>
-     <width>49</width>
+     <width>81</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>MFC A:</string>
+    <string>MFC A: Fuel</string>
    </property>
   </widget>
   <widget class="QLabel" name="SLPMlabel1">
    <property name="geometry">
     <rect>
-     <x>300</x>
+     <x>340</x>
      <y>90</y>
      <width>49</width>
      <height>16</height>
@@ -1071,7 +1071,7 @@ QProgressBar::chunk
   <widget class="QLineEdit" name="mfcAsetpoint">
    <property name="geometry">
     <rect>
-     <x>220</x>
+     <x>260</x>
      <y>90</y>
      <width>61</width>
      <height>22</height>
@@ -1084,7 +1084,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="SLPMlabel3">
    <property name="geometry">
     <rect>
-     <x>300</x>
+     <x>340</x>
      <y>170</y>
      <width>49</width>
      <height>16</height>
@@ -1099,18 +1099,18 @@ QProgressBar::chunk
     <rect>
      <x>10</x>
      <y>170</y>
-     <width>49</width>
+     <width>91</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>MFC C:</string>
+    <string>MFC C: Oxidizer</string>
    </property>
   </widget>
   <widget class="QLabel" name="SLPMlabel2">
    <property name="geometry">
     <rect>
-     <x>300</x>
+     <x>340</x>
      <y>130</y>
      <width>49</width>
      <height>16</height>
@@ -1123,7 +1123,7 @@ QProgressBar::chunk
   <widget class="QLineEdit" name="mfcBsetpoint">
    <property name="geometry">
     <rect>
-     <x>220</x>
+     <x>260</x>
      <y>130</y>
      <width>61</width>
      <height>22</height>
@@ -1149,7 +1149,7 @@ QProgressBar::chunk
   <widget class="QComboBox" name="mfcBgas">
    <property name="geometry">
     <rect>
-     <x>60</x>
+     <x>100</x>
      <y>130</y>
      <width>81</width>
      <height>21</height>
@@ -1325,7 +1325,7 @@ QProgressBar::chunk
   <widget class="QComboBox" name="mfcCgas">
    <property name="geometry">
     <rect>
-     <x>60</x>
+     <x>100</x>
      <y>170</y>
      <width>81</width>
      <height>21</height>
@@ -2475,7 +2475,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="setpointlabel1">
    <property name="geometry">
     <rect>
-     <x>160</x>
+     <x>200</x>
      <y>90</y>
      <width>49</width>
      <height>16</height>
@@ -2488,7 +2488,7 @@ QProgressBar::chunk
   <widget class="QLineEdit" name="mfcCsetpoint">
    <property name="geometry">
     <rect>
-     <x>220</x>
+     <x>260</x>
      <y>170</y>
      <width>61</width>
      <height>22</height>
@@ -2501,7 +2501,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="setpointlabel2">
    <property name="geometry">
     <rect>
-     <x>160</x>
+     <x>200</x>
      <y>130</y>
      <width>49</width>
      <height>16</height>
@@ -2514,7 +2514,7 @@ QProgressBar::chunk
   <widget class="QComboBox" name="mfcAgas">
    <property name="geometry">
     <rect>
-     <x>60</x>
+     <x>100</x>
      <y>90</y>
      <width>81</width>
      <height>21</height>
@@ -2674,7 +2674,7 @@ QProgressBar::chunk
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>780</x>
+     <x>820</x>
      <y>0</y>
      <width>61</width>
      <height>561</height>
@@ -2687,7 +2687,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="solenoidstatelabel">
    <property name="geometry">
     <rect>
-     <x>1010</x>
+     <x>1050</x>
      <y>30</y>
      <width>91</width>
      <height>31</height>
@@ -2700,7 +2700,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="purgelabel">
    <property name="geometry">
     <rect>
-     <x>860</x>
+     <x>900</x>
      <y>170</y>
      <width>91</width>
      <height>16</height>
@@ -2713,7 +2713,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="exhaustlabel">
    <property name="geometry">
     <rect>
-     <x>860</x>
+     <x>900</x>
      <y>110</y>
      <width>91</width>
      <height>16</height>
@@ -2726,7 +2726,7 @@ QProgressBar::chunk
   <widget class="QPushButton" name="openS1">
    <property name="geometry">
     <rect>
-     <x>960</x>
+     <x>1000</x>
      <y>110</y>
      <width>92</width>
      <height>31</height>
@@ -2742,7 +2742,7 @@ QProgressBar::chunk
   <widget class="QPushButton" name="openS2">
    <property name="geometry">
     <rect>
-     <x>960</x>
+     <x>1000</x>
      <y>160</y>
      <width>92</width>
      <height>31</height>
@@ -2755,7 +2755,7 @@ QProgressBar::chunk
   <widget class="QPushButton" name="closeS2">
    <property name="geometry">
     <rect>
-     <x>1060</x>
+     <x>1100</x>
      <y>160</y>
      <width>92</width>
      <height>31</height>
@@ -2771,7 +2771,7 @@ QProgressBar::chunk
   <widget class="QPushButton" name="closeS1">
    <property name="geometry">
     <rect>
-     <x>1060</x>
+     <x>1100</x>
      <y>110</y>
      <width>92</width>
      <height>31</height>
@@ -2787,7 +2787,7 @@ QProgressBar::chunk
   <widget class="Line" name="line_2">
    <property name="geometry">
     <rect>
-     <x>1170</x>
+     <x>1210</x>
      <y>-10</y>
      <width>61</width>
      <height>561</height>
@@ -2800,7 +2800,7 @@ QProgressBar::chunk
   <widget class="QPushButton" name="purgebutton">
    <property name="geometry">
     <rect>
-     <x>1250</x>
+     <x>1290</x>
      <y>190</y>
      <width>151</width>
      <height>61</height>
@@ -2813,7 +2813,7 @@ QProgressBar::chunk
   <widget class="QPushButton" name="testautomation">
    <property name="geometry">
     <rect>
-     <x>1250</x>
+     <x>1290</x>
      <y>30</y>
      <width>151</width>
      <height>61</height>
@@ -2826,7 +2826,7 @@ QProgressBar::chunk
   <widget class="QPushButton" name="igniteButton">
    <property name="geometry">
     <rect>
-     <x>1250</x>
+     <x>1290</x>
      <y>110</y>
      <width>151</width>
      <height>61</height>
@@ -2839,7 +2839,7 @@ QProgressBar::chunk
   <widget class="QComboBox" name="mfcDgas">
    <property name="geometry">
     <rect>
-     <x>500</x>
+     <x>540</x>
      <y>90</y>
      <width>81</width>
      <height>21</height>
@@ -3989,7 +3989,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="mfcDlabel">
    <property name="geometry">
     <rect>
-     <x>440</x>
+     <x>480</x>
      <y>90</y>
      <width>49</width>
      <height>16</height>
@@ -4002,7 +4002,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="setpointlabel4">
    <property name="geometry">
     <rect>
-     <x>590</x>
+     <x>630</x>
      <y>90</y>
      <width>49</width>
      <height>16</height>
@@ -4015,7 +4015,7 @@ QProgressBar::chunk
   <widget class="QLineEdit" name="mfcDsetpoint">
    <property name="geometry">
     <rect>
-     <x>650</x>
+     <x>690</x>
      <y>90</y>
      <width>61</width>
      <height>22</height>
@@ -4028,7 +4028,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="SLPMlabel4">
    <property name="geometry">
     <rect>
-     <x>720</x>
+     <x>760</x>
      <y>90</y>
      <width>49</width>
      <height>16</height>
@@ -4041,7 +4041,7 @@ QProgressBar::chunk
   <widget class="Line" name="line_3">
    <property name="geometry">
     <rect>
-     <x>360</x>
+     <x>400</x>
      <y>10</y>
      <width>61</width>
      <height>561</height>
@@ -4054,7 +4054,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="mfcClabel_2">
    <property name="geometry">
     <rect>
-     <x>440</x>
+     <x>480</x>
      <y>120</y>
      <width>49</width>
      <height>16</height>
@@ -4067,7 +4067,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="setpointlabel3_2">
    <property name="geometry">
     <rect>
-     <x>590</x>
+     <x>630</x>
      <y>120</y>
      <width>49</width>
      <height>16</height>
@@ -4080,7 +4080,7 @@ QProgressBar::chunk
   <widget class="QLineEdit" name="mfcCsetpoint_2">
    <property name="geometry">
     <rect>
-     <x>650</x>
+     <x>690</x>
      <y>120</y>
      <width>61</width>
      <height>22</height>
@@ -4093,7 +4093,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="SLPMlabel3_2">
    <property name="geometry">
     <rect>
-     <x>720</x>
+     <x>760</x>
      <y>120</y>
      <width>49</width>
      <height>16</height>
@@ -4106,7 +4106,7 @@ QProgressBar::chunk
   <widget class="QLabel" name="driver_label">
    <property name="geometry">
     <rect>
-     <x>570</x>
+     <x>610</x>
      <y>30</y>
      <width>91</width>
      <height>31</height>

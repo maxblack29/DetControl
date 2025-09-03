@@ -45,7 +45,7 @@ class AutomationWorker(QObject):
         self.finished.emit()
 
     def runstanpurge(self):
-        asyncio.run(initiator.driver_purge(self.setpointA, self.setpointB, self.setpointC))
+        asyncio.run(initiator.driver_purge(self.setpointA, self.setpointB, self.setpointC, self.setpointD))
         self.finished.emit()
 
 
