@@ -21,6 +21,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import initiator
 from initiator import test_initiator, stanpurge
+import mfcreadout
 
 import pdb
 import pyqtgraph as pg
@@ -43,7 +44,7 @@ class AutomationWorker(QObject):
     def runauto(self):
         asyncio.run(initiator.test_initiator_driver(self.setpointA, self.setpointB, self.setpointC, self.setpointD, self.setpointC_driver))
         self.finished.emit()
-
+        py
     def runstanpurge(self):
         asyncio.run(initiator.driver_purge(self.setpointA, self.setpointB, self.setpointC, self.setpointD))
         self.finished.emit()

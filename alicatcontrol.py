@@ -39,6 +39,14 @@ async def set_gas(unit, gas):
         await mfc.set_gas(gas)
         print(f'Set gas for controller {unit} to {gas}')
 
+# Mass flow rate readout for MFCs (don't know if this needs to loop)
+async def read_flow_rates():
+    async with FlowController(address = 'COM3', unit = 'A') as mfc:
+        data = await mfc.get() #This prints a dictionary with all the readout info; we want only the flow rate value
+        z = str(data['volumetric_flow'])
+        x = str(data['mass_flow'])
+        print("Volumetric flow: " + z + ", mass flow: " + x) #prints the flow rate values only (dont know which one Sean wants yet)
+
 if __name__ == '__main__':
     #Global settings for the flow controllers
     asyncio.run(get())

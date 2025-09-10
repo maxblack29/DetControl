@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'initiator_driver_guiFCTjDz.ui'
+## Form generated from reading UI file 'initiator_driver_guivivRMH.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -16,14 +16,14 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QDialog, QFrame,
-    QLabel, QLineEdit, QPushButton, QSizePolicy,
-    QWidget)
+    QLCDNumber, QLabel, QLineEdit, QPushButton,
+    QSizePolicy, QWidget)
 
 class Ui_Initiatorgui(object):
     def setupUi(self, Initiatorgui):
         if not Initiatorgui.objectName():
             Initiatorgui.setObjectName(u"Initiatorgui")
-        Initiatorgui.resize(1525, 336)
+        Initiatorgui.resize(1628, 336)
         Initiatorgui.setStyleSheet(u"/*Copyright (c) DevSec Studio. All rights reserved.\n"
 "\n"
 "MIT License\n"
@@ -2183,44 +2183,44 @@ class Ui_Initiatorgui(object):
         self.mfcAgas.setGeometry(QRect(100, 90, 81, 21))
         self.line = QFrame(Initiatorgui)
         self.line.setObjectName(u"line")
-        self.line.setGeometry(QRect(820, 0, 61, 561))
+        self.line.setGeometry(QRect(960, 0, 61, 561))
         self.line.setFrameShape(QFrame.Shape.VLine)
         self.line.setFrameShadow(QFrame.Shadow.Sunken)
         self.solenoidstatelabel = QLabel(Initiatorgui)
         self.solenoidstatelabel.setObjectName(u"solenoidstatelabel")
-        self.solenoidstatelabel.setGeometry(QRect(1050, 30, 91, 31))
+        self.solenoidstatelabel.setGeometry(QRect(1190, 30, 91, 31))
         self.purgelabel = QLabel(Initiatorgui)
         self.purgelabel.setObjectName(u"purgelabel")
-        self.purgelabel.setGeometry(QRect(900, 170, 91, 16))
+        self.purgelabel.setGeometry(QRect(1040, 170, 91, 16))
         self.exhaustlabel = QLabel(Initiatorgui)
         self.exhaustlabel.setObjectName(u"exhaustlabel")
-        self.exhaustlabel.setGeometry(QRect(900, 110, 91, 16))
+        self.exhaustlabel.setGeometry(QRect(1040, 110, 91, 16))
         self.openS1 = QPushButton(Initiatorgui)
         self.openS1.setObjectName(u"openS1")
-        self.openS1.setGeometry(QRect(1000, 110, 92, 31))
+        self.openS1.setGeometry(QRect(1140, 110, 92, 31))
         self.openS2 = QPushButton(Initiatorgui)
         self.openS2.setObjectName(u"openS2")
-        self.openS2.setGeometry(QRect(1000, 160, 92, 31))
+        self.openS2.setGeometry(QRect(1140, 160, 92, 31))
         self.closeS2 = QPushButton(Initiatorgui)
         self.closeS2.setObjectName(u"closeS2")
-        self.closeS2.setGeometry(QRect(1100, 160, 92, 31))
+        self.closeS2.setGeometry(QRect(1240, 160, 92, 31))
         self.closeS1 = QPushButton(Initiatorgui)
         self.closeS1.setObjectName(u"closeS1")
-        self.closeS1.setGeometry(QRect(1100, 110, 92, 31))
+        self.closeS1.setGeometry(QRect(1240, 110, 92, 31))
         self.line_2 = QFrame(Initiatorgui)
         self.line_2.setObjectName(u"line_2")
-        self.line_2.setGeometry(QRect(1210, -10, 61, 561))
+        self.line_2.setGeometry(QRect(1350, -10, 61, 561))
         self.line_2.setFrameShape(QFrame.Shape.VLine)
         self.line_2.setFrameShadow(QFrame.Shadow.Sunken)
         self.purgebutton = QPushButton(Initiatorgui)
         self.purgebutton.setObjectName(u"purgebutton")
-        self.purgebutton.setGeometry(QRect(1290, 190, 151, 61))
+        self.purgebutton.setGeometry(QRect(1430, 190, 151, 61))
         self.testautomation = QPushButton(Initiatorgui)
         self.testautomation.setObjectName(u"testautomation")
-        self.testautomation.setGeometry(QRect(1290, 30, 151, 61))
+        self.testautomation.setGeometry(QRect(1430, 30, 151, 61))
         self.igniteButton = QPushButton(Initiatorgui)
         self.igniteButton.setObjectName(u"igniteButton")
-        self.igniteButton.setGeometry(QRect(1290, 110, 151, 61))
+        self.igniteButton.setGeometry(QRect(1430, 110, 151, 61))
         self.mfcDgas = QComboBox(Initiatorgui)
         self.mfcDgas.addItem("")
         self.mfcDgas.addItem("")
@@ -2253,7 +2253,7 @@ class Ui_Initiatorgui(object):
         self.mfcDgas.addItem("")
         self.mfcDgas.addItem("")
         self.mfcDgas.setObjectName(u"mfcDgas")
-        self.mfcDgas.setGeometry(QRect(540, 90, 81, 21))
+        self.mfcDgas.setGeometry(QRect(680, 90, 81, 21))
         self.mfcDgas.setStyleSheet(u"/*Copyright (c) DevSec Studio. All rights reserved.\n"
 "\n"
 "MIT License\n"
@@ -3262,36 +3262,48 @@ class Ui_Initiatorgui(object):
 "")
         self.mfcDlabel = QLabel(Initiatorgui)
         self.mfcDlabel.setObjectName(u"mfcDlabel")
-        self.mfcDlabel.setGeometry(QRect(480, 90, 49, 16))
+        self.mfcDlabel.setGeometry(QRect(620, 90, 49, 16))
         self.setpointlabel4 = QLabel(Initiatorgui)
         self.setpointlabel4.setObjectName(u"setpointlabel4")
-        self.setpointlabel4.setGeometry(QRect(630, 90, 49, 16))
+        self.setpointlabel4.setGeometry(QRect(770, 90, 49, 16))
         self.mfcDsetpoint = QLineEdit(Initiatorgui)
         self.mfcDsetpoint.setObjectName(u"mfcDsetpoint")
-        self.mfcDsetpoint.setGeometry(QRect(690, 90, 61, 22))
+        self.mfcDsetpoint.setGeometry(QRect(830, 90, 61, 22))
         self.SLPMlabel4 = QLabel(Initiatorgui)
         self.SLPMlabel4.setObjectName(u"SLPMlabel4")
-        self.SLPMlabel4.setGeometry(QRect(760, 90, 49, 16))
+        self.SLPMlabel4.setGeometry(QRect(900, 90, 49, 16))
         self.line_3 = QFrame(Initiatorgui)
         self.line_3.setObjectName(u"line_3")
-        self.line_3.setGeometry(QRect(400, 10, 61, 561))
+        self.line_3.setGeometry(QRect(540, 0, 61, 561))
         self.line_3.setFrameShape(QFrame.Shape.VLine)
         self.line_3.setFrameShadow(QFrame.Shadow.Sunken)
         self.mfcClabel_2 = QLabel(Initiatorgui)
         self.mfcClabel_2.setObjectName(u"mfcClabel_2")
-        self.mfcClabel_2.setGeometry(QRect(480, 120, 49, 16))
+        self.mfcClabel_2.setGeometry(QRect(620, 120, 49, 16))
         self.setpointlabel3_2 = QLabel(Initiatorgui)
         self.setpointlabel3_2.setObjectName(u"setpointlabel3_2")
-        self.setpointlabel3_2.setGeometry(QRect(630, 120, 49, 16))
+        self.setpointlabel3_2.setGeometry(QRect(770, 120, 49, 16))
         self.mfcCsetpoint_2 = QLineEdit(Initiatorgui)
         self.mfcCsetpoint_2.setObjectName(u"mfcCsetpoint_2")
-        self.mfcCsetpoint_2.setGeometry(QRect(690, 120, 61, 22))
+        self.mfcCsetpoint_2.setGeometry(QRect(830, 120, 61, 22))
         self.SLPMlabel3_2 = QLabel(Initiatorgui)
         self.SLPMlabel3_2.setObjectName(u"SLPMlabel3_2")
-        self.SLPMlabel3_2.setGeometry(QRect(760, 120, 49, 16))
+        self.SLPMlabel3_2.setGeometry(QRect(900, 120, 49, 16))
         self.driver_label = QLabel(Initiatorgui)
         self.driver_label.setObjectName(u"driver_label")
-        self.driver_label.setGeometry(QRect(610, 30, 91, 31))
+        self.driver_label.setGeometry(QRect(750, 30, 91, 31))
+        self.mfcAreadout = QLCDNumber(Initiatorgui)
+        self.mfcAreadout.setObjectName(u"mfcAreadout")
+        self.mfcAreadout.setGeometry(QRect(440, 90, 64, 23))
+        self.mfcBreadout = QLCDNumber(Initiatorgui)
+        self.mfcBreadout.setObjectName(u"mfcBreadout")
+        self.mfcBreadout.setGeometry(QRect(440, 130, 64, 23))
+        self.mfcCreadout = QLCDNumber(Initiatorgui)
+        self.mfcCreadout.setObjectName(u"mfcCreadout")
+        self.mfcCreadout.setGeometry(QRect(440, 170, 64, 23))
+        self.mfcreadoutlabel = QLabel(Initiatorgui)
+        self.mfcreadoutlabel.setObjectName(u"mfcreadoutlabel")
+        self.mfcreadoutlabel.setGeometry(QRect(430, 30, 91, 31))
 
         self.retranslateUi(Initiatorgui)
 
@@ -3463,5 +3475,6 @@ class Ui_Initiatorgui(object):
         self.mfcCsetpoint_2.setText(QCoreApplication.translate("Initiatorgui", u"0.0", None))
         self.SLPMlabel3_2.setText(QCoreApplication.translate("Initiatorgui", u"SLPM", None))
         self.driver_label.setText(QCoreApplication.translate("Initiatorgui", u"Driver Mixture:", None))
+        self.mfcreadoutlabel.setText(QCoreApplication.translate("Initiatorgui", u"MFC readout:", None))
     # retranslateUi
 
