@@ -69,8 +69,25 @@ class SolenoidWorker(QObject):
     def runignite(self):
         nicontrol.set_ignite_read_pressure(self.states, self.testcount) 
         self.finished.emit()
-   
 
+class DisplayWorker(QObject):
+    finished = Signal()
+    def __init__(self, lcdScreen):
+        super().__init__()
+        self.lcdScren = lcdScreen
+
+    def displayReadoutA(self):
+        mfcreadout.read_flow_rateA()
+        self.finished.emit()
+
+    def displayReadoutB(self):
+        print(type(mfcreadout.read_flow_rateB()))
+        #mfcreadout.read_flow_rateB()
+        self.finished.emit()
+
+    def displayReadoutC(self):
+        mfcreadout.read_flow_rateC()
+        self.finished.emit()
 
 
 # class StandardPurgeWorker(QObject):
@@ -130,6 +147,21 @@ class MyDialog(QDialog):
         self.ui.testautomation.clicked.connect(self.begin_testing)
         self.ui.purgebutton.clicked.connect(self.purge)
         self.ui.igniteButton.clicked.connect(self.ignite)
+
+        #Connect lcd displays with the SLPM readout
+        #self.ui.mfcBreadout.display(str(self.display_readouts)) #Must input a string to display on the lcd display
+
+        self.mfcA_timer = QTimer(self)
+        self.mfcA_timer.timeout.connect(self.update_mfcA_lcd)
+        self.mfcA_timer.start(1000)  # Update every 1000 ms (1 second)
+
+        self.mfcB_timer = QTimer(self)
+        self.mfcB_timer.timeout.connect(self.update_mfcB_lcd)
+        self.mfcB_timer.start(1000)  # Update every 1000 ms (1 second)
+
+        self.mfcC_timer = QTimer(self)
+        self.mfcC_timer.timeout.connect(self.update_mfcC_lcd)
+        self.mfcC_timer.start(1000)  # Update every 1000 ms (1 second)
     
     def save_setpoints(self):
         #This function can be used to update the setpoints
@@ -332,22 +364,6 @@ class MyDialog(QDialog):
 
         ignite_thread.start()
 
-
-    # process1 = asyncio.run(initiator.initiator_testing(setpointA, setpointB, setpointC))
-    # def begin_test(self, process1):
-    #     button = self.ui.testautomation
-    #     button.setEnabled(False)
-    #     self.ui.testautomation.setStyleSheet("")
-    #     self.ui.emergencypurge.setStyleSheet("")
-    #     self.ui.standardpurge.setStyleSheet("")
-
-    #     setpointA = float(self.ui.mfcAsetpoint.text())
-    #     setpointB = float(self.ui.mfcBsetpoint.text())
-    #     setpointC = float(self.ui.mfcCsetpoint.text())
-
-    #     self.process() == QProcess()
-    #     self.process.setProcessChannelMode(QProcess.MergedChannels)
-    #     self.process.start("python", asyncio.run(initiator.initiator_testing(setpointA, setpointB, setpointC)))
     def purge(self):
         button = self.ui.purgebutton
 
@@ -378,6 +394,26 @@ class MyDialog(QDialog):
     def reenable(self, button):
         button.setEnabled(True)
         button.setStyleSheet("")
+
+    def display_readouts(self):
+        display_worker = DisplayWorker()
+        display_thread = QThread()
+        display_worker.moveToThread(display_thread)
+        display_worker.started.connect(display_worker.displayReadoutB)
+        display_worker.finished.connect(display_thread.quit)
+        return
+
+    def update_mfcB_lcd(self):
+        flow = mfcreadout.read_flow_rateB()
+        self.ui.mfcBreadout.display(flow)
+
+    def update_mfcA_lcd(self):
+        flow = mfcreadout.read_flow_rateA()
+        self.ui.mfcAreadout.display(flow)
+
+    def update_mfcC_lcd(self):
+        flow = mfcreadout.read_flow_rateC()
+        self.ui.mfcCreadout.display(flow)
 
         
 
@@ -445,7 +481,6 @@ if __name__ == "__main__":
     stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
     #stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     #for lab computer, use: stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
-    #for personal computer, use: stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     app = QApplication(sys.argv)
     app.setStyleSheet(stylesheet)
     #dialog2 = PlumbingDiagram()

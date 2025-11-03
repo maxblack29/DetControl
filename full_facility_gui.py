@@ -4,8 +4,9 @@ from PySide6.QtCore import QTimer, QThread, Signal, QObject, Slot, QProcess
 from combustionchamber import Ui_Dialog
 import combustionchamber
 from PySide6.QtCore import QTimer
-from initiatortesting import Ui_Initiatorgui
-import initiatortesting
+import full_facility_run_methods
+from initiator_driver_gui_script import Ui_Initiatorgui
+import initiator_driver_gui_script
 from plumbingdiagram import Ui_plumbingdiagram
 from greenledwidget import GreenLed
 import nidaqmx #might not be needed since I imported nicontrol
@@ -21,10 +22,13 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import initiator
 from initiator import test_initiator, stanpurge
+import mfcreadout
 
 import pdb
 import pyqtgraph as pg
 import matplotlib.pyplot as plt
+
+from ui_full_facility_gui_script import Ui_full_facility_gui
 
 '''This calls the python file that was created FROM the .ui file (combustionchamber.py). 
 When updating gui in qt designer, must update the PYTHON file to see the updates.'''
@@ -32,25 +36,22 @@ When updating gui in qt designer, must update the PYTHON file to see the updates
 
 class AutomationWorker(QObject):
     finished = Signal()
-    def __init__(self, setpointA, setpointB, setpointC):
+    def __init__(self, setpointA, setpointB, setpointC, setpointD, setpointC_driver):
         super().__init__()
         self.setpointA = setpointA
         self.setpointB = setpointB
         self.setpointC = setpointC
+        self.setpointD = setpointD
+        self.setpointC_driver = setpointC_driver
 
     def runauto(self):
-        asyncio.run(initiator.test_initiator(self.setpointA, self.setpointB, self.setpointC))
+        asyncio.run(full_facility_run_methods.automate_test(self.setpointA, self.setpointB, self.setpointC, self.setpointD, self.setpointC_driver))
         self.finished.emit()
-
+ 
     def runstanpurge(self):
-        asyncio.run(initiator.stanpurge(self.setpointA, self.setpointB, self.setpointC))
+        asyncio.run(full_facility_run_methods.purge(self.setpointA, self.setpointB, self.setpointC, self.setpointD))
         self.finished.emit()
 
-
-
-    # def runemepurge(self):
-    #     asyncio.run(initiator.emerpurge(self.setpointA, self.setpointB, self.setpointC))
-    #     self.finished.emit()
 
 class SolenoidWorker(QObject):
     finished = Signal()
@@ -66,43 +67,55 @@ class SolenoidWorker(QObject):
     def runignite(self):
         nicontrol.set_ignite_read_pressure(self.states, self.testcount) 
         self.finished.emit()
-   
 
+class DisplayWorker(QObject):
+    finished = Signal()
+    def __init__(self, lcdScreen):
+        super().__init__()
+        self.lcdScren = lcdScreen
 
+    def displayReadoutA(self):
+        mfcreadout.read_flow_rateA()
+        self.finished.emit()
 
-# class StandardPurgeWorker(QObject):
-#     finished = Signal()
-#     def runstdpurge(self):
-#         import initiator
-#         asyncio.run(initiator.stanpurge())
-#         self.finished.emit()
+    def displayReadoutB(self):
+        print(type(mfcreadout.read_flow_rateB()))
+        #mfcreadout.read_flow_rateB()
+        self.finished.emit()
 
-# class EmergencyPurgeWorker(QObject):
-#     finished = Signal()
-#     def runemepurge(self):
-#         import initiator
-#         asyncio.run(initiator.emerpurge())
-#         self.finished.emit()
+    def displayReadoutC(self):
+        mfcreadout.read_flow_rateC()
+        self.finished.emit()
 
 
 class MyDialog(QDialog):
     def __init__(self, plumbing_diagram=None):
         #MyDialog starts the GUI. this first secion is for initializing and connecting buttons. 
         super().__init__()
-        self.ui = Ui_Initiatorgui()
+        self.ui = Ui_full_facility_gui()
         self.ui.setupUi(self)
         #self.plumbing_diagram = plumbing_diagram
         
-        self.solenoids = [False, True, False, False, False, False, False, False] #Sets a bool array for 8 channels, last channel is empty
+        self.solenoids = [False, False, False, False, False, False, False, False] #Sets a bool array for 8 channels, last channel is empty
         nicontrol.set_digital_output(self.solenoids) #Sets the digital output to the solenoid states
 
         self.testcount = 0 #zeroes the test count for data acquisition when gui is opened
 
         #Connect each open and close button
-        self.ui.openS1.clicked.connect(lambda: self.toggle_solenoid(0,True))
+        self.ui.openS1.clicked.connect(lambda: self.toggle_solenoid(0, True))
         self.ui.closeS1.clicked.connect(lambda: self.toggle_solenoid(0, False))
         self.ui.openS2.clicked.connect(lambda: self.toggle_solenoid(1, True))
         self.ui.closeS2.clicked.connect(lambda: self.toggle_solenoid(1, False))
+        self.ui.openS3.clicked.connect(lambda: self.toggle_solenoid(2, True))
+        self.ui.closeS3.clicked.connect(lambda: self.toggle_solenoid(2, False))
+        self.ui.openS4.clicked.connect(lambda: self.toggle_solenoid(3, False))  # Normally open
+        self.ui.closeS4.clicked.connect(lambda: self.toggle_solenoid(3, True))  
+        self.ui.openS5.clicked.connect(lambda: self.toggle_solenoid(4, True))
+        self.ui.closeS5.clicked.connect(lambda: self.toggle_solenoid(4, False))
+        self.ui.openS6.clicked.connect(lambda: self.toggle_solenoid(5, False)) # Normally open
+        self.ui.closeS6.clicked.connect(lambda: self.toggle_solenoid(5, True))  
+        self.ui.openS7.clicked.connect(lambda: self.toggle_solenoid(6, True))
+        self.ui.closeS7.clicked.connect(lambda: self.toggle_solenoid(6, False))
 
         #Connects the update setpoints button
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
@@ -113,17 +126,34 @@ class MyDialog(QDialog):
         #Retrieves the gas setpoints from the GUI 
         self.ui.mfcAsetpoint.returnPressed.connect(lambda: self.save_setpoints('A', float(self.ui.mfcAsetpoint.text())))
         self.ui.mfcBsetpoint.returnPressed.connect(lambda: self.save_setpoints('B', float(self.ui.mfcBsetpoint.text())))
-        self.ui.mfcCsetpoint.returnPressed.connect(lambda: self.choosegas('C', float(self.ui.mfcCsetpoint.text())))
+        self.ui.mfcCsetpoint.returnPressed.connect(lambda: self.save_setpoints('C', float(self.ui.mfcCsetpoint.text())))
+        self.ui.mfcDsetpoint.returnPressed.connect(lambda: self.save_setpoints('D', float(self.ui.mfcDsetpoint.text())))
+
         
         #Retrieves the gas type from the GUI
         self.ui.mfcAgas.currentTextChanged.connect(self.change_gas)
         self.ui.mfcBgas.currentTextChanged.connect(self.change_gas)
         self.ui.mfcCgas.currentTextChanged.connect(self.change_gas)
+        self.ui.mfcDgas.currentTextChanged.connect(self.change_gas)
 
         #Connects the automation and purge buttons
         self.ui.testautomation.clicked.connect(self.begin_testing)
         self.ui.purgebutton.clicked.connect(self.purge)
         self.ui.igniteButton.clicked.connect(self.ignite)
+
+        #Connect lcd displays with the SLPM readout
+        
+        self.mfcA_timer = QTimer(self)
+        self.mfcA_timer.timeout.connect(self.update_mfcA_lcd)
+        self.mfcA_timer.start(1000)  # Update every 1000 ms (1 second)
+
+        self.mfcB_timer = QTimer(self)
+        self.mfcB_timer.timeout.connect(self.update_mfcB_lcd)
+        self.mfcB_timer.start(1000)  # Update every 1000 ms (1 second)
+
+        self.mfcC_timer = QTimer(self)
+        self.mfcC_timer.timeout.connect(self.update_mfcC_lcd)
+        self.mfcC_timer.start(1000)  # Update every 1000 ms (1 second)
     
     def save_setpoints(self):
         #This function can be used to update the setpoints
@@ -140,9 +170,11 @@ class MyDialog(QDialog):
         setpointA = float(self.ui.mfcAsetpoint.text())
         setpointB = float(self.ui.mfcBsetpoint.text())
         setpointC = float(self.ui.mfcCsetpoint.text())
+        setpointD = float(self.ui.mfcDsetpoint.text())
         asyncio.run(alicatcontrol.change_rate('A', setpointA))
         asyncio.run(alicatcontrol.change_rate('B', setpointB))
         asyncio.run(alicatcontrol.change_rate('C', setpointC))
+        asyncio.run(alicatcontrol.change_rate('D', setpointD))
 
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
 
@@ -159,25 +191,38 @@ class MyDialog(QDialog):
         self.ui.mfcAsetpoint.setText("0.0")
         self.ui.mfcBsetpoint.setText("0.0")
         self.ui.mfcCsetpoint.setText("0.0")
+        self.ui.mfcDsetpoint.setText("0.0")
         asyncio.run(alicatcontrol.change_rate('A', 0.0))
         asyncio.run(alicatcontrol.change_rate('B', 0.0))
         asyncio.run(alicatcontrol.change_rate('C', 0.0))
+        asyncio.run(alicatcontrol.change_rate('D', 0.0))
         print("All gas setpoints reset to 0.0 SLPM.")
     
 
-    
+    #Figure out how to do a change_gas function
     def change_gas(self):
         #This function will change the gas type for each controller
         self.ui.mfcAgas.currentText()
         self.ui.mfcBgas.currentText()
         self.ui.mfcCgas.currentText()
+        self.ui.mfcDgas.currentText()
+
         asyncio.run(alicatcontrol.set_gas('A', self.ui.mfcAgas.currentText()))
         asyncio.run(alicatcontrol.set_gas('B', self.ui.mfcBgas.currentText()))
         asyncio.run(alicatcontrol.set_gas('C', self.ui.mfcCgas.currentText()))
+        asyncio.run(alicatcontrol.set_gas('D', self.ui.mfcDgas.currentText()))
 
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
     def toggle_solenoid(self, index, state):
-        self.solenoids[index] = state
+         
+        # Handle specific cases for S4 and S6
+        if index == 3:  # S4
+            state = not state  
+        elif index == 5:  # S6
+            state = not state  
+        
+        
+        self.solenoids[index] = state #pulls state of current solenoid from button click
         open_button = getattr(self.ui, f"openS{index+1}")
         close_button = getattr(self.ui, f"closeS{index+1}")
 
@@ -208,64 +253,24 @@ class MyDialog(QDialog):
         self._solenoid_threads.append((solenoid_thread, solenoid_worker))
 
         solenoid_thread.start()
-        #print(f"Solenoid S{index+1} {'actuated' if state else 'disabled'}.")
-
-        #Michael: fixed to better match initiator solenoids 
         if(index == 0):
-            print(f"Solenoid S{index+1} {'To Initiator' if state else 'Exhausting'}.")
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
         if(index == 1):
-            print(f"Solenoid S{index+1} {'Purging' if state else 'Closed'}.")
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 2):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 3):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 4):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 5):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 6):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 7):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.") 
 
-    #This function will eventually handle the automation of the purge sequence, testing, and emergency purge sequence
-    # def auto_purge(self):
-    #     pressed_button = self.sender()
-
-    #     pressed_button.setEnabled(False)
-    #     #pressed_button.clicked.disconnect(self.auto_purge)
-    #     #pressed_button.setStyleSheet("background-color: orange; color: white;")
-    #     self.ui.testautomation.setStyleSheet("")
-    #     self.ui.emergencypurge.setStyleSheet("")
-    #     self.ui.standardpurge.setStyleSheet("")
-        
-      
-    #     if pressed_button == self.ui.testautomation:
-    #         setpointA = float(self.ui.mfcAsetpoint.text())
-    #         setpointB = float(self.ui.mfcBsetpoint.text())
-    #         setpointC = float(self.ui.mfcCsetpoint.text())
-
-    #         self.worker = AutomationWorker(setpointA, setpointB, setpointC)
-    #         self.thread = QThread()
-    #         self.worker.moveToThread(self.thread)
-    #         self.thread.started.connect(self.worker.runauto)
-    #         self.worker.finished.connect(self.thread.quit)
-    #         #self.worker.finished.connect(lambda: pressed_button.setStyleSheet(""))
-    #         self.worker.finished.connect(lambda: self.reenable(pressed_button))
-    #         self.thread.start()
-    #     elif pressed_button == self.ui.emergencypurge:
-    #         setpointA = 0.0
-    #         setpointB = 10.0
-    #         setpointC = 0.0
-
-    #         self.eme_worker = AutomationWorker(setpointA, setpointB, setpointC)
-    #         self.eme_thread = QThread()
-    #         self.eme_worker.moveToThread(self.eme_thread)
-    #         self.eme_thread.started.connect(self.eme_worker.runemepurge)
-    #         self.eme_worker.finished.connect(self.eme_thread.quit)
-    #         self.eme_worker.finished.connect(lambda: self.reenable(pressed_button))
-    #         self.eme_thread.start()
-
-    #     else:
-    #         setpointA = 0.0
-    #         setpointB = 0.0
-    #         setpointC = 0.0
-
-    #         self.std_worker = AutomationWorker(setpointA, setpointB, setpointC)
-    #         self.std_worker = QThread()
-    #         self.std_worker.moveToThread(self.std_thread)
-    #         self.std_thread.started.connect(self.std_worker.runstanpurge)
-    #         self.std_worker.finished.connect(self.std_thread.quit)
-    #         self.std_worker.finished.connect(lambda: self.reenable(pressed_button))
-    #         self.std_thread.start()
+  
     stop_test = False
 
     def begin_testing(self, stop_test):
@@ -277,9 +282,12 @@ class MyDialog(QDialog):
         setpointA = float(self.ui.mfcAsetpoint.text())
         setpointB = float(self.ui.mfcBsetpoint.text())
         setpointC = float(self.ui.mfcCsetpoint.text())
+        setpointC2 = float(self.ui.mfcCsetpoint_2.text())
+        setpointD = float(self.ui.mfcDsetpoint.text())
+
 
         #Michael change: now gives automation its own worker/thread
-        automation_worker = AutomationWorker(setpointA, setpointB, setpointC)
+        automation_worker = AutomationWorker(setpointA, setpointB, setpointC, setpointD, setpointC2)
         automation_thread = QThread()
         automation_worker.moveToThread(automation_thread)
         automation_thread.started.connect(automation_worker.runauto)
@@ -316,22 +324,6 @@ class MyDialog(QDialog):
 
         ignite_thread.start()
 
-
-    # process1 = asyncio.run(initiator.initiator_testing(setpointA, setpointB, setpointC))
-    # def begin_test(self, process1):
-    #     button = self.ui.testautomation
-    #     button.setEnabled(False)
-    #     self.ui.testautomation.setStyleSheet("")
-    #     self.ui.emergencypurge.setStyleSheet("")
-    #     self.ui.standardpurge.setStyleSheet("")
-
-    #     setpointA = float(self.ui.mfcAsetpoint.text())
-    #     setpointB = float(self.ui.mfcBsetpoint.text())
-    #     setpointC = float(self.ui.mfcCsetpoint.text())
-
-    #     self.process() == QProcess()
-    #     self.process.setProcessChannelMode(QProcess.MergedChannels)
-    #     self.process.start("python", asyncio.run(initiator.initiator_testing(setpointA, setpointB, setpointC)))
     def purge(self):
         button = self.ui.purgebutton
 
@@ -342,8 +334,10 @@ class MyDialog(QDialog):
         setpointA = 0.0
         setpointB = 0.0
         setpointC = 0.0
+        setpointC2 = 0.0
+        setpointD = 0.0
 
-        purge_worker = AutomationWorker(setpointA, setpointB, setpointC)
+        purge_worker = AutomationWorker(setpointA, setpointB, setpointC, setpointD, setpointC2)
         purge_thread = QThread()
         purge_worker.moveToThread(purge_thread)
         purge_thread.started.connect(purge_worker.runstanpurge)
@@ -361,6 +355,26 @@ class MyDialog(QDialog):
         button.setEnabled(True)
         button.setStyleSheet("")
 
+    def display_readouts(self):
+        display_worker = DisplayWorker()
+        display_thread = QThread()
+        display_worker.moveToThread(display_thread)
+        display_worker.started.connect(display_worker.displayReadoutB)
+        display_worker.finished.connect(display_thread.quit)
+        return
+
+    def update_mfcB_lcd(self):
+        flow = mfcreadout.read_flow_rateB()
+        self.ui.mfcBreadout.display(flow)
+
+    def update_mfcA_lcd(self):
+        flow = mfcreadout.read_flow_rateA()
+        self.ui.mfcAreadout.display(flow)
+
+    def update_mfcC_lcd(self):
+        flow = mfcreadout.read_flow_rateC()
+        self.ui.mfcCreadout.display(flow)
+
         
 
 
@@ -375,51 +389,7 @@ class MyDialog(QDialog):
         
 
 
-# class PlumbingDiagram(QDialog):
-#     def __init__(self):
-#         super().__init__()
-#         self.ui = Ui_plumbingdiagram()
-#         self.ui.setupUi(self)
-
-#         solenoid_positions = [
-#         (215, 415),  # S1
-#         (407, 218),  # S2
-#         (560, 473),  # S3
-#         (895, 607),  # S4
-#         (1000, 392),  # S5
-#         (813, 161),  # S6
-#         (997, 150),  # S7
-#         ]
-
-#         self.leds = []
-#         for i, (x, y) in enumerate(solenoid_positions):
-#             led = GreenLed(self, diameter=20)
-#             led.move(x, y)
-#             led.show()
-#             self.leds.append(led)
-#             if i == 3:
-#                 led.turn_on()
-#             if i == 5:
-#                 led.turn_on()
-
-#         self.led_open = GreenLed(self, diameter=22)
-#         self.led_open.move(1185, 450)  # Adjust position as needed
-#         self.led_open.turn_on()
-#         self.led_open.show()
-
-#         # Red (Closed)
-#         self.led_closed = GreenLed(self, diameter=22)
-#         self.led_closed.move(1185,495)  # Adjust position as needed
-#         self.led_closed.turn_off()
-#         self.led_closed.show()
-
-#     def set_solenoid_led(self, index, on):
-#         if 0 <= index < len(self.leds):
-#             if on:
-#                 self.leds[index].turn_on()
-#             else:
-#                 self.leds[index].turn_off()
-        
+#main: whats actually running  
 if __name__ == "__main__":
     def load_stylesheet(filename):
         with open(filename, "r") as f:
@@ -427,11 +397,8 @@ if __name__ == "__main__":
     stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
     #stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     #for lab computer, use: stylesheet = load_stylesheet("/Users/dedic-lab/source/repos/maxblack29/DetControl/Combinear.qss")
-    #for personal computer, use: stylesheet = load_stylesheet("/Users/maxbl/OneDrive - University of Virginia/DetControl/Combinear.qss")
     app = QApplication(sys.argv)
     app.setStyleSheet(stylesheet)
-    #dialog2 = PlumbingDiagram()
     dialog = MyDialog()
     dialog.show()
-    #dialog2.show()
     sys.exit(app.exec())

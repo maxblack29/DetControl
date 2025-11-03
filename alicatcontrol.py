@@ -53,6 +53,3 @@ if __name__ == '__main__':
     asyncio.run(change_rate(unit='A', setpoint = 0.0))
     asyncio.run(change_rate(unit='B', setpoint = 0.0))
 
-#This works but figure out how to get this connected to GUI???
-
-# SET EVERYTHING BACK TO 0.0 SLPM AT THE END OF THE DAY, TURN OFF CHEMICAL SUPPLY

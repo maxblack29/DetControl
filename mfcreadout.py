@@ -1,14 +1,56 @@
 # Mass Flow rate readout for MFCs to get a constant readout of flow rates
 import asyncio
-import alicat
 from alicat import FlowController
 
-async def read_flow_rates():
-    async with FlowController(address = 'COM3', unit = 'A') as mfc:
-        data = await mfc.get() #This prints a dictionary with all the readout info; we want only the flow rate value
-        z = str(data['volumetric_flow'])
-        x = str(data['mass_flow'])
-        print("Volumetric flow: " + z + ", mass flow: " + x) #prints the flow rate values only (dont know which one Sean wants yet)
+async def read_flow_rateA_async():
+    async with FlowController(address='COM3', unit='A') as mfc:
+        data = await mfc.get()
+        print("DEBUG: mfc.get() returned:", data)
+        x = data.get('mass_flow')
+        print("DEBUG: mass_flow value:", x)
+        return x
+
+def read_flow_rateA():
+    value = asyncio.run(read_flow_rateA_async())
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        print(f"Invalid mass_flow value: {value}")
+        return 0.0
+
+
+async def read_flow_rateB_async():
+    async with FlowController(address='COM3', unit='B') as mfc:
+        data = await mfc.get()
+        print("DEBUG: mfc.get() returned:", data)
+        x = data.get('mass_flow')
+        print("DEBUG: mass_flow value:", x)
+        return x
+
+def read_flow_rateB():
+    value = asyncio.run(read_flow_rateB_async())
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        print(f"Invalid mass_flow value: {value}")
+        return 0.0
+
+async def read_flow_rateC_async():
+    async with FlowController(address='COM3', unit='C') as mfc:
+        data = await mfc.get()
+        print("DEBUG: mfc.get() returned:", data)
+        x = data.get('mass_flow')
+        print("DEBUG: mass_flow value:", x)
+        return x
+
+def read_flow_rateC():
+    value = asyncio.run(read_flow_rateC_async())
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        print(f"Invalid mass_flow value: {value}")
+        return 0.0
 
 if __name__ == '__main__':
-    asyncio.run(read_flow_rates())
+    print(read_flow_rateB())
+    print(read_flow_rateC())
