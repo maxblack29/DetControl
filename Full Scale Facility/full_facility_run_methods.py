@@ -20,13 +20,13 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     print("Test starting")
 
     #determine fill times based on molar flow rates
-    molar_flow_rate_A = setpointA/60 * 101300 / (8.314 * 298)  # Convert SLPM to mol/s)
-    molar_flow_rate_B = setpointA/60 * 101300 / (8.314 * 298)  # Convert SLPM to mol/s)
-    molar_flow_rate_C = setpointA/60 * 101300 / (8.314 * 298)  # Convert SLPM to mol/s)
+    molar_flow_rate_A = setpointA/60 * 101300 / (8.314 * 298)  # Convert SLPM to mol/s
+    molar_flow_rate_B = setpointB/60 * 101300 / (8.314 * 298)  # Convert SLPM to mol/s
+    molar_flow_rate_C = setpointC/60 * 101300 / (8.314 * 298)  # Convert SLPM to mol/s
 
     total_molar_flow_rate = molar_flow_rate_A + molar_flow_rate_B + molar_flow_rate_C  # Total molar flow rate (mol/s)
 
-    fill_volume = 14.2/1000  # Volume to be filled (m^3) 
+    fill_volume = 14.2/1000  # Volume to be filled (m^3) (facility is 14.2L)
 
     n_needed = 10000*fill_volume / (8.314*298)  # Moles needed to fill the volume at 10 kPa and 298 K
 
@@ -45,12 +45,11 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     vacuum_solenoids = [True, True, True, True, True, True, True, False] #Solenoid States for Vacuuming Down. All open except S4 and S6 (normally closed) 
     nicontrol.set_digital_output(vacuum_solenoids)
 
+    #check vacuum state
     vacuum_running = True
     while vacuum_running:
         await(1)
-        pressure_check = 0; #Replace with actual pressure reading function
-        if pressure_check > 5:
-            vacuum_running = False
+        vacuum_running = nicontrol.read_vaccuum_state(threshold = 1) #if receiving voltage above 1, vacuuming is complete
 
     print("Vacuum down complete. Starting fill sequence...")
         
@@ -70,21 +69,18 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     )
 
     await asyncio.sleep(fill_time/2)
-    #nicontrol.warning_sound()
-    speaker = "cDAQ9188-169338EMod2/port0/line0:7"
-    speakerstate = [False, False, False, True, False, True, False, False] #all closed except 4 and 6
-    with nidaqmx.Task() as task:
-        task.do_channels.add_do_chan(speaker, line_grouping=LineGrouping.CHAN_PER_LINE)
-        task.write(speakerstate)
+    #Start Speaker 
+    speakerstate = [False, False, False, True, False, True, False, False] 
+    nicontrol.set_digital_output_2(speakerstate)
 
     await asyncio.sleep(fill_time/2) 
 
 
-
+    #Zero MFCs and Close Fill Solenoids
     post_fill_solenoids = [False, True, False, False, False, False, False, False] #Solenoid states post fill 
     nicontrol.set_digital_output(post_fill_solenoids)
 
-    await asyncio.sleep(1)
+    
 
     #Driver Line
     # await asyncio.gather(
@@ -96,20 +92,6 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
 
     # await asyncio.sleep(1) #1 second fill for driver gas 
 
-    # await asyncio.gather(
-    #     connect('A', 0.0), 
-    #     connect('B', 0.0),
-    #     connect('C', 0.0),
-    #     connect('D', 0.0)
-    # )
-
-    print("Fill complete, Ignite and press the standard purge button")
-    #Exhaust line and purge line are controlled by DIFFERENT solenoids. Exhaust line is next to manifold and purge line is closest to the table with the computer
-
-async def purge(setpointA, setpointB, setpointC, setpointD):
-    purge_solenoids = [False, False, False, False, False, False, False, False]
-    nicontrol.set_digital_output(purge_solenoids)
-    
     await asyncio.gather(
         connect('A', 0.0), 
         connect('B', 0.0),
@@ -117,24 +99,32 @@ async def purge(setpointA, setpointB, setpointC, setpointD):
         connect('D', 0.0)
     )
 
-    print("Purging...")
-    await asyncio.sleep(5)
+    await asyncio.sleep(1)
 
-    solenoids3 = [False, True, False, False, False, False, False, False]
-    nicontrol.set_digital_output(solenoids3)
+    print("Fill complete, Ignite and press the standard purge button")
+   
 
-    #turns off speaker
-    speaker = "cDAQ9188-169338EMod2/port0/line0:7"
-    speakerstate = [False] * 8
-    with nidaqmx.Task() as task:
-        task.do_channels.add_do_chan(speaker, line_grouping=LineGrouping.CHAN_PER_LINE)
-        task.write(speakerstate)
-
+async def purge(setpointA, setpointB, setpointC, setpointD):
+    
     await asyncio.gather(
-        connect('A', 0.0),
+        connect('A', 0.0), 
         connect('B', 0.0),
         connect('C', 0.0),
         connect('D', 0.0)
     )
+    
+    purge_solenoids = [False, False, False, False, False, False, False, False]
+    nicontrol.set_digital_output(purge_solenoids)
+    
+    print("Purging...")
+    await asyncio.sleep(5)
+
+    purge_complete_solenoids = [False, True, False, False, False, False, False, False]
+    nicontrol.set_digital_output(purge_complete_solenoids)
+    
+
+    #Speaker Off 
+    speakerstate = [False]*8 
+    nicontrol.set_digital_output_2(speakerstate)
 
     print("Purge complete!")

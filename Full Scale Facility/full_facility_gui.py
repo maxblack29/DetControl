@@ -1,12 +1,8 @@
 import sys
 from PySide6.QtWidgets import QApplication, QDialog, QLabel
 from PySide6.QtCore import QTimer, QThread, Signal, QObject, Slot, QProcess
-from combustionchamber import Ui_Dialog
-import combustionchamber
 from PySide6.QtCore import QTimer
 import full_facility_run_methods
-from initiator_driver_gui_script import Ui_Initiatorgui
-import initiator_driver_gui_script
 from plumbingdiagram import Ui_plumbingdiagram
 from greenledwidget import GreenLed
 import nidaqmx #might not be needed since I imported nicontrol
@@ -15,13 +11,10 @@ from nicontrol import set_digital_output
 from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
 import alicatcontrol
 import asyncio
-import diagram_rc
 #import dataacquisition
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-import initiator
-from initiator import test_initiator, stanpurge
 import mfcreadout
 
 import pdb
@@ -29,9 +22,9 @@ import pyqtgraph as pg
 import matplotlib.pyplot as plt
 
 from ui_full_facility_gui_script import Ui_full_facility_gui
-
-'''This calls the python file that was created FROM the .ui file (combustionchamber.py). 
+'''This calls the python file that was created FROM the .ui file (ui_full_facility_gui_script.py). 
 When updating gui in qt designer, must update the PYTHON file to see the updates.'''
+
 
 
 class AutomationWorker(QObject):
@@ -238,7 +231,6 @@ class MyDialog(QDialog):
             close_button.setStyleSheet("background-color: green; color: white;")
             QTimer.singleShot(500, lambda: close_button.setStyleSheet(""))
 
-        #Michael change: gives solenoid its own worker/thread variable so it doesn't share with automation
         solenoid_worker = SolenoidWorker(self.solenoids, self.testcount)
         solenoid_thread = QThread()
         solenoid_worker.moveToThread(solenoid_thread)
@@ -308,7 +300,9 @@ class MyDialog(QDialog):
         self.ui.purgebutton.setStyleSheet("")
         self.ui.igniteButton.setStyleSheet("")
 
-        ignite_state = [True, True, False, False, False, False, False, False] #Set the ignite solenoid state to True
+
+        #CHANGE LATER WHEN WIRED 
+        ignite_state = [False, False, False, False, False, False, False, False] #Set the ignite solenoid state to True
         testcount = self.testcount 
         ignite_worker = SolenoidWorker(ignite_state, testcount)
         ignite_thread = QThread()

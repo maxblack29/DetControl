@@ -7,31 +7,46 @@ import time
 
 #port = 'port0'
 
-def set_all_digital_outputs(states):
-    # states: list or array of 8 booleans
+
+def set_digital_output(states): #for Mod4 (plumbing)
     device_name = "cDAQ9188-169338EMod4/port0/line0:7"
     with nidaqmx.Task() as task:
         task.do_channels.add_do_chan(device_name, line_grouping=LineGrouping.CHAN_PER_LINE)
         task.write(states)
 
-def set_digital_output(states):
-    device_name = "cDAQ9188-169338EMod4/port0/line0:7"
+def set_digital_output_2(states): #for Mod2 (pump, speaker)
+    device_name = "cDAQ9188-169338EMod2/port0/line0:7"
     with nidaqmx.Task() as task:
         task.do_channels.add_do_chan(device_name, line_grouping=LineGrouping.CHAN_PER_LINE)
         task.write(states)
+
+def read_vaccuum_state(threshold):
+    ai_channel = "cDAQ9188-169338EMod6/ai0"
+    sample_rate = 125e6 # 125 MS/s
+    duration = 8e-3  # 8 milliseconds
+    samples = int(sample_rate * duration)
+
+    with nidaqmx.Task() as ai_task:
+        ai_task.ai_channels.add_ai_voltage_chan(ai_channel, min_val=-10, max_val=10)
+        ai_task.timing.cfg_samp_clk_timing(sample_rate, sample_mode=AcquisitionType.FINITE, samps_per_chan=samples)
+        data = ai_task.read(number_of_samples_per_channel=samples)
+        # If any sample is above the threshold, return True
+        if np.any(np.array(data) > threshold):
+            return True
+        return False
 
 
 #had to write separate function because this one is on Mod2 
 def set_ignite_read_pressure(on_states, testcount): 
     ignite_device = "cDAQ9188-169338EMod2/port0/line0:7"
-    ai_channel =  "cDAQ9188-169338EMod6/ai0"  # Replace with your actual AI channel name
+    ai_channel =  "cDAQ9188-169338EMod6/ai0"  
     off_states  = [False] * len(on_states)  
     
     #send signal to ignite
     with nidaqmx.Task() as do_task:
         do_task.do_channels.add_do_chan(ignite_device, line_grouping=LineGrouping.CHAN_PER_LINE)
         do_task.write(on_states)
-        time.sleep(15) 
+        time.sleep(0.1) 
         do_task.write(off_states)
 
 # #read pressure transducers 
