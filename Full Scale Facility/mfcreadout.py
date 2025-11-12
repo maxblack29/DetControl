@@ -27,6 +27,7 @@ def read_flow_rateC():
     except (TypeError, ValueError):
         return 0.0  # Return 0.0 silently if the value is invalid
 
+
 async def read_flow_rateA_async():
     try:
         async with FlowController(address='COM3', unit='A') as mfc:
@@ -50,3 +51,4 @@ async def read_flow_rateC_async():
             return data.get('mass_flow', 0.0)  # Default to 0.0 if 'mass_flow' is missing
     except Exception:
         return 0.0  # Return 0.0 silently in case of any error
+

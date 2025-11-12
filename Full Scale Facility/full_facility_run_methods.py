@@ -19,18 +19,28 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
 
     print("Test starting")
 
-    #determine fill times based on molar flow rates
-    molar_flow_rate_A = setpointA/60 * 101300 / (8.314 * 298)  # Convert SLPM to mol/s
-    molar_flow_rate_B = setpointB/60 * 101300 / (8.314 * 298)  # Convert SLPM to mol/s
-    molar_flow_rate_C = setpointC/60 * 101300 / (8.314 * 298)  # Convert SLPM to mol/s
+    P_std = 101300      # Pa
+    T_std = 298         # K
+    R = 8.314           # J/mol·K
 
-    total_molar_flow_rate = molar_flow_rate_A + molar_flow_rate_B + molar_flow_rate_C  # Total molar flow rate (mol/s)
+    molar_flow_rate_A = setpointA / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
+    molar_flow_rate_B = setpointB / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
+    molar_flow_rate_C = setpointC / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
 
-    fill_volume = 14.2/1000  # Volume to be filled (m^3) (facility is 14.2L)
+    # Total molar flow rate
+    total_molar_flow_rate = molar_flow_rate_A + molar_flow_rate_B + molar_flow_rate_C  # mol/s
 
-    n_needed = 10000*fill_volume / (8.314*298)  # Moles needed to fill the volume at 10 kPa and 298 K
+    # Volume to be filled (m³)
+    fill_volume = 14.2 / 1000  # 14.2 L ? 0.0142 m³
 
-    fill_time = n_needed/ total_molar_flow_rate  # Time to fill (s)
+    # Moles needed to fill the volume to 10 kPa absolute at 298 K
+    P_target = 10000  # Pa
+    T_gas = 298       # K
+
+    n_needed = P_target * fill_volume / (R * T_gas)  # mol
+
+    # Time required to fill (s)
+    fill_time = n_needed / total_molar_flow_rate
 
     await asyncio.sleep(1) 
 
@@ -40,24 +50,24 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     print("Vacuuming down...")
 
     turn_vacuum_on_array = [True, False, False, False, False, False, False, False] #Solenoid States to turn on vacuum pump
-    nicontrol.set_digital_output_2(turn_vacuum_on_array)
+    # nicontrol.set_digital_output_2(turn_vacuum_on_array)
 
-    vacuum_solenoids = [True, True, True, True, True, True, True, False] #Solenoid States for Vacuuming Down. All open except S4 and S6 (normally closed) 
-    nicontrol.set_digital_output(vacuum_solenoids)
+    # vacuum_solenoids = [True, True, True, True, True, True, True, False] #Solenoid States for Vacuuming Down. All open except S4 and S6 (normally closed) 
+    # nicontrol.set_digital_output(vacuum_solenoids)
 
     #check vacuum state
-    vacuum_running = True
-    while vacuum_running:
-        await(1)
-        vacuum_running = nicontrol.read_vaccuum_state(threshold = 1) #if receiving voltage above 1, vacuuming is complete
+    # vacuum_running = False
+    # while vacuum_running:
+    #     await(1)
+    #     vacuum_running = nicontrol.read_vaccuum_state(threshold = 1) #if receiving voltage above 1, vacuuming is complete
 
     print("Vacuum down complete. Starting fill sequence...")
         
-    post_vacuum_solenoids = [False, True, True, True, True, True, False, False] #Solenoid States Post Vacuuming Down. S1, S4, S5, S6, S7 closed
-    nicontrol.set_digital_output(post_vacuum_solenoids)
+    # post_vacuum_solenoids = [False, True, True, True, True, True, False, False] #Solenoid States Post Vacuuming Down. S1, S4, S5, S6, S7 closed
+    # nicontrol.set_digital_output(post_vacuum_solenoids)
 
-    turn_vacuum_off_array = [False, False, False, False, False, False, False, False] #Solenoid States to turn off vacuum pump
-    nicontrol.set_digital_output_2(turn_vacuum_off_array)
+    # turn_vacuum_off_array = [False, False, False, False, False, False, False, False] #Solenoid States to turn off vacuum pump
+    # nicontrol.set_digital_output_2(turn_vacuum_off_array)
 
     #2: Fill 
         
@@ -68,17 +78,17 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
         connect('D', 0.0)  
     )
 
-    await asyncio.sleep(fill_time/2)
+    await asyncio.sleep(fill_time)
     #Start Speaker 
-    speakerstate = [False, False, False, True, False, True, False, False] 
-    nicontrol.set_digital_output_2(speakerstate)
+    # speakerstate = [False, False, False, True, False, True, False, False] 
+    # nicontrol.set_digital_output_2(speakerstate)
 
-    await asyncio.sleep(fill_time/2) 
+    # await asyncio.sleep(fill_time/2) 
 
 
-    #Zero MFCs and Close Fill Solenoids
-    post_fill_solenoids = [False, True, False, False, False, False, False, False] #Solenoid states post fill 
-    nicontrol.set_digital_output(post_fill_solenoids)
+    # #Zero MFCs and Close Fill Solenoids
+    # post_fill_solenoids = [False, True, False, False, False, False, False, False] #Solenoid states post fill 
+    # nicontrol.set_digital_output(post_fill_solenoids)
 
     
 

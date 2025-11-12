@@ -23,7 +23,7 @@ def set_digital_output_2(states): #for Mod2 (pump, speaker)
 def read_vaccuum_state(threshold):
     ai_channel = "cDAQ9188-169338EMod6/ai0"
     sample_rate = 125e6 # 125 MS/s
-    duration = 8e-3  # 8 milliseconds
+    duration = 5e-3  # 8 milliseconds
     samples = int(sample_rate * duration)
 
     with nidaqmx.Task() as ai_task:
@@ -61,30 +61,21 @@ def set_ignite_read_pressure(on_states, testcount):
     #     ai_task.in_stream.configure_logging(filename, LoggingMode.LOG_AND_READ, operation=LoggingOperation.CREATE_OR_REPLACE)
 
     #     data = ai_task.read(number_of_samples_per_channel=samples)
-        
-# def warning_sound():
-#     speaker = "cDAQ9188-169338EMod2/port0/line0:7"
-#     speakerstate = [False, True, False, False, False, False, False, False]
-#     with nidaqmx.Task() as task:
-#         task.do_channels.add_do_chan(speaker, line_grouping=LineGrouping.CHAN_PER_LINE)
-#         task.write(speakerstate)
-#         time.sleep(22) #Play sound for 15 seconds
-#         task.write([False]*8) #Turn off the speaker
+          
+def read_pressure():
+    ai_channel = "cDAQ9188-169338EMod8/ai0"
+    sample_rate = 1000  # 1 kHz 
+    duration = 0.1      # 100 ms
+    samples = int(sample_rate * duration)
 
+    with nidaqmx.Task() as ai_task:
+        ai_task.ai_channels.add_ai_voltage_chan(ai_channel, min_val=0, max_val=10)
+        ai_task.timing.cfg_samp_clk_timing(
+            sample_rate, 
+            sample_mode=AcquisitionType.FINITE, 
+            samps_per_chan=samples
+        )
+        data = ai_task.read(number_of_samples_per_channel=samples)
+        avg = np.mean(data)
 
-    
-   
-    
-
-
-#  '''
-# k = 0
-# while k < 5:
-#     state = np.logical_not(state)
-#     k = k+1
-#     with nidaqmx.Task() as task:
-#         task.do_channels.add_do_chan(device_name, line_grouping=LineGrouping.CHAN_PER_LINE)
-#         task.write(state)
-#     time.sleep(1)
-
-#     '''
+    return avg * 103.421 / 10 # Convert voltage to kPa based on sensor specs

@@ -38,7 +38,7 @@ class AutomationWorker(QObject):
         self.setpointC_driver = setpointC_driver
 
     def runauto(self):
-        asyncio.run(full_facility_run_methods.automate_test(self.setpointA, self.setpointB, self.setpointC, self.setpointD, self.setpointC_driver))
+        asyncio.run(full_facility_run_methods.automatic_test(self.setpointA, self.setpointB, self.setpointC, self.setpointD, self.setpointC_driver))
         self.finished.emit()
  
     def runstanpurge(self):
@@ -61,24 +61,24 @@ class SolenoidWorker(QObject):
         nicontrol.set_ignite_read_pressure(self.states, self.testcount) 
         self.finished.emit()
 
-class DisplayWorker(QObject):
-    finished = Signal()
-    def __init__(self, lcdScreen):
-        super().__init__()
-        self.lcdScren = lcdScreen
+# class DisplayWorker(QObject):
+#     finished = Signal()
+#     def __init__(self, lcdScreen):
+#         super().__init__()
+#         self.lcdScren = lcdScreen
 
-    def displayReadoutA(self):
-        mfcreadout.read_flow_rateA()
-        self.finished.emit()
+#     def displayReadoutA(self):
+#         mfcreadout.read_flow_rateA()
+#         self.finished.emit()
 
-    def displayReadoutB(self):
-        print(type(mfcreadout.read_flow_rateB()))
-        #mfcreadout.read_flow_rateB()
-        self.finished.emit()
+#     def displayReadoutB(self):
+#         print(type(mfcreadout.read_flow_rateB()))
+#         #mfcreadout.read_flow_rateB()
+#         self.finished.emit()
 
-    def displayReadoutC(self):
-        mfcreadout.read_flow_rateC()
-        self.finished.emit()
+#     def displayReadoutC(self):
+#         mfcreadout.read_flow_rateC()
+#         self.finished.emit()
 
 
 class MyDialog(QDialog):
@@ -136,17 +136,22 @@ class MyDialog(QDialog):
 
         #Connect lcd displays with the SLPM readout
         
-        self.mfcA_timer = QTimer(self)
-        self.mfcA_timer.timeout.connect(self.update_mfcA_lcd)
-        self.mfcA_timer.start(1000)  # Update every 1000 ms (1 second)
+        # self.mfcA_timer = QTimer(self)
+        # self.mfcA_timer.timeout.connect(self.update_mfcA_lcd)
+        # self.mfcA_timer.start(1000)  # Update every 1000 ms (1 second)
 
-        self.mfcB_timer = QTimer(self)
-        self.mfcB_timer.timeout.connect(self.update_mfcB_lcd)
-        self.mfcB_timer.start(1000)  # Update every 1000 ms (1 second)
+        # self.mfcB_timer = QTimer(self)
+        # self.mfcB_timer.timeout.connect(self.update_mfcB_lcd)
+        # self.mfcB_timer.start(1000)  # Update every 1000 ms (1 second)
 
-        self.mfcC_timer = QTimer(self)
-        self.mfcC_timer.timeout.connect(self.update_mfcC_lcd)
-        self.mfcC_timer.start(1000)  # Update every 1000 ms (1 second)
+        # self.mfcC_timer = QTimer(self)
+        # self.mfcC_timer.timeout.connect(self.update_mfcC_lcd)
+        # self.mfcC_timer.start(1000)  # Update every 1000 ms (1 second)
+
+        #connects pressure display with the pressure input 
+        self.pressure_timer = QTimer(self)
+        self.pressure_timer.timeout.connect(self.update_pressure)
+        self.pressure_timer.start(500)  # Update every 500 ms 
     
     def save_setpoints(self):
         #This function can be used to update the setpoints
@@ -203,7 +208,7 @@ class MyDialog(QDialog):
         asyncio.run(alicatcontrol.set_gas('A', self.ui.mfcAgas.currentText()))
         asyncio.run(alicatcontrol.set_gas('B', self.ui.mfcBgas.currentText()))
         asyncio.run(alicatcontrol.set_gas('C', self.ui.mfcCgas.currentText()))
-        asyncio.run(alicatcontrol.set_gas('D', self.ui.mfcDgas.currentText()))
+        #asyncio.run(alicatcontrol.set_gas('D', self.ui.mfcDgas.currentText()))
 
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
     def toggle_solenoid(self, index, state):
@@ -349,13 +354,13 @@ class MyDialog(QDialog):
         button.setEnabled(True)
         button.setStyleSheet("")
 
-    def display_readouts(self):
-        display_worker = DisplayWorker()
-        display_thread = QThread()
-        display_worker.moveToThread(display_thread)
-        display_worker.started.connect(display_worker.displayReadoutB)
-        display_worker.finished.connect(display_thread.quit)
-        return
+    # def display_readouts(self):
+    #     display_worker = DisplayWorker()
+    #     display_thread = QThread()
+    #     display_worker.moveToThread(display_thread)
+    #     display_worker.started.connect(display_worker.displayReadoutB)
+    #     display_worker.finished.connect(display_thread.quit)
+    #     return
 
     def update_mfcB_lcd(self):
         flow = mfcreadout.read_flow_rateB()
@@ -368,6 +373,10 @@ class MyDialog(QDialog):
     def update_mfcC_lcd(self):
         flow = mfcreadout.read_flow_rateC()
         self.ui.mfcCreadout.display(flow)
+
+    def update_pressure(self):
+        pressure = nicontrol.read_pressure()
+        self.ui.pressure_readout.display(pressure)
 
         
 
