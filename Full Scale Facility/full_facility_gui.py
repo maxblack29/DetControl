@@ -61,24 +61,7 @@ class SolenoidWorker(QObject):
         nicontrol.set_ignite_read_pressure(self.states, self.testcount) 
         self.finished.emit()
 
-# class DisplayWorker(QObject):
-#     finished = Signal()
-#     def __init__(self, lcdScreen):
-#         super().__init__()
-#         self.lcdScren = lcdScreen
 
-#     def displayReadoutA(self):
-#         mfcreadout.read_flow_rateA()
-#         self.finished.emit()
-
-#     def displayReadoutB(self):
-#         print(type(mfcreadout.read_flow_rateB()))
-#         #mfcreadout.read_flow_rateB()
-#         self.finished.emit()
-
-#     def displayReadoutC(self):
-#         mfcreadout.read_flow_rateC()
-#         self.finished.emit()
 
 
 class MyDialog(QDialog):
@@ -136,17 +119,10 @@ class MyDialog(QDialog):
 
         #Connect lcd displays with the SLPM readout
         
-        # self.mfcA_timer = QTimer(self)
-        # self.mfcA_timer.timeout.connect(self.update_mfcA_lcd)
-        # self.mfcA_timer.start(1000)  # Update every 1000 ms (1 second)
+        # self.mfc_timer = QTimer(self)
+        # self.mfc_timer.timeout.connect(self.update_mfc_lcds)
+        # self.mfc_timer.start(2000)  # Update every 1000 ms (1 second)
 
-        # self.mfcB_timer = QTimer(self)
-        # self.mfcB_timer.timeout.connect(self.update_mfcB_lcd)
-        # self.mfcB_timer.start(1000)  # Update every 1000 ms (1 second)
-
-        # self.mfcC_timer = QTimer(self)
-        # self.mfcC_timer.timeout.connect(self.update_mfcC_lcd)
-        # self.mfcC_timer.start(1000)  # Update every 1000 ms (1 second)
 
         #connects pressure display with the pressure input 
         self.pressure_timer = QTimer(self)
@@ -354,25 +330,14 @@ class MyDialog(QDialog):
         button.setEnabled(True)
         button.setStyleSheet("")
 
-    # def display_readouts(self):
-    #     display_worker = DisplayWorker()
-    #     display_thread = QThread()
-    #     display_worker.moveToThread(display_thread)
-    #     display_worker.started.connect(display_worker.displayReadoutB)
-    #     display_worker.finished.connect(display_thread.quit)
-    #     return
 
-    def update_mfcB_lcd(self):
-        flow = mfcreadout.read_flow_rateB()
-        self.ui.mfcBreadout.display(flow)
+    def update_mfc_lcds(self):
+        [flowA, flowB, flowC] = mfcreadout.read_flow_rates()
+        self.ui.mfcAreadout.display(flowA)
+        self.ui.mfcBreadout.display(flowB)
+        self.ui.mfcCreadout.display(flowC)
 
-    def update_mfcA_lcd(self):
-        flow = mfcreadout.read_flow_rateA()
-        self.ui.mfcAreadout.display(flow)
 
-    def update_mfcC_lcd(self):
-        flow = mfcreadout.read_flow_rateC()
-        self.ui.mfcCreadout.display(flow)
 
     def update_pressure(self):
         pressure = nicontrol.read_pressure()

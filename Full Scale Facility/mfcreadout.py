@@ -6,49 +6,45 @@ from alicat import FlowController
 import asyncio
 from alicat import FlowController
 
-def read_flow_rateA():
-    value = asyncio.run(read_flow_rateA_async())
+def read_flow_rates():
+    # Run the asynchronous batch read function
+    values = asyncio.run(read_all_flow_rates_async())
     try:
-        return float(value)
+        # Ensure all values are floats and return them as a tuple
+        return tuple(float(value) for value in values)
     except (TypeError, ValueError):
-        return 0.0  # Return 0.0 silently if the value is invalid
+        # Return (0.0, 0.0, 0.0) if any value is invalid
+        return (0.0, 0.0, 0.0)
 
-def read_flow_rateB():
-    value = asyncio.run(read_flow_rateB_async())
+async def read_all_flow_rates_async():
     try:
-        return float(value)
-    except (TypeError, ValueError):
-        return 0.0  # Return 0.0 silently if the value is invalid
+        # Create FlowController instances for all three MFCs
+        async with FlowController(address='COM3', unit='A') as mfcA, \
+                   FlowController(address='COM3', unit='B') as mfcB, \
+                   FlowController(address='COM3', unit='C') as mfcC:
+            # Gather all readouts concurrently, handling exceptions individually
+            results = await asyncio.gather(
+                safe_get_mass_flow(mfcA, 'A'),
+                safe_get_mass_flow(mfcB, 'B'),
+                safe_get_mass_flow(mfcC, 'C'),
+                return_exceptions=True  # Allow individual exceptions
+            )
 
-def read_flow_rateC():
-    value = asyncio.run(read_flow_rateC_async())
+            # Process results: return 0.0 for errors, valid values otherwise
+            flow_rates = tuple(
+                result if not isinstance(result, Exception) else 0.0
+                for result in results
+            )
+            return flow_rates
+    except Exception as e:
+        # If something unexpected happens, return 0.0 for all
+        print(f"Unexpected error in read_all_flow_rates_async: {e}")
+        return (0.0, 0.0, 0.0)
+
+async def safe_get_mass_flow(mfc, unit):
     try:
-        return float(value)
-    except (TypeError, ValueError):
-        return 0.0  # Return 0.0 silently if the value is invalid
-
-
-async def read_flow_rateA_async():
-    try:
-        async with FlowController(address='COM3', unit='A') as mfc:
-            data = await mfc.get()
-            return data.get('mass_flow', 0.0)  # Default to 0.0 if 'mass_flow' is missing
-    except Exception:
-        return 0.0  # Return 0.0 silently in case of any error
-
-async def read_flow_rateB_async():
-    try:
-        async with FlowController(address='COM3', unit='B') as mfc:
-            data = await mfc.get()
-            return data.get('mass_flow', 0.0)  # Default to 0.0 if 'mass_flow' is missing
-    except Exception:
-        return 0.0  # Return 0.0 silently in case of any error
-
-async def read_flow_rateC_async():
-    try:
-        async with FlowController(address='COM3', unit='C') as mfc:
-            data = await mfc.get()
-            return data.get('mass_flow', 0.0)  # Default to 0.0 if 'mass_flow' is missing
-    except Exception:
-        return 0.0  # Return 0.0 silently in case of any error
-
+        data = await mfc.get()
+        return data.get('mass_flow', 0.0)  # Default to 0.0 if 'mass_flow' is missing
+    except Exception as e:
+        print(f"Error reading mass flow for MFC {unit}: {e}")
+        return 0.0  # Return 0.0 for errors

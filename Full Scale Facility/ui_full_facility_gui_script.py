@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_full_facility_gui_scriptsRuGev.ui'
+## Form generated from reading UI file 'ui_full_facility_gui_scriptTquqNz.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -3351,7 +3351,7 @@ class Ui_full_facility_gui(object):
         self.s7_label.setGeometry(QRect(1010, 310, 131, 20))
         self.pressure_readout = QLCDNumber(full_facility_gui)
         self.pressure_readout.setObjectName(u"pressure_readout")
-        self.pressure_readout.setGeometry(QRect(720, 290, 71, 21))
+        self.pressure_readout.setGeometry(QRect(710, 280, 81, 31))
         self.line_4 = QFrame(full_facility_gui)
         self.line_4.setObjectName(u"line_4")
         self.line_4.setGeometry(QRect(610, 220, 321, 21))

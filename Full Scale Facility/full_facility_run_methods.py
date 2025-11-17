@@ -1,4 +1,4 @@
-# Test automation script for intiator testing without data acquisition (for now)
+ï»¿# Test automation script for intiator testing without data acquisition (for now)
 import nidaqmx
 from nidaqmx.constants import LineGrouping
 import nicontrol
@@ -21,7 +21,7 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
 
     P_std = 101300      # Pa
     T_std = 298         # K
-    R = 8.314           # J/mol·K
+    R = 8.314           # J/molÂ·K
 
     molar_flow_rate_A = setpointA / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
     molar_flow_rate_B = setpointB / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
@@ -30,8 +30,8 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     # Total molar flow rate
     total_molar_flow_rate = molar_flow_rate_A + molar_flow_rate_B + molar_flow_rate_C  # mol/s
 
-    # Volume to be filled (m³)
-    fill_volume = 14.2 / 1000  # 14.2 L ? 0.0142 m³
+    # Volume to be filled (mÂ³)
+    fill_volume = 14.2 / 1000  # 14.2 L â†’ 0.0142 mÂ³
 
     # Moles needed to fill the volume to 10 kPa absolute at 298 K
     P_target = 10000  # Pa
