@@ -29,6 +29,9 @@ When updating gui in qt designer, must update the PYTHON file to see the updates
 
 class AutomationWorker(QObject):
     finished = Signal()
+    fill_phase_complete = Signal()
+    mfc_readouts_updated = Signal(float, float, float)
+
     def __init__(self, setpointA, setpointB, setpointC, setpointD, setpointC_driver):
         super().__init__()
         self.setpointA = setpointA
@@ -38,11 +41,18 @@ class AutomationWorker(QObject):
         self.setpointC_driver = setpointC_driver
 
     def runauto(self):
-        asyncio.run(full_facility_run_methods.automatic_test(self.setpointA, self.setpointB, self.setpointC, self.setpointD, self.setpointC_driver))
+        asyncio.run(full_facility_run_methods.automatic_test(
+            self.setpointA, self.setpointB, self.setpointC, self.setpointD, self.setpointC_driver,
+            on_fill_complete=self.fill_phase_complete.emit,
+            on_mfc_setpoints_changed=self.mfc_readouts_updated.emit
+        ))
         self.finished.emit()
- 
+
     def runstanpurge(self):
-        asyncio.run(full_facility_run_methods.purge(self.setpointA, self.setpointB, self.setpointC, self.setpointD))
+        asyncio.run(full_facility_run_methods.purge(
+            self.setpointA, self.setpointB, self.setpointC, self.setpointD,
+            on_mfc_setpoints_changed=self.mfc_readouts_updated.emit
+        ))
         self.finished.emit()
 
 
@@ -120,15 +130,8 @@ class MyDialog(QDialog):
         #Connect lcd displays with the SLPM readout
         
 
-        #connects pressure display with the pressure input 
-        self.pressure_timer = QTimer(self)
-        self.pressure_timer.timeout.connect(self.update_pressure)
-        self.pressure_timer.start(1000)  # Update every 1
-
-        #connects vacuum pressure display with the pressure input 
-        self.vacuum_pressure_timer = QTimer(self)
-        self.vacuum_pressure_timer.timeout.connect(self.update_vacuum_pressure)
-        self.vacuum_pressure_timer.start(1000)  # Update every 1
+        # Pressure and vacuum pressure are updated only during automatic test
+        # (low pressure once when test starts, vacuum once after fill phase completes)
     
     def save_setpoints(self):
         #This function can be used to update the setpoints
@@ -259,6 +262,9 @@ class MyDialog(QDialog):
         setpointD = float(self.ui.mfcDsetpoint.text())
 
 
+        # Update vacuum gauge once when automatic test starts
+        self.update_vacuum_pressure()
+
         #Michael change: now gives automation its own worker/thread
         automation_worker = AutomationWorker(setpointA, setpointB, setpointC, setpointD, setpointC2)
         automation_thread = QThread()
@@ -266,6 +272,8 @@ class MyDialog(QDialog):
         automation_thread.started.connect(automation_worker.runauto)
         automation_worker.finished.connect(automation_thread.quit)
         automation_worker.finished.connect(lambda: self.reenable(button))
+        automation_worker.fill_phase_complete.connect(self.update_pressure)
+        automation_worker.mfc_readouts_updated.connect(self.update_mfc_readouts)
 
         #keep the worker alive so it's not garbage collected while running 
         if not hasattr(self, "_automation_threads"):
@@ -318,6 +326,7 @@ class MyDialog(QDialog):
         purge_thread.started.connect(purge_worker.runstanpurge)
         purge_worker.finished.connect(purge_thread.quit)
         purge_worker.finished.connect(lambda: self.reenable(button))
+        purge_worker.mfc_readouts_updated.connect(self.update_mfc_readouts)
 
         # keep a reference so it's not garbage collected and prematurely closed 
         if not hasattr(self, "_automation_threads"):
@@ -330,25 +339,22 @@ class MyDialog(QDialog):
         button.setEnabled(True)
         button.setStyleSheet("")
 
-
+    #is run at end of fill phase
     def update_pressure(self):
         pressure = nicontrol.read_pressure()
         self.ui.pressure_readout.display(pressure)
 
+    #is run at start of automatic test
     def update_vacuum_pressure(self):
         vacuum_pressure = nicontrol.read_vacuum_pressure()
-        self.ui.vacuum_pressure_readout.display(vacuum_pressure)    
+        self.ui.vacuum_pressure_readout.display(vacuum_pressure)
 
+    def update_mfc_readouts(self, setpoint_a, setpoint_b, setpoint_c):
+        """Update MFC A/B/C readout displays (e.g. when setpoints change in automatic test or purge)."""
+        self.ui.mfcAreadout.display(setpoint_a)
+        self.ui.mfcBreadout.display(setpoint_b)
+        self.ui.mfcCreadout.display(setpoint_c)
 
-    # def data_acquisition(self):
-    #     with nidaqmx.Task() as task:
-    #         task.ai_channels.add_ai_voltage_chan("cdaq9188-169338emod6/port0/ai0", min_val = -10, max_val = 10)
-    #         task.timing.cfg_samp_clk_timing(1000, sample_mode= acquisitiontype.finite, samps_per_chan=1000)
-    #         data = task.read(read_all_available)
-    #         fig = figure(figsize=(4,4))
-    #         ax = fig.add_subplot()
-    #         ax.plot(data)
-        
 
 
 #main: whats actually running  

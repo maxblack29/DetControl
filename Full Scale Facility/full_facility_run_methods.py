@@ -1,4 +1,4 @@
-﻿# Test automation script for intiator testing without data acquisition (for now)
+# Test automation script for intiator testing without data acquisition (for now)
 import nidaqmx
 from nidaqmx.constants import LineGrouping
 import nicontrol
@@ -16,7 +16,7 @@ async def connect(unit, setpoint):
         #figure out way to change last sent flow rate from here 
         await mfc.set_flow_rate(setpoint)
 
-async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_driver):
+async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_driver, on_fill_complete=None, on_mfc_setpoints_changed=None):
 
     print("Test starting")
 
@@ -77,17 +77,19 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     await asyncio.gather(
         connect('A', setpointA),
         connect('B', setpointB),
-        connect('C', setpointC), 
+        connect('C', setpointC),
     )
+    if on_mfc_setpoints_changed is not None:
+        on_mfc_setpoints_changed(setpointA, setpointB, setpointC)
 
     #Start Speaker After Half the Fill Time
-    await asyncio.sleep(30) 
+    await asyncio.sleep(fill_time/2) 
     speaker_on_daq_2 = [True, True, True, False, False, False, False, False] #State for speaker on
     nicontrol.set_digital_output_2(speaker_on_daq_2)
 
     
 
-    await asyncio.sleep(30) 
+    await asyncio.sleep(fill_time/2) 
     # #Zero MFCs and Close Fill Solenoids
     post_fill_daq1 = [False, False, True, True, False, False, False, False] #Daq1 states post fill 
     nicontrol.set_digital_output(post_fill_daq1)
@@ -108,24 +110,31 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     # await asyncio.sleep(1) #1 second fill for driver gas 
 
     await asyncio.gather(
-        connect('A', 0.0), 
+        connect('A', 0.0),
         connect('B', 0.0),
         connect('C', 0.0),
     )
+    if on_mfc_setpoints_changed is not None:
+        on_mfc_setpoints_changed(0.0, 0.0, 0.0)
 
     await asyncio.sleep(1)
+
+    if on_fill_complete is not None:
+        on_fill_complete()
 
     print("Fill complete, Ignite and press the standard purge button")
    
 
-async def purge(setpointA, setpointB, setpointC, setpointD):
-    
+async def purge(setpointA, setpointB, setpointC, setpointD, on_mfc_setpoints_changed=None):
+
     await asyncio.gather(
-        connect('A', 0.0), 
+        connect('A', 0.0),
         connect('B', 0.0),
         connect('C', 0.0),
     )
-    
+    if on_mfc_setpoints_changed is not None:
+        on_mfc_setpoints_changed(0.0, 0.0, 0.0)
+
     purge_daq1 = [False, False, False, False, False, False, False, False]
     nicontrol.set_digital_output(purge_daq1)
     purge_daq2 = [False, False, False, False, False, False, False, False]
