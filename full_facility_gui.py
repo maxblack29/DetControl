@@ -48,15 +48,13 @@ class AutomationWorker(QObject):
 
 class SolenoidWorker(QObject):
     finished = Signal()
-    def __init__(self, daq1, daq2, testcount):
+    def __init__(self, states, testcount):
         super().__init__()
-        self.daq1 = daq1 
-        self.daq2 = daq2 
+        self.states = states
         self.testcount = testcount
 
     def runsolenoid(self):
-        nicontrol.set_digital_output(self.daq1)
-        nicontrol.set_digital_output_2(self.daq2)
+        nicontrol.set_digital_output(self.states)
         self.finished.emit()
     
     def runignite(self):
@@ -74,11 +72,8 @@ class MyDialog(QDialog):
         self.ui.setupUi(self)
         #self.plumbing_diagram = plumbing_diagram
         
-        self.daq1 = [False, False, True, False, False, False, False, False] #Startup DAQ1 States
-        nicontrol.set_digital_output(self.daq1) #Sets the digital output to the daq1
-
-        self.daq2 = [False, False, False, False, False, False, False, False] #Startup DAQ2 States
-        nicontrol.set_digital_output_2(self.daq2) #Sets the digital output to the daq2 
+        self.solenoids = [False, False, False, False, False, False, False, False] #Sets a bool array for 8 channels, last channel is empty
+        nicontrol.set_digital_output(self.solenoids) #Sets the digital output to the solenoid states
 
         self.testcount = 0 #zeroes the test count for data acquisition when gui is opened
 
@@ -88,10 +83,15 @@ class MyDialog(QDialog):
         self.ui.openS2.clicked.connect(lambda: self.toggle_solenoid(1, True))
         self.ui.closeS2.clicked.connect(lambda: self.toggle_solenoid(1, False))
         self.ui.openS3.clicked.connect(lambda: self.toggle_solenoid(2, True))
-        self.ui.closeS3.clicked.connect(lambda: self.toggle_solenoid(2,False))  
-        self.ui.openS4.clicked.connect(lambda: self.toggle_solenoid(3, True))  
-        self.ui.closeS4.clicked.connect(lambda: self.toggle_solenoid(3, False))  
-
+        self.ui.closeS3.clicked.connect(lambda: self.toggle_solenoid(2, False))
+        self.ui.openS4.clicked.connect(lambda: self.toggle_solenoid(3, False))  # Normally open
+        self.ui.closeS4.clicked.connect(lambda: self.toggle_solenoid(3, True))  
+        self.ui.openS5.clicked.connect(lambda: self.toggle_solenoid(4, True))
+        self.ui.closeS5.clicked.connect(lambda: self.toggle_solenoid(4, False))
+        self.ui.openS6.clicked.connect(lambda: self.toggle_solenoid(5, False)) # Normally open
+        self.ui.closeS6.clicked.connect(lambda: self.toggle_solenoid(5, True))  
+        self.ui.openS7.clicked.connect(lambda: self.toggle_solenoid(6, True))
+        self.ui.closeS7.clicked.connect(lambda: self.toggle_solenoid(6, False))
 
         #Connects the update setpoints button
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
@@ -119,6 +119,11 @@ class MyDialog(QDialog):
 
         #Connect lcd displays with the SLPM readout
         
+        # #COMMENT BELOW OUT IF CODE NOT WORKING
+        # self.mfc_timer = QTimer(self)
+        # self.mfc_timer.timeout.connect(self.update_mfc_lcds)
+        # self.mfc_timer.start(2000)  # Update every 1000 ms (1 second)
+        # #COMMENT ABOVE OUT IF CODE NOT WORKING
 
         #connects pressure display with the pressure input 
         self.pressure_timer = QTimer(self)
@@ -149,12 +154,7 @@ class MyDialog(QDialog):
         asyncio.run(alicatcontrol.change_rate('A', setpointA))
         asyncio.run(alicatcontrol.change_rate('B', setpointB))
         asyncio.run(alicatcontrol.change_rate('C', setpointC))
-        #asyncio.run(alicatcontrol.change_rate('D', setpointD))
-        
-        #update last sent flow rates display
-        self.ui.mfcAreadout.display(setpointA)
-        self.ui.mfcBreadout.display(setpointB)
-        self.ui.mfcCreadout.display(setpointC)
+        asyncio.run(alicatcontrol.change_rate('D', setpointD))
 
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
 
@@ -175,18 +175,11 @@ class MyDialog(QDialog):
         asyncio.run(alicatcontrol.change_rate('A', 0.0))
         asyncio.run(alicatcontrol.change_rate('B', 0.0))
         asyncio.run(alicatcontrol.change_rate('C', 0.0))
-        #asyncio.run(alicatcontrol.change_rate('D', 0.0))
-
-        #update last sent flow rates display
-        self.ui.mfcAreadout.display("0.0")
-        self.ui.mfcBreadout.display("0.0")
-        self.ui.mfcCreadout.display("0.0")
-
-
+        asyncio.run(alicatcontrol.change_rate('D', 0.0))
         print("All gas setpoints reset to 0.0 SLPM.")
     
 
-
+    #Figure out how to do a change_gas function
     def change_gas(self):
         #This function will change the gas type for each controller
         self.ui.mfcAgas.currentText()
@@ -201,14 +194,15 @@ class MyDialog(QDialog):
 
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
     def toggle_solenoid(self, index, state):
-        # Update the correct DAQ based on the solenoid index
-        if index == 3:  # S4 is now on daq2
-            self.daq2[index - 3] = not state  # Invert state for S4 (Open -> False, Close -> True)
-        elif index == 2:  # S3 is on daq1
-            self.daq1[index] = not state  # Invert state for S3 (Open -> False, Close -> True)
-        else:
-            self.daq1[index] = state  # Directly update daq1 for other solenoids
-
+         
+        # Handle specific cases for S4 and S6
+        if index == 3:  # S4
+            state = not state  
+        elif index == 5:  # S6
+            state = not state  
+        
+        
+        self.solenoids[index] = state #pulls state of current solenoid from button click
         open_button = getattr(self.ui, f"openS{index+1}")
         close_button = getattr(self.ui, f"closeS{index+1}")
 
@@ -224,8 +218,7 @@ class MyDialog(QDialog):
             close_button.setStyleSheet("background-color: green; color: white;")
             QTimer.singleShot(500, lambda: close_button.setStyleSheet(""))
 
-        # Pass the updated DAQ states to the SolenoidWorker
-        solenoid_worker = SolenoidWorker(self.daq1, self.daq2, self.testcount)
+        solenoid_worker = SolenoidWorker(self.solenoids, self.testcount)
         solenoid_thread = QThread()
         solenoid_worker.moveToThread(solenoid_thread)
         solenoid_thread.started.connect(solenoid_worker.runsolenoid)
@@ -233,15 +226,28 @@ class MyDialog(QDialog):
         solenoid_worker.finished.connect(lambda: self.reenable(open_button))
         solenoid_worker.finished.connect(lambda: self.reenable(close_button))
 
-        # Keep the worker alive so it's not garbage collected while running
-        if not hasattr(self, "_solenoid_threads"):
+        # keep the worker alive so it's not garbage collected while running 
+        if not hasattr(self, "_solenoid_threads"): 
             self._solenoid_threads = []
         self._solenoid_threads.append((solenoid_thread, solenoid_worker))
 
         solenoid_thread.start()
-
-        # Print the state of the solenoid
-        print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 0):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 1):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 2):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 3):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 4):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 5):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 6):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+        if(index == 7):
+            print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.") 
 
   
     stop_test = False
@@ -329,6 +335,16 @@ class MyDialog(QDialog):
     def reenable(self, button):
         button.setEnabled(True)
         button.setStyleSheet("")
+
+
+    async def update_mfc_lcds_async(self):
+        flowA, flowB, flowC = await mfcreadout.read_flow_rates()
+        self.ui.mfcAreadout.display(flowA)
+        self.ui.mfcBreadout.display(flowB)
+        self.ui.mfcCreadout.display(flowC)
+
+    def update_mfc_lcds(self):
+        asyncio.create_task(self.update_mfc_lcds_async())
 
 
     def update_pressure(self):

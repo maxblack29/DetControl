@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_full_facility_gui_scriptIJKTrc.ui'
+## Form generated from reading UI file 'ui_full_facility_gui_scripthKGuEW.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -23,7 +23,7 @@ class Ui_full_facility_gui(object):
     def setupUi(self, full_facility_gui):
         if not full_facility_gui.objectName():
             full_facility_gui.setObjectName(u"full_facility_gui")
-        full_facility_gui.resize(1737, 415)
+        full_facility_gui.resize(1737, 379)
         full_facility_gui.setStyleSheet(u"/*Copyright (c) DevSec Studio. All rights reserved.\n"
 "\n"
 "MIT License\n"
@@ -2191,7 +2191,7 @@ class Ui_full_facility_gui(object):
         self.solenoidstatelabel.setGeometry(QRect(1210, 30, 91, 31))
         self.s2_label = QLabel(full_facility_gui)
         self.s2_label.setObjectName(u"s2_label")
-        self.s2_label.setGeometry(QRect(1010, 110, 131, 16))
+        self.s2_label.setGeometry(QRect(1010, 110, 91, 16))
         self.s1_label = QLabel(full_facility_gui)
         self.s1_label.setObjectName(u"s1_label")
         self.s1_label.setGeometry(QRect(1010, 80, 91, 16))
@@ -3303,7 +3303,7 @@ class Ui_full_facility_gui(object):
         self.mfcCreadout.setGeometry(QRect(440, 170, 64, 23))
         self.mfcreadoutlabel = QLabel(full_facility_gui)
         self.mfcreadoutlabel.setObjectName(u"mfcreadoutlabel")
-        self.mfcreadoutlabel.setGeometry(QRect(420, 30, 111, 31))
+        self.mfcreadoutlabel.setGeometry(QRect(430, 30, 91, 31))
         self.s3_label = QLabel(full_facility_gui)
         self.s3_label.setObjectName(u"s3_label")
         self.s3_label.setGeometry(QRect(1010, 150, 131, 20))
@@ -3313,15 +3313,42 @@ class Ui_full_facility_gui(object):
         self.openS4 = QPushButton(full_facility_gui)
         self.openS4.setObjectName(u"openS4")
         self.openS4.setGeometry(QRect(1150, 190, 92, 31))
+        self.openS5 = QPushButton(full_facility_gui)
+        self.openS5.setObjectName(u"openS5")
+        self.openS5.setGeometry(QRect(1150, 230, 92, 31))
+        self.openS6 = QPushButton(full_facility_gui)
+        self.openS6.setObjectName(u"openS6")
+        self.openS6.setGeometry(QRect(1150, 270, 92, 31))
+        self.openS7 = QPushButton(full_facility_gui)
+        self.openS7.setObjectName(u"openS7")
+        self.openS7.setGeometry(QRect(1150, 310, 92, 31))
         self.closeS3 = QPushButton(full_facility_gui)
         self.closeS3.setObjectName(u"closeS3")
         self.closeS3.setGeometry(QRect(1260, 150, 92, 31))
         self.closeS4 = QPushButton(full_facility_gui)
         self.closeS4.setObjectName(u"closeS4")
         self.closeS4.setGeometry(QRect(1260, 190, 92, 31))
+        self.closeS5 = QPushButton(full_facility_gui)
+        self.closeS5.setObjectName(u"closeS5")
+        self.closeS5.setGeometry(QRect(1260, 230, 92, 31))
+        self.closeS6 = QPushButton(full_facility_gui)
+        self.closeS6.setObjectName(u"closeS6")
+        self.closeS6.setGeometry(QRect(1260, 270, 92, 31))
+        self.closeS7 = QPushButton(full_facility_gui)
+        self.closeS7.setObjectName(u"closeS7")
+        self.closeS7.setGeometry(QRect(1260, 310, 92, 31))
         self.s4_label = QLabel(full_facility_gui)
         self.s4_label.setObjectName(u"s4_label")
         self.s4_label.setGeometry(QRect(1010, 190, 131, 20))
+        self.s5_label = QLabel(full_facility_gui)
+        self.s5_label.setObjectName(u"s5_label")
+        self.s5_label.setGeometry(QRect(1010, 230, 131, 20))
+        self.s6_label = QLabel(full_facility_gui)
+        self.s6_label.setObjectName(u"s6_label")
+        self.s6_label.setGeometry(QRect(1010, 270, 131, 20))
+        self.s7_label = QLabel(full_facility_gui)
+        self.s7_label.setObjectName(u"s7_label")
+        self.s7_label.setGeometry(QRect(1010, 310, 131, 20))
         self.pressure_readout = QLCDNumber(full_facility_gui)
         self.pressure_readout.setObjectName(u"pressure_readout")
         self.pressure_readout.setGeometry(QRect(760, 250, 71, 31))
@@ -3347,6 +3374,9 @@ class Ui_full_facility_gui(object):
         self.closeS1.setDefault(True)
         self.closeS3.setDefault(True)
         self.closeS4.setDefault(True)
+        self.closeS5.setDefault(True)
+        self.closeS6.setDefault(True)
+        self.closeS7.setDefault(True)
 
 
         QMetaObject.connectSlotsByName(full_facility_gui)
@@ -3463,8 +3493,8 @@ class Ui_full_facility_gui(object):
         self.mfcAgas.setItemText(29, QCoreApplication.translate("full_facility_gui", u"P-5", None))
 
         self.solenoidstatelabel.setText(QCoreApplication.translate("full_facility_gui", u"Solenoid States:", None))
-        self.s2_label.setText(QCoreApplication.translate("full_facility_gui", u"S2: Oxidizer and Diluent", None))
-        self.s1_label.setText(QCoreApplication.translate("full_facility_gui", u"S1: Fuel", None))
+        self.s2_label.setText(QCoreApplication.translate("full_facility_gui", u"S2: Fuel ", None))
+        self.s1_label.setText(QCoreApplication.translate("full_facility_gui", u"S1: Driver Gas", None))
         self.openS1.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.openS2.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.closeS2.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
@@ -3512,13 +3542,22 @@ class Ui_full_facility_gui(object):
         self.mfcCsetpoint_2.setText(QCoreApplication.translate("full_facility_gui", u"0.0", None))
         self.SLPMlabel3_2.setText(QCoreApplication.translate("full_facility_gui", u"SLPM", None))
         self.driver_label.setText(QCoreApplication.translate("full_facility_gui", u"Driver Mixture:", None))
-        self.mfcreadoutlabel.setText(QCoreApplication.translate("full_facility_gui", u"Last Sent Flow Rate", None))
-        self.s3_label.setText(QCoreApplication.translate("full_facility_gui", u"S3: Purge", None))
+        self.mfcreadoutlabel.setText(QCoreApplication.translate("full_facility_gui", u"MFC readout:", None))
+        self.s3_label.setText(QCoreApplication.translate("full_facility_gui", u"S3: Oxidizer and Diluent", None))
         self.openS3.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.openS4.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
+        self.openS5.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
+        self.openS6.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
+        self.openS7.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.closeS3.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
         self.closeS4.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
-        self.s4_label.setText(QCoreApplication.translate("full_facility_gui", u"S4: Exhaust", None))
+        self.closeS5.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
+        self.closeS6.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
+        self.closeS7.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
+        self.s4_label.setText(QCoreApplication.translate("full_facility_gui", u"S4: Purge", None))
+        self.s5_label.setText(QCoreApplication.translate("full_facility_gui", u"S5: Static Pressure", None))
+        self.s6_label.setText(QCoreApplication.translate("full_facility_gui", u"S6: Exhaust", None))
+        self.s7_label.setText(QCoreApplication.translate("full_facility_gui", u"S7: Vacuum Valve", None))
         self.pressure_label.setText(QCoreApplication.translate("full_facility_gui", u"High Pressure Reading", None))
         self.pressure_label_2.setText(QCoreApplication.translate("full_facility_gui", u"Vacuum Pressure Reading", None))
     # retranslateUi

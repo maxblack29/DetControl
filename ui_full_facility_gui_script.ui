@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1737</width>
-    <height>415</height>
+    <height>379</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -2702,12 +2702,12 @@ QProgressBar::chunk
     <rect>
      <x>1010</x>
      <y>110</y>
-     <width>131</width>
+     <width>91</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>S2: Oxidizer and Diluent</string>
+    <string>S2: Fuel </string>
    </property>
   </widget>
   <widget class="QLabel" name="s1_label">
@@ -2720,7 +2720,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S1: Fuel</string>
+    <string>S1: Driver Gas</string>
    </property>
   </widget>
   <widget class="QPushButton" name="openS1">
@@ -4149,14 +4149,14 @@ QProgressBar::chunk
   <widget class="QLabel" name="mfcreadoutlabel">
    <property name="geometry">
     <rect>
-     <x>420</x>
+     <x>430</x>
      <y>30</y>
-     <width>111</width>
+     <width>91</width>
      <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>Last Sent Flow Rate</string>
+    <string>MFC readout:</string>
    </property>
   </widget>
   <widget class="QLabel" name="s3_label">
@@ -4169,7 +4169,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S3: Purge</string>
+    <string>S3: Oxidizer and Diluent</string>
    </property>
   </widget>
   <widget class="QPushButton" name="openS3">
@@ -4190,6 +4190,45 @@ QProgressBar::chunk
     <rect>
      <x>1150</x>
      <y>190</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="openS5">
+   <property name="geometry">
+    <rect>
+     <x>1150</x>
+     <y>230</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="openS6">
+   <property name="geometry">
+    <rect>
+     <x>1150</x>
+     <y>270</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="openS7">
+   <property name="geometry">
+    <rect>
+     <x>1150</x>
+     <y>310</y>
      <width>92</width>
      <height>31</height>
     </rect>
@@ -4230,6 +4269,54 @@ QProgressBar::chunk
     <bool>true</bool>
    </property>
   </widget>
+  <widget class="QPushButton" name="closeS5">
+   <property name="geometry">
+    <rect>
+     <x>1260</x>
+     <y>230</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Close</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="closeS6">
+   <property name="geometry">
+    <rect>
+     <x>1260</x>
+     <y>270</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Close</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="closeS7">
+   <property name="geometry">
+    <rect>
+     <x>1260</x>
+     <y>310</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Close</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+  </widget>
   <widget class="QLabel" name="s4_label">
    <property name="geometry">
     <rect>
@@ -4240,7 +4327,46 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S4: Exhaust</string>
+    <string>S4: Purge</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="s5_label">
+   <property name="geometry">
+    <rect>
+     <x>1010</x>
+     <y>230</y>
+     <width>131</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>S5: Static Pressure</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="s6_label">
+   <property name="geometry">
+    <rect>
+     <x>1010</x>
+     <y>270</y>
+     <width>131</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>S6: Exhaust</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="s7_label">
+   <property name="geometry">
+    <rect>
+     <x>1010</x>
+     <y>310</y>
+     <width>131</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>S7: Vacuum Valve</string>
    </property>
   </widget>
   <widget class="QLCDNumber" name="pressure_readout">

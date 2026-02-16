@@ -13,7 +13,6 @@ import gc
 
 async def connect(unit, setpoint):
     async with FlowController(address='COM3', unit=unit) as mfc:
-        #figure out way to change last sent flow rate from here 
         await mfc.set_flow_rate(setpoint)
 
 async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_driver):
@@ -46,15 +45,15 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     await asyncio.sleep(1) 
 
     #BEGIN TEST 
-    #1: Open up valves to MFCs and vacuum down to 60 milTorr (done manually in these first tests)-------------------------------------------------------------------------------------------------
+    #1: Open up valves to MFCs and vacuum down to 60 milTorr
 
-    #print("Vacuuming down...")
+    print("Vacuuming down...")
 
-    #turn_vacuum_on_array = [True, False, False, False, False, False, False, False] #Solenoid States to turn on vacuum pump
-    #nicontrol.set_digital_output_2(turn_vacuum_on_array)
+    turn_vacuum_on_array = [True, False, False, False, False, False, False, False] #Solenoid States to turn on vacuum pump
+    # nicontrol.set_digital_output_2(turn_vacuum_on_array)
 
-     #vacuum_solenoids = [True, True, True, True, True, True, True, False] #Solenoid States for Vacuuming Down. All open except S4 and S6 (normally closed) 
-     #nicontrol.set_digital_output(vacuum_solenoids)
+    # vacuum_solenoids = [True, True, True, True, True, True, True, False] #Solenoid States for Vacuuming Down. All open except S4 and S6 (normally closed) 
+    # nicontrol.set_digital_output(vacuum_solenoids)
 
     #check vacuum state
     # vacuum_running = False
@@ -64,38 +63,34 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
 
     print("Vacuum down complete. Starting fill sequence...")
         
-    daq_1 = [True, True, True, False, False, False, False, False] #DAQ 1 States Post Vacuuming Down. Fuel and Oxidizer/Diluent open, purge closed
-    nicontrol.set_digital_output(daq_1)
-    daq_2 = [True, True, False, False, False, False, False, False] #DAQ 2 States Post Vacuuming Down. Exhaust closed, Pressure reading open
-    nicontrol.set_digital_output_2(daq_2)
+    # post_vacuum_solenoids = [False, True, True, True, True, True, False, False] #Solenoid States Post Vacuuming Down. S1, S4, S5, S6, S7 closed
+    # nicontrol.set_digital_output(post_vacuum_solenoids)
 
-    #turn_vacuum_off_array = [False, False, False, False, False, False, False, False] #Solenoid States to turn off vacuum pump
-    #nicontrol.set_digital_output_2(turn_vacuum_off_array)
+    # turn_vacuum_off_array = [False, False, False, False, False, False, False, False] #Solenoid States to turn off vacuum pump
+    # nicontrol.set_digital_output_2(turn_vacuum_off_array)
 
-    #2: Fill---------------------------------------------------------------------------------------------------------------------------------------------------
+    #2: Fill 
         
     await asyncio.gather(
         connect('A', setpointA),
         connect('B', setpointB),
         connect('C', setpointC), 
+        connect('D', 0.0)  
     )
 
-    #Start Speaker After Half the Fill Time
-    await asyncio.sleep(30) 
-    speaker_on_daq_2 = [True, True, True, False, False, False, False, False] #State for speaker on
-    nicontrol.set_digital_output_2(speaker_on_daq_2)
+    await asyncio.sleep(fill_time)
+    #Start Speaker 
+    # speakerstate = [False, False, False, True, False, True, False, False] 
+    # nicontrol.set_digital_output_2(speakerstate)
 
-    
+    # await asyncio.sleep(fill_time/2) 
 
-    await asyncio.sleep(30) 
+
     # #Zero MFCs and Close Fill Solenoids
-    post_fill_daq1 = [False, False, True, True, False, False, False, False] #Daq1 states post fill 
-    nicontrol.set_digital_output(post_fill_daq1)
-    post_fill_daq2 = [True, False, True, False, False, False, False, False] #Daq2 states post fill 
-    nicontrol.set_digital_output_2(post_fill_daq2)
-    
-    #need to read a pressure here once tap is closed 
+    # post_fill_solenoids = [False, True, False, False, False, False, False, False] #Solenoid states post fill 
+    # nicontrol.set_digital_output(post_fill_solenoids)
 
+    
 
     #Driver Line
     # await asyncio.gather(
@@ -111,6 +106,7 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
         connect('A', 0.0), 
         connect('B', 0.0),
         connect('C', 0.0),
+        connect('D', 0.0)
     )
 
     await asyncio.sleep(1)
@@ -124,19 +120,21 @@ async def purge(setpointA, setpointB, setpointC, setpointD):
         connect('A', 0.0), 
         connect('B', 0.0),
         connect('C', 0.0),
+        connect('D', 0.0)
     )
     
-    purge_daq1 = [False, False, False, False, False, False, False, False]
-    nicontrol.set_digital_output(purge_daq1)
-    purge_daq2 = [False, False, False, False, False, False, False, False]
-    nicontrol.set_digital_output_2(purge_daq2)
+    purge_solenoids = [False, False, False, False, False, False, False, False]
+    nicontrol.set_digital_output(purge_solenoids)
     
     print("Purging...")
-    await asyncio.sleep(30)
+    await asyncio.sleep(5)
 
-    purge_complete_daq1 = [False, False, True, False, False, False, False, False]
-    nicontrol.set_digital_output(purge_complete_daq1)
-    purge_complete_daq2 = [False, False, False, False, False, False, False, False]
-    nicontrol.set_digital_output_2(purge_complete_daq2)
+    purge_complete_solenoids = [False, True, False, False, False, False, False, False]
+    nicontrol.set_digital_output(purge_complete_solenoids)
     
+
+    #Speaker Off 
+    speakerstate = [False]*8 
+    nicontrol.set_digital_output_2(speakerstate)
+
     print("Purge complete!")
