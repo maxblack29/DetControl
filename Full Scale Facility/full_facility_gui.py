@@ -15,7 +15,6 @@ import asyncio
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-import mfcreadout
 
 import pdb
 import pyqtgraph as pg
@@ -58,11 +57,13 @@ class AutomationWorker(QObject):
 
 class SolenoidWorker(QObject):
     finished = Signal()
-    def __init__(self, daq1, daq2, testcount):
+    def __init__(self, daq1, daq2, testcount, vacuum_pressure, post_fill_pressure):
         super().__init__()
         self.daq1 = daq1 
         self.daq2 = daq2 
         self.testcount = testcount
+        self.vacuum_pressure = vacuum_pressure
+        self.post_fill_pressure = post_fill_pressure
 
     def runsolenoid(self):
         nicontrol.set_digital_output(self.daq1)
@@ -70,7 +71,7 @@ class SolenoidWorker(QObject):
         self.finished.emit()
     
     def runignite(self):
-        nicontrol.set_ignite_read_pressure(self.states, self.testcount) 
+        nicontrol.set_ignite_read_pressure(self.testcount, self.vacuum_pressure, self.post_fill_pressure) 
         self.finished.emit()
 
 
@@ -87,7 +88,7 @@ class MyDialog(QDialog):
         self.daq1 = [False, False, True, False, False, False, False, False] #Startup DAQ1 States
         nicontrol.set_digital_output(self.daq1) #Sets the digital output to the daq1
 
-        self.daq2 = [False, False, False, False, False, False, False, False] #Startup DAQ2 States
+        self.daq2 = [True, True, False, False, False, False, False, False] #Startup DAQ2 States
         nicontrol.set_digital_output_2(self.daq2) #Sets the digital output to the daq2 
 
         self.testcount = 0 #zeroes the test count for data acquisition when gui is opened
@@ -100,7 +101,9 @@ class MyDialog(QDialog):
         self.ui.openS3.clicked.connect(lambda: self.toggle_solenoid(2, True))
         self.ui.closeS3.clicked.connect(lambda: self.toggle_solenoid(2,False))  
         self.ui.openS4.clicked.connect(lambda: self.toggle_solenoid(3, True))  
-        self.ui.closeS4.clicked.connect(lambda: self.toggle_solenoid(3, False))  
+        self.ui.closeS4.clicked.connect(lambda: self.toggle_solenoid(3, False)) 
+        self.ui.openS5.clicked.connect(lambda: self.toggle_solenoid(4, True))  
+        self.ui.closeS5.clicked.connect(lambda: self.toggle_solenoid(4, False)) 
 
 
         #Connects the update setpoints button
@@ -127,11 +130,8 @@ class MyDialog(QDialog):
         self.ui.purgebutton.clicked.connect(self.purge)
         self.ui.igniteButton.clicked.connect(self.ignite)
 
-        #Connect lcd displays with the SLPM readout
-        
-
-        # Pressure and vacuum pressure are updated only during automatic test
-        # (low pressure once when test starts, vacuum once after fill phase completes)
+        self.vacuum_pressure = 0
+        self.post_fill_pressure = 0
     
     def save_setpoints(self):
         #This function can be used to update the setpoints
@@ -207,6 +207,8 @@ class MyDialog(QDialog):
         # Update the correct DAQ based on the solenoid index
         if index == 3:  # S4 is now on daq2
             self.daq2[index - 3] = not state  # Invert state for S4 (Open -> False, Close -> True)
+        elif index == 4:  #S5 is on DAQ2 port 1
+            self.daq2[1] = state  
         elif index == 2:  # S3 is on daq1
             self.daq1[index] = not state  # Invert state for S3 (Open -> False, Close -> True)
         else:
@@ -262,6 +264,8 @@ class MyDialog(QDialog):
         setpointD = float(self.ui.mfcDsetpoint.text())
 
 
+        self.testcount+=1
+
         # Update vacuum gauge once when automatic test starts
         self.update_vacuum_pressure()
 
@@ -289,11 +293,8 @@ class MyDialog(QDialog):
         self.ui.purgebutton.setStyleSheet("")
         self.ui.igniteButton.setStyleSheet("")
 
-
-        #CHANGE LATER WHEN WIRED 
-        ignite_state = [False, False, False, False, False, False, False, False] #Set the ignite solenoid state to True
         testcount = self.testcount 
-        ignite_worker = SolenoidWorker(ignite_state, testcount)
+        ignite_worker = SolenoidWorker(testcount, vacuum_pressure, )
         ignite_thread = QThread()
         ignite_worker.moveToThread(ignite_thread)
         ignite_thread.started.connect(ignite_worker.runignite)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_full_facility_gui_scriptIJKTrc.ui'
+## Form generated from reading UI file 'ui_full_facility_gui_scriptWifSAm.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -3335,10 +3335,22 @@ class Ui_full_facility_gui(object):
         self.pressure_label.setGeometry(QRect(620, 250, 121, 31))
         self.pressure_label_2 = QLabel(full_facility_gui)
         self.pressure_label_2.setObjectName(u"pressure_label_2")
-        self.pressure_label_2.setGeometry(QRect(620, 300, 151, 21))
+        self.pressure_label_2.setGeometry(QRect(620, 300, 231, 31))
         self.vacuum_pressure_readout = QLCDNumber(full_facility_gui)
         self.vacuum_pressure_readout.setObjectName(u"vacuum_pressure_readout")
-        self.vacuum_pressure_readout.setGeometry(QRect(760, 300, 71, 31))
+        self.vacuum_pressure_readout.setGeometry(QRect(760, 310, 71, 31))
+        self.pressure_label_3 = QLabel(full_facility_gui)
+        self.pressure_label_3.setObjectName(u"pressure_label_3")
+        self.pressure_label_3.setGeometry(QRect(660, 320, 41, 31))
+        self.s5_label = QLabel(full_facility_gui)
+        self.s5_label.setObjectName(u"s5_label")
+        self.s5_label.setGeometry(QRect(1010, 230, 131, 20))
+        self.openS5 = QPushButton(full_facility_gui)
+        self.openS5.setObjectName(u"openS5")
+        self.openS5.setGeometry(QRect(1150, 230, 92, 31))
+        self.closeS5 = QPushButton(full_facility_gui)
+        self.closeS5.setObjectName(u"closeS5")
+        self.closeS5.setGeometry(QRect(1260, 230, 92, 31))
 
         self.retranslateUi(full_facility_gui)
 
@@ -3347,6 +3359,7 @@ class Ui_full_facility_gui(object):
         self.closeS1.setDefault(True)
         self.closeS3.setDefault(True)
         self.closeS4.setDefault(True)
+        self.closeS5.setDefault(True)
 
 
         QMetaObject.connectSlotsByName(full_facility_gui)
@@ -3519,7 +3532,11 @@ class Ui_full_facility_gui(object):
         self.closeS3.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
         self.closeS4.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
         self.s4_label.setText(QCoreApplication.translate("full_facility_gui", u"S4: Exhaust", None))
-        self.pressure_label.setText(QCoreApplication.translate("full_facility_gui", u"High Pressure Reading", None))
+        self.pressure_label.setText(QCoreApplication.translate("full_facility_gui", u"Post Fill Pressure (kPa)", None))
         self.pressure_label_2.setText(QCoreApplication.translate("full_facility_gui", u"Vacuum Pressure Reading", None))
+        self.pressure_label_3.setText(QCoreApplication.translate("full_facility_gui", u"(kPa)", None))
+        self.s5_label.setText(QCoreApplication.translate("full_facility_gui", u"S5: Fill Pressure Gauge", None))
+        self.openS5.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
+        self.closeS5.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
     # retranslateUi
 

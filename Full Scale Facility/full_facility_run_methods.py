@@ -90,14 +90,17 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     
 
     await asyncio.sleep(fill_time/2) 
+
+    #read pressure
+    if on_fill_complete is not None:
+        on_fill_complete()
+
     # #Zero MFCs and Close Fill Solenoids
     post_fill_daq1 = [False, False, True, True, False, False, False, False] #Daq1 states post fill 
     nicontrol.set_digital_output(post_fill_daq1)
     post_fill_daq2 = [True, False, True, False, False, False, False, False] #Daq2 states post fill 
     nicontrol.set_digital_output_2(post_fill_daq2)
     
-    #need to read a pressure here once tap is closed 
-
 
     #Driver Line
     # await asyncio.gather(
@@ -119,8 +122,6 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
 
     await asyncio.sleep(1)
 
-    if on_fill_complete is not None:
-        on_fill_complete()
 
     print("Fill complete, Ignite and press the standard purge button")
    
@@ -141,7 +142,7 @@ async def purge(setpointA, setpointB, setpointC, setpointD, on_mfc_setpoints_cha
     nicontrol.set_digital_output_2(purge_daq2)
     
     print("Purging...")
-    await asyncio.sleep(30)
+    await asyncio.sleep(5)
 
     purge_complete_daq1 = [False, False, True, False, False, False, False, False]
     nicontrol.set_digital_output(purge_complete_daq1)

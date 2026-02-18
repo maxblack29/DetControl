@@ -4276,7 +4276,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>High Pressure Reading</string>
+    <string>Post Fill Pressure (kPa)</string>
    </property>
   </widget>
   <widget class="QLabel" name="pressure_label_2">
@@ -4284,8 +4284,8 @@ QProgressBar::chunk
     <rect>
      <x>620</x>
      <y>300</y>
-     <width>151</width>
-     <height>21</height>
+     <width>231</width>
+     <height>31</height>
     </rect>
    </property>
    <property name="text">
@@ -4296,10 +4296,65 @@ QProgressBar::chunk
    <property name="geometry">
     <rect>
      <x>760</x>
-     <y>300</y>
+     <y>310</y>
      <width>71</width>
      <height>31</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="pressure_label_3">
+   <property name="geometry">
+    <rect>
+     <x>660</x>
+     <y>320</y>
+     <width>41</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>(kPa)</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="s5_label">
+   <property name="geometry">
+    <rect>
+     <x>1010</x>
+     <y>230</y>
+     <width>131</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>S5: Fill Pressure Gauge</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="openS5">
+   <property name="geometry">
+    <rect>
+     <x>1150</x>
+     <y>230</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="closeS5">
+   <property name="geometry">
+    <rect>
+     <x>1260</x>
+     <y>230</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Close</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>
