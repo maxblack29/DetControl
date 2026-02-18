@@ -4357,6 +4357,29 @@ QProgressBar::chunk
     <bool>true</bool>
    </property>
   </widget>
+  <widget class="QLCDNumber" name="test_num_readout">
+   <property name="geometry">
+    <rect>
+     <x>1530</x>
+     <y>310</y>
+     <width>71</width>
+     <height>31</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="test_num_label">
+   <property name="geometry">
+    <rect>
+     <x>1470</x>
+     <y>310</y>
+     <width>41</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Test #</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

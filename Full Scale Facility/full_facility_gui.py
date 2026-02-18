@@ -265,6 +265,7 @@ class MyDialog(QDialog):
 
 
         self.testcount+=1
+        self.ui.test_num_readout.display(self.testcount)
 
         # Update vacuum gauge once when automatic test starts
         self.update_vacuum_pressure()

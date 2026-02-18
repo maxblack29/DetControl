@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_full_facility_gui_scriptWifSAm.ui'
+## Form generated from reading UI file 'ui_full_facility_gui_scriptkLOprF.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -3351,6 +3351,12 @@ class Ui_full_facility_gui(object):
         self.closeS5 = QPushButton(full_facility_gui)
         self.closeS5.setObjectName(u"closeS5")
         self.closeS5.setGeometry(QRect(1260, 230, 92, 31))
+        self.test_num_readout = QLCDNumber(full_facility_gui)
+        self.test_num_readout.setObjectName(u"test_num_readout")
+        self.test_num_readout.setGeometry(QRect(1530, 310, 71, 31))
+        self.test_num_label = QLabel(full_facility_gui)
+        self.test_num_label.setObjectName(u"test_num_label")
+        self.test_num_label.setGeometry(QRect(1470, 310, 41, 31))
 
         self.retranslateUi(full_facility_gui)
 
@@ -3538,5 +3544,6 @@ class Ui_full_facility_gui(object):
         self.s5_label.setText(QCoreApplication.translate("full_facility_gui", u"S5: Fill Pressure Gauge", None))
         self.openS5.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.closeS5.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
+        self.test_num_label.setText(QCoreApplication.translate("full_facility_gui", u"Test #", None))
     # retranslateUi
 
