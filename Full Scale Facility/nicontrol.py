@@ -25,8 +25,8 @@ def set_digital_output_2(states): #for Mod2
 
 #had to write separate function because this one is on Mod2
 def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
-    ignite_port = "cDAQ9188-169338EMod2/port6/line0:7"
-    ai_channels = "cDAQ9188-169338EMod6/ai0:ai3"
+    ignite_port = "cDAQ9188-169338EMod2/port0/line0:7"
+    ai_channels = "cDAQ9188-169338EMod6/ai0:3"
     on_states = [True, False, True, False, False, False, True, False]  # ignite is on port 6
     off_states = [True, False, True, False, False, False, False, False]  # Daq2 states post fill
 
@@ -63,7 +63,7 @@ def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
     pt4 = data[:, 3] if n_ch >= 4 else np.zeros(n_samples)
 
     # One CSV per test: properties in header, then time and PT1–PT4 columns
-    filename = f"C:\Users\dedic-lab\Documents\Detonation_Facility_Testing\TestData{testcount}.csv"
+    filename = f"C:\\Users\\dedic-lab\\Documents\\Detonation_Facility_Testing\\TestData{testcount}.csv"
     time_s = np.arange(n_samples, dtype=np.float64) / sample_rate_Hz
 
     with open(filename, "w", newline="") as f:

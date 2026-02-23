@@ -295,7 +295,7 @@ class MyDialog(QDialog):
         self.ui.igniteButton.setStyleSheet("")
 
         testcount = self.testcount 
-        ignite_worker = SolenoidWorker(testcount, vacuum_pressure, )
+        ignite_worker = SolenoidWorker(0,0, testcount, self.vacuum_pressure, self.post_fill_pressure)
         ignite_thread = QThread()
         ignite_worker.moveToThread(ignite_thread)
         ignite_thread.started.connect(ignite_worker.runignite)
