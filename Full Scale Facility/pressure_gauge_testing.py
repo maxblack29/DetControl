@@ -11,7 +11,7 @@ from datetime import datetime
 import nicontrol
 
 
-READING_INTERVAL_S = 0.5   # 1 reading every 0.5 s → 2 Hz (use 1.0 for 1 Hz)
+READING_INTERVAL_S = 0.1   # 1 reading every 0.5 s → 2 Hz (use 1.0 for 1 Hz)
 
 
 def wait_for_stop(stop_event):
@@ -35,7 +35,7 @@ def main():
     print("Testing... (press Enter to stop)")
     try:
         while not stop_event.is_set():
-            t_elapsed = time.perf_counter() - start_time
+            t_elapsed = time.perf_counter() - start_iso
             post_fill_kPa = nicontrol.read_pressure()
             vacuum_kPa = nicontrol.read_vacuum_pressure()
             timestamp = datetime.now().isoformat(timespec="milliseconds")
@@ -50,7 +50,7 @@ def main():
         print("No data recorded.")
         return
 
-    filename = "pressure_gauge_test_{}.csv".format(
+    filename = "C:\\Users\\dedic-lab\\Documents\\Detonation_Facility_Testing\\pressure_gauge_test_{}.csv".format(
         datetime.now().strftime("%Y%m%d_%H%M%S"))
     with open(filename, "w", newline="") as f:
         w = csv.writer(f)

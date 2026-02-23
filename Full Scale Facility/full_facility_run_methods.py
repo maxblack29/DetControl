@@ -32,7 +32,7 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     total_molar_flow_rate = molar_flow_rate_A + molar_flow_rate_B + molar_flow_rate_C  # mol/s
 
     # Volume to be filled (m³)
-    fill_volume = 14.2 / 1000  # 14.2 L → 0.0142 m³
+    fill_volume = 14.2 / 1000  # 14.2 L full facility volume → 0.0142 m³
 
     # Moles needed to fill the volume to 10 kPa absolute at 298 K
     P_target = 10000  # Pa
