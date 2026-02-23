@@ -63,7 +63,7 @@ def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
     pt4 = data[:, 3] if n_ch >= 4 else np.zeros(n_samples)
 
     # One CSV per test: properties in header, then time and PT1–PT4 columns
-    filename = f"TestData{testcount}.csv"
+    filename = f"C:\Users\dedic-lab\Documents\Detonation_Facility_Testing\TestData{testcount}.csv"
     time_s = np.arange(n_samples, dtype=np.float64) / sample_rate_Hz
 
     with open(filename, "w", newline="") as f:
