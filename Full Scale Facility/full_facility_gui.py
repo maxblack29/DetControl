@@ -230,7 +230,7 @@ class MyDialog(QDialog):
             QTimer.singleShot(500, lambda: close_button.setStyleSheet(""))
 
         # Pass the updated DAQ states to the SolenoidWorker
-        solenoid_worker = SolenoidWorker(self.daq1, self.daq2, self.testcount)
+        solenoid_worker = SolenoidWorker(self.daq1, self.daq2, self.testcount, 0, 0)
         solenoid_thread = QThread()
         solenoid_worker.moveToThread(solenoid_thread)
         solenoid_thread.started.connect(solenoid_worker.runsolenoid)

@@ -1,8 +1,3 @@
-"""
-Standalone script to test the post-fill (low) and vacuum pressure gauges.
-Reads both at 1–2 Hz until the user presses Enter. Saves results to a CSV.
-Run from the 'Full Scale Facility' directory so 'nicontrol' is importable.
-"""
 import csv
 import time
 import threading
