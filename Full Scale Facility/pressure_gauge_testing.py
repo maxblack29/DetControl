@@ -29,20 +29,32 @@ def main():
     thread.start()
 
     start_time = time.perf_counter()
-    start_iso = datetime.now().isoformat(timespec="seconds")
+    next_read_at = start_time
     rows = []
 
     print("Testing... (press Enter to stop)")
     try:
         while not stop_event.is_set():
-            t_elapsed = time.perf_counter() - start_iso
+            # Wait until it's time for the next reading (keeps interval accurate)
+            now = time.perf_counter()
+            wait_s = next_read_at - now
+            if wait_s > 0:
+                stop_event.wait(min(wait_s, READING_INTERVAL_S))
+
+            if stop_event.is_set():
+                break
+
             post_fill_kPa = nicontrol.read_pressure()
             vacuum_kPa = nicontrol.read_vacuum_pressure()
+
+            # Elapsed time and timestamp taken after reads (when we actually have the data)
+            t_elapsed = time.perf_counter() - start_time
             timestamp = datetime.now().isoformat(timespec="milliseconds")
             rows.append((timestamp, t_elapsed, post_fill_kPa, vacuum_kPa))
-            print("  {:.1f}s  post_fill={:.2f} kPa  vacuum={:.2f} kPa".format(
+            print("  {:.2f}s  post_fill={:.2f} kPa  vacuum={:.2f} kPa".format(
                 t_elapsed, post_fill_kPa, vacuum_kPa))
-            stop_event.wait(READING_INTERVAL_S)
+
+            next_read_at += READING_INTERVAL_S
     except KeyboardInterrupt:
         print("\nStopped by Ctrl+C.")
 
