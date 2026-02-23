@@ -37,13 +37,16 @@ def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
         time.sleep(0.1)
         do_task.write(off_states)
 
-    # Read pressure transducers (ai0->PT1, ai1->PT2, ai2->PT3, ai3->PT4) over 10 ms
+    # Read 8 pressure transducers over 10 ms (Mod5 PT1–PT4, Mod6 PT5–PT8) in one synchronized task
     sample_rate_Hz = 1_000_000  # 1 MS/s
     duration_s = 0.01          # 10 ms
     samples = int(sample_rate_Hz * duration_s)
+    mod5_channels = "cDAQ9188-169338EMod5/ai0:3"   # PT1, PT2, PT3, PT4
+    mod6_channels = "cDAQ9188-169338EMod6/ai0:3"   # PT5, PT6, PT7, PT8
 
     with nidaqmx.Task() as ai_task:
-        ai_task.ai_channels.add_ai_voltage_chan(ai_channels, min_val=-10, max_val=10)
+        ai_task.ai_channels.add_ai_voltage_chan(mod5_channels, min_val=-10, max_val=10)
+        ai_task.ai_channels.add_ai_voltage_chan(mod6_channels, min_val=-10, max_val=10)
         ai_task.timing.cfg_samp_clk_timing(
             sample_rate_Hz,
             sample_mode=AcquisitionType.FINITE,
@@ -51,38 +54,38 @@ def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
         )
         data = ai_task.read(number_of_samples_per_channel=samples)
 
-    # nidaqmx multi-channel read: one array per channel -> shape (n_channels, samples_per_channel)
+    # nidaqmx multi-channel read: shape (n_channels, samples_per_channel) -> PT1..PT8
     data = np.asarray(data, dtype=np.float64)
     if data.ndim == 1:
-        # Single-channel fallback; treat as PT1 only
         pt1 = data
         n_samples = pt1.shape[0]
-        pt2 = np.zeros(n_samples)
-        pt3 = np.zeros(n_samples)
-        pt4 = np.zeros(n_samples)
+        pt2 = pt3 = pt4 = pt5 = pt6 = pt7 = pt8 = np.zeros(n_samples)
     else:
         n_ch, n_samples = data.shape
         pt1 = data[0] if n_ch >= 1 else np.zeros(n_samples)
         pt2 = data[1] if n_ch >= 2 else np.zeros(n_samples)
         pt3 = data[2] if n_ch >= 3 else np.zeros(n_samples)
         pt4 = data[3] if n_ch >= 4 else np.zeros(n_samples)
+        pt5 = data[4] if n_ch >= 5 else np.zeros(n_samples)
+        pt6 = data[5] if n_ch >= 6 else np.zeros(n_samples)
+        pt7 = data[6] if n_ch >= 7 else np.zeros(n_samples)
+        pt8 = data[7] if n_ch >= 8 else np.zeros(n_samples)
 
-    # One CSV per test: properties in header, then time and PT1–PT4 columns
+    # One CSV per test: properties in header, then time and PT1–PT8 columns
     filename = f"C:\\Users\\dedic-lab\\Documents\\Detonation_Facility_Testing\\TestData{testcount}.csv"
     time_s = np.arange(n_samples, dtype=np.float64) / sample_rate_Hz
 
     with open(filename, "w", newline="") as f:
         writer = csv.writer(f)
-        # File properties (same as former TDMS root properties)
         writer.writerow(["TestNumber", testcount])
         writer.writerow(["VacuumPressure_Pa", float(vacuum_pressure)])
         writer.writerow(["PostFillPressure_Pa", float(fill_pressure)])
         writer.writerow(["DateTime", datetime.now().isoformat()])
         writer.writerow(["SampleRate_Hz", sample_rate_Hz])
-        writer.writerow([])  # blank line before data
-        writer.writerow(["time_s", "PT1", "PT2", "PT3", "PT4"])
+        writer.writerow([])
+        writer.writerow(["time_s", "PT1", "PT2", "PT3", "PT4", "PT5", "PT6", "PT7", "PT8"])
         for i in range(n_samples):
-            writer.writerow([time_s[i], pt1[i], pt2[i], pt3[i], pt4[i]])
+            writer.writerow([time_s[i], pt1[i], pt2[i], pt3[i], pt4[i], pt5[i], pt6[i], pt7[i], pt8[i]])
 
 
 def read_pressure():
