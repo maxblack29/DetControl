@@ -51,16 +51,21 @@ def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
         )
         data = ai_task.read(number_of_samples_per_channel=samples)
 
-    # nidaqmx multi-channel read: shape (samples_per_channel, num_channels)
+    # nidaqmx multi-channel read: one array per channel -> shape (n_channels, samples_per_channel)
     data = np.asarray(data, dtype=np.float64)
     if data.ndim == 1:
-        data = np.atleast_2d(data).T
-    
-    n_samples, n_ch = data.shape[0], data.shape[1]
-    pt1 = data[:, 0] if n_ch >= 1 else np.zeros(n_samples)
-    pt2 = data[:, 1] if n_ch >= 2 else np.zeros(n_samples)
-    pt3 = data[:, 2] if n_ch >= 3 else np.zeros(n_samples)
-    pt4 = data[:, 3] if n_ch >= 4 else np.zeros(n_samples)
+        # Single-channel fallback; treat as PT1 only
+        pt1 = data
+        n_samples = pt1.shape[0]
+        pt2 = np.zeros(n_samples)
+        pt3 = np.zeros(n_samples)
+        pt4 = np.zeros(n_samples)
+    else:
+        n_ch, n_samples = data.shape
+        pt1 = data[0] if n_ch >= 1 else np.zeros(n_samples)
+        pt2 = data[1] if n_ch >= 2 else np.zeros(n_samples)
+        pt3 = data[2] if n_ch >= 3 else np.zeros(n_samples)
+        pt4 = data[3] if n_ch >= 4 else np.zeros(n_samples)
 
     # One CSV per test: properties in header, then time and PT1–PT4 columns
     filename = f"C:\\Users\\dedic-lab\\Documents\\Detonation_Facility_Testing\\TestData{testcount}.csv"
