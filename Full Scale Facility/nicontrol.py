@@ -7,26 +7,37 @@ from datetime import datetime
 import csv
 
 
-#port = 'port0'
+# Track last DAQ output states so the GUI can show current solenoid status.
+_daq1_state = [False] * 8
+_daq2_state = [False] * 8
 
 
-def set_digital_output(states): #for Mod1
+def set_digital_output(states):  # for Mod1
+    global _daq1_state
     device_name = "cDAQ9188-169338EMod1/port0/line0:7"
     with nidaqmx.Task() as task:
         task.do_channels.add_do_chan(device_name, line_grouping=LineGrouping.CHAN_PER_LINE)
         task.write(states)
+    _daq1_state = list(states)
 
-def set_digital_output_2(states): #for Mod2
+
+def set_digital_output_2(states):  # for Mod2
+    global _daq2_state
     device_name = "cDAQ9188-169338EMod2/port0/line0:7"
     with nidaqmx.Task() as task:
         task.do_channels.add_do_chan(device_name, line_grouping=LineGrouping.CHAN_PER_LINE)
         task.write(states)
+    _daq2_state = list(states)
+
+
+def get_daq_states():
+    """Return the last written DAQ1 and DAQ2 digital output states."""
+    return _daq1_state[:], _daq2_state[:]
 
 
 #had to write separate function because this one is on Mod2
 def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
     ignite_port = "cDAQ9188-169338EMod2/port0/line0:7"
-    ai_channels = "cDAQ9188-169338EMod6/ai0:3"
     on_states = [True, False, True, False, False, False, True, False]  # ignite is on port 6
     off_states = [True, False, True, False, False, False, False, False]  # Daq2 states post fill
 
@@ -104,7 +115,7 @@ def read_pressure():
         data = ai_task.read(number_of_samples_per_channel=samples)
         avg = np.mean(data)
 
-    return avg * 103.421 / 10 # Convert voltage to kPa based on sensor specs (15 psi = 10 V)
+    return avg * 103.421 / 10 # Convert voltage to kPa based on sensor specs
 
 def read_vacuum_pressure():
     ai_channel = "cDAQ9188-169338EMod3/ai1"
@@ -122,4 +133,4 @@ def read_vacuum_pressure():
         data = ai_task.read(number_of_samples_per_channel=samples)
         avg = np.mean(data)
 
-    return avg * 0.133322 / 10 # Convert voltage to kPa based on sensor specs (1 tor = 10 V)
+    return avg * 103.421 / 10 # Convert voltage to kPa based on sensor specs

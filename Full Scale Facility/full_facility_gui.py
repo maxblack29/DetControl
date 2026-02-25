@@ -132,6 +132,12 @@ class MyDialog(QDialog):
 
         self.vacuum_pressure = 0
         self.post_fill_pressure = 0
+
+        # Periodically refresh solenoid status labels from last DAQ states
+        self.solenoid_label_timer = QTimer(self)
+        self.solenoid_label_timer.timeout.connect(self.update_solenoid_labels)
+        self.solenoid_label_timer.start(500)
+        self.update_solenoid_labels()
     
     def save_setpoints(self):
         #This function can be used to update the setpoints
@@ -247,6 +253,35 @@ class MyDialog(QDialog):
 
         # Print the state of the solenoid
         print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
+
+    def update_solenoid_labels(self):
+        """Update S1–S5 labels based on last DAQ states in nicontrol."""
+        try:
+            daq1, daq2 = nicontrol.get_daq_states()
+        except AttributeError:
+            daq1, daq2 = self.daq1, self.daq2
+
+        # Ensure arrays are long enough
+        daq1 = (daq1 + [False] * 8)[:8]
+        daq2 = (daq2 + [False] * 8)[:8]
+
+        # Mapping and normally-open rules:
+        # S1: DAQ1 port 0 (True = OPEN)
+        # S2: DAQ1 port 1 (True = OPEN)
+        # S3: DAQ1 port 2, normally open (False = OPEN, True = CLOSED)
+        # S4: DAQ2 port 0, normally open (False = OPEN, True = CLOSED)
+        # S5: DAQ2 port 1 (True = OPEN)
+        s1_open = bool(daq1[0])
+        s2_open = bool(daq1[1])
+        s3_open = not bool(daq1[2])
+        s4_open = not bool(daq2[0])
+        s5_open = bool(daq2[1])
+
+        self.ui.S1_label.setText("OPEN" if s1_open else "CLOSED")
+        self.ui.S2_label.setText("OPEN" if s2_open else "CLOSED")
+        self.ui.S3_label.setText("OPEN" if s3_open else "CLOSED")
+        self.ui.S4_label.setText("OPEN" if s4_open else "CLOSED")
+        self.ui.S5_label.setText("OPEN" if s5_open else "CLOSED")
 
   
     stop_test = False
