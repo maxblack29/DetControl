@@ -16,10 +16,14 @@ async def get():
             print(await mfc.get())
 
 async def change_rate(unit, setpoint):
-    #Changes flow rate based on user input from GUI
-    async with FlowController(address = 'COM3', unit = unit) as mfc:
-        #if gas not in 
-        await mfc.set_flow_rate(setpoint) # In units of SLPM
+    """Set flow rate and return the current volumetric flow reported by the controller."""
+    async with FlowController(address="COM3", unit=unit) as mfc:
+        await mfc.set_flow_rate(setpoint)  # In units of SLPM
+        data = await mfc.get()
+        # Update cached settings
+        if unit in gas_settings:
+            gas_settings[unit]["setpoint"] = float(setpoint)
+        return float(data.get("volumetric_flow", setpoint))
 
 
 async def zero():
@@ -38,13 +42,14 @@ async def set_gas(unit, gas):
         await mfc.set_gas(gas)
         print(f'Set gas for controller {unit} to {gas}')
 
-# Mass flow rate readout for MFCs (don't know if this needs to loop)
-async def read_flow_rates():
-    async with FlowController(address = 'COM3', unit = 'A') as mfc:
-        data = await mfc.get() #This prints a dictionary with all the readout info; we want only the flow rate value
-        z = str(data['volumetric_flow'])
-        x = str(data['mass_flow'])
-        print("Volumetric flow: " + z + ", mass flow: " + x) #prints the flow rate values only (dont know which one Sean wants yet)
+async def read_flows_all():
+    """Read current volumetric flow for controllers A, B, C and return a dict."""
+    results = {}
+    for unit in ['A', 'B', 'C']:
+        async with FlowController(address='COM3', unit=unit) as mfc:
+            data = await mfc.get()
+            results[unit] = float(data.get('volumetric_flow', 0.0))
+    return results
 
 if __name__ == '__main__':
     #Global settings for the flow controllers

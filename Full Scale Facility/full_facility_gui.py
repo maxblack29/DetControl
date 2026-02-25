@@ -5,7 +5,7 @@ from PySide6.QtCore import QTimer
 import full_facility_run_methods
 from plumbingdiagram import Ui_plumbingdiagram
 from greenledwidget import GreenLed
-import nidaqmx #might not be needed since I imported nicontrol
+import nidaqmx  # might not be needed since I imported nicontrol
 import nicontrol
 from nicontrol import set_digital_output
 from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
@@ -15,6 +15,7 @@ import asyncio
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+import time
 
 import pdb
 import pyqtgraph as pg
@@ -24,6 +25,39 @@ from ui_full_facility_gui_script import Ui_full_facility_gui
 '''This calls the python file that was created FROM the .ui file (ui_full_facility_gui_script.py). 
 When updating gui in qt designer, must update the PYTHON file to see the updates.'''
 
+
+
+class MFCMonitorWorker(QObject):
+    flows_updated = Signal(float, float, float)
+
+    def __init__(self, interval_ms=500):
+        super().__init__()
+        self.interval_s = interval_ms / 1000.0
+        self._running = True
+        self._paused = False
+
+    def stop(self):
+        self._running = False
+
+    def pause(self):
+        self._paused = True
+
+    def resume(self):
+        self._paused = False
+
+    def run(self):
+        while self._running:
+            if not self._paused:
+                try:
+                    flows = asyncio.run(alicatcontrol.read_flows_all())
+                    a = flows.get('A', 0.0)
+                    b = flows.get('B', 0.0)
+                    c = flows.get('C', 0.0)
+                    self.flows_updated.emit(a, b, c)
+                except Exception:
+                    # Avoid crashing the GUI if COM errors occur; they can be handled/logged as needed.
+                    pass
+            time.sleep(self.interval_s)
 
 
 class AutomationWorker(QObject):
@@ -133,6 +167,14 @@ class MyDialog(QDialog):
         self.vacuum_pressure = 0
         self.post_fill_pressure = 0
 
+        # Background MFC monitor: reads actual flows every 500 ms without blocking the GUI.
+        self.mfc_monitor_worker = MFCMonitorWorker(interval_ms=500)
+        self.mfc_monitor_thread = QThread()
+        self.mfc_monitor_worker.moveToThread(self.mfc_monitor_thread)
+        self.mfc_monitor_worker.flows_updated.connect(self.update_mfc_readouts)
+        self.mfc_monitor_thread.started.connect(self.mfc_monitor_worker.run)
+        self.mfc_monitor_thread.start()
+
         # Periodically refresh solenoid status labels from last DAQ states
         self.solenoid_label_timer = QTimer(self)
         self.solenoid_label_timer.timeout.connect(self.update_solenoid_labels)
@@ -155,15 +197,19 @@ class MyDialog(QDialog):
         setpointB = float(self.ui.mfcBsetpoint.text())
         setpointC = float(self.ui.mfcCsetpoint.text())
         setpointD = float(self.ui.mfcDsetpoint.text())
-        asyncio.run(alicatcontrol.change_rate('A', setpointA))
-        asyncio.run(alicatcontrol.change_rate('B', setpointB))
-        asyncio.run(alicatcontrol.change_rate('C', setpointC))
+
+        # Temporarily pause background monitor while we talk to the Alicats
+        self.mfc_monitor_worker.pause()
+        flowA = asyncio.run(alicatcontrol.change_rate('A', setpointA))
+        flowB = asyncio.run(alicatcontrol.change_rate('B', setpointB))
+        flowC = asyncio.run(alicatcontrol.change_rate('C', setpointC))
+        self.mfc_monitor_worker.resume()
         #asyncio.run(alicatcontrol.change_rate('D', setpointD))
         
-        #update last sent flow rates display
-        self.ui.mfcAreadout.display(setpointA)
-        self.ui.mfcBreadout.display(setpointB)
-        self.ui.mfcCreadout.display(setpointC)
+        # update readouts with current flow rate (SLPM) from controllers
+        self.ui.mfcAreadout.display(flowA)
+        self.ui.mfcBreadout.display(flowB)
+        self.ui.mfcCreadout.display(flowC)
 
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
 
@@ -181,15 +227,18 @@ class MyDialog(QDialog):
         self.ui.mfcBsetpoint.setText("0.0")
         self.ui.mfcCsetpoint.setText("0.0")
         self.ui.mfcDsetpoint.setText("0.0")
-        asyncio.run(alicatcontrol.change_rate('A', 0.0))
-        asyncio.run(alicatcontrol.change_rate('B', 0.0))
-        asyncio.run(alicatcontrol.change_rate('C', 0.0))
+
+        self.mfc_monitor_worker.pause()
+        flowA = asyncio.run(alicatcontrol.change_rate('A', 0.0))
+        flowB = asyncio.run(alicatcontrol.change_rate('B', 0.0))
+        flowC = asyncio.run(alicatcontrol.change_rate('C', 0.0))
+        self.mfc_monitor_worker.resume()
         #asyncio.run(alicatcontrol.change_rate('D', 0.0))
 
-        #update last sent flow rates display
-        self.ui.mfcAreadout.display("0.0")
-        self.ui.mfcBreadout.display("0.0")
-        self.ui.mfcCreadout.display("0.0")
+        # update readouts with current flow rate (should be near 0.0 SLPM)
+        self.ui.mfcAreadout.display(flowA)
+        self.ui.mfcBreadout.display(flowB)
+        self.ui.mfcCreadout.display(flowC)
 
 
         print("All gas setpoints reset to 0.0 SLPM.")
