@@ -1,7 +1,13 @@
+"""
+Central MFC manager: one persistent serial connection per controller (A, B, C)
+opened when the GUI starts. All Alicat commands go through this manager to avoid
+repeated open/close and COM port conflicts.
+"""
 import asyncio
+import threading
 from alicat import FlowController
-import time #Don't know if I actually need this yet, figured I would import it just in case
 
+# Cached settings (updated when we set flow/gas)
 gas_settings = {
     "A": {"gas": "C2H2", "setpoint": 0.0, "unit": "SLPM"},
     "B": {"gas": "H2", "setpoint": 0.0, "unit": "SLPM"},
@@ -9,51 +15,114 @@ gas_settings = {
     "D": {"gas": "N2", "setpoint": 0.0, "unit": "SLPM"},
 }
 
-async def get():
-    #Establish connections with mass flow controllers A, B, and C
-    for unit in ['A', 'B', 'C']:
-        async with FlowController(address = 'COM3', unit = unit) as mfc:
-            print(await mfc.get())
+DEFAULT_ADDRESS = "COM3"
+UNITS = ["A", "B", "C"]
 
-async def change_rate(unit, setpoint):
-    """Set flow rate and return the current volumetric flow reported by the controller."""
-    async with FlowController(address="COM3", unit=unit) as mfc:
-        await mfc.set_flow_rate(setpoint)  # In units of SLPM
-        data = await mfc.get()
-        # Update cached settings
+
+class AlicatManager:
+    """Keeps FlowController connections open for A, B, C. Runs one asyncio loop in a dedicated thread."""
+
+    def __init__(self, address=DEFAULT_ADDRESS):
+        self._address = address
+        self._loop = None
+        self._thread = None
+        self._mfcs = {}  # unit -> FlowController (after __aenter__)
+        self._ready = threading.Event()
+
+    async def _open_all(self):
+        for unit in UNITS:
+            mfc = FlowController(address=self._address, unit=unit)
+            await mfc.__aenter__()
+            self._mfcs[unit] = mfc
+        self._ready.set()
+
+    async def _close_all(self):
+        for unit in list(self._mfcs.keys()):
+            try:
+                await self._mfcs[unit].__aexit__(None, None, None)
+            except Exception:
+                pass
+            self._mfcs.pop(unit, None)
+
+    async def _set_flow_rate(self, unit, setpoint):
+        await self._mfcs[unit].set_flow_rate(setpoint)
+        data = await self._mfcs[unit].get()
         if unit in gas_settings:
             gas_settings[unit]["setpoint"] = float(setpoint)
         return float(data.get("volumetric_flow", setpoint))
 
+    async def _set_gas(self, unit, gas):
+        await self._mfcs[unit].set_gas(gas)
+        print(f"Set gas for controller {unit} to {gas}")
 
-async def zero():
-    controller = ['A', 'B', 'C'] #Add D when the controller is in place
-    for unit in ['A', 'B', 'C']:
-        async with FlowController(address = 'COM3', unit = unit) as mfc:
-            x = mfc.set_flow_rate(0.0)
-            await x
-            if unit := 0.0:
-                print(f'{unit} failed to reset to 0.0')
-            else:
-                print('All controllers reset to 0.0 SLPM') #continues to loop 3 times, figure out later after user input list
+    async def _read_flows(self):
+        out = {}
+        for u in UNITS:
+            data = await self._mfcs[u].get()
+            out[u] = float(data.get("volumetric_flow", 0.0))
+        return out
 
-async def set_gas(unit, gas):
-    async with FlowController(address = 'COM3', unit = unit) as mfc:
-        await mfc.set_gas(gas)
-        print(f'Set gas for controller {unit} to {gas}')
+    def _run_loop(self):
+        self._loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self._loop)
+        try:
+            self._loop.run_until_complete(self._open_all())
+            self._loop.run_forever()
+        finally:
+            self._loop.run_until_complete(self._close_all())
+            self._loop.close()
 
-async def read_flows_all():
-    """Read current volumetric flow for controllers A, B, C and return a dict."""
-    results = {}
-    for unit in ['A', 'B', 'C']:
-        async with FlowController(address='COM3', unit=unit) as mfc:
-            data = await mfc.get()
-            results[unit] = float(data.get('volumetric_flow', 0.0))
-    return results
+    def start(self, timeout=10):
+        if self._thread is not None:
+            return
+        self._thread = threading.Thread(target=self._run_loop, daemon=True)
+        self._thread.start()
+        if not self._ready.wait(timeout=timeout):
+            raise RuntimeError("AlicatManager failed to open MFC connections in time")
 
-if __name__ == '__main__':
-    #Global settings for the flow controllers
-    asyncio.run(get())
-    asyncio.run(change_rate(unit='A', setpoint = 0.0))
-    asyncio.run(change_rate(unit='B', setpoint = 0.0))
+    def _submit(self, coro, timeout=10):
+        if self._loop is None:
+            raise RuntimeError("AlicatManager not started; call start() first")
+        future = asyncio.run_coroutine_threadsafe(coro, self._loop)
+        return future.result(timeout=timeout)
 
+    def set_flow_rate(self, unit, setpoint):
+        """Set flow rate for one unit; returns current volumetric flow (SLPM)."""
+        return self._submit(self._set_flow_rate(unit, float(setpoint)))
+
+    def set_gas(self, unit, gas):
+        """Set gas type for one unit."""
+        self._submit(self._set_gas(unit, gas))
+
+    def read_flows(self):
+        """Return dict {'A': flow_a, 'B': flow_b, 'C': flow_c} in SLPM."""
+        return self._submit(self._read_flows())
+
+    def stop(self):
+        if self._loop is None:
+            return
+
+        async def _shutdown():
+            await self._close_all()
+            self._loop.stop()
+
+        self._loop.call_soon_threadsafe(
+            lambda: asyncio.ensure_future(_shutdown(), loop=self._loop)
+        )
+
+
+_manager = None
+_lock = threading.Lock()
+
+
+def get_manager():
+    global _manager
+    with _lock:
+        if _manager is None:
+            _manager = AlicatManager()
+        return _manager
+
+
+def start_manager(timeout=10):
+    """Create and start the manager (call once when GUI opens)."""
+    get_manager().start(timeout=timeout)

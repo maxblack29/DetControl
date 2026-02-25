@@ -3,18 +3,19 @@ import nidaqmx
 from nidaqmx.constants import LineGrouping
 import nicontrol
 import asyncio
-import alicat 
-from alicat import FlowController
-from alicatcontrol import change_rate, zero
+import alicatcontrol
 import time
-import gc 
+import gc
 #import os
 
 
-async def connect(unit, setpoint):
-    async with FlowController(address='COM3', unit=unit) as mfc:
-        #figure out way to change last sent flow rate from here 
-        await mfc.set_flow_rate(setpoint)
+def _set_mfc_rates(setpoint_a, setpoint_b, setpoint_c):
+    """Set flow rates via the persistent MFC manager (no per-call COM open/close)."""
+    manager = alicatcontrol.get_manager()
+    manager.set_flow_rate("A", setpoint_a)
+    manager.set_flow_rate("B", setpoint_b)
+    manager.set_flow_rate("C", setpoint_c)
+
 
 async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_driver, on_fill_complete=None, on_mfc_setpoints_changed=None):
 
@@ -73,12 +74,7 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     #nicontrol.set_digital_output_2(turn_vacuum_off_array)
 
     #2: Fill---------------------------------------------------------------------------------------------------------------------------------------------------
-        
-    await asyncio.gather(
-        connect('A', setpointA),
-        connect('B', setpointB),
-        connect('C', setpointC),
-    )
+    _set_mfc_rates(setpointA, setpointB, setpointC)
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(setpointA, setpointB, setpointC)
 
@@ -112,27 +108,17 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
 
     # await asyncio.sleep(1) #1 second fill for driver gas 
 
-    await asyncio.gather(
-        connect('A', 0.0),
-        connect('B', 0.0),
-        connect('C', 0.0),
-    )
+    _set_mfc_rates(0.0, 0.0, 0.0)
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(0.0, 0.0, 0.0)
 
     await asyncio.sleep(1)
 
-
     print("Fill complete, Ignite and press the standard purge button")
    
 
 async def purge(setpointA, setpointB, setpointC, setpointD, on_mfc_setpoints_changed=None):
-
-    await asyncio.gather(
-        connect('A', 0.0),
-        connect('B', 0.0),
-        connect('C', 0.0),
-    )
+    _set_mfc_rates(0.0, 0.0, 0.0)
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(0.0, 0.0, 0.0)
 

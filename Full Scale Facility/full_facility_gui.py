@@ -49,13 +49,12 @@ class MFCMonitorWorker(QObject):
         while self._running:
             if not self._paused:
                 try:
-                    flows = asyncio.run(alicatcontrol.read_flows_all())
-                    a = flows.get('A', 0.0)
-                    b = flows.get('B', 0.0)
-                    c = flows.get('C', 0.0)
+                    flows = alicatcontrol.get_manager().read_flows()
+                    a = flows.get("A", 0.0)
+                    b = flows.get("B", 0.0)
+                    c = flows.get("C", 0.0)
                     self.flows_updated.emit(a, b, c)
                 except Exception:
-                    # Avoid crashing the GUI if COM errors occur; they can be handled/logged as needed.
                     pass
             time.sleep(self.interval_s)
 
@@ -167,7 +166,13 @@ class MyDialog(QDialog):
         self.vacuum_pressure = 0
         self.post_fill_pressure = 0
 
-        # Background MFC monitor: reads actual flows every 500 ms without blocking the GUI.
+        # Start persistent MFC manager (one COM connection per controller, kept open).
+        try:
+            alicatcontrol.start_manager()
+        except Exception as e:
+            print("MFC manager failed to start (check COM3 / Alicat):", e)
+
+        # Background MFC monitor: reads actual flows every 500 ms via the manager.
         self.mfc_monitor_worker = MFCMonitorWorker(interval_ms=500)
         self.mfc_monitor_thread = QThread()
         self.mfc_monitor_worker.moveToThread(self.mfc_monitor_thread)
@@ -198,15 +203,11 @@ class MyDialog(QDialog):
         setpointC = float(self.ui.mfcCsetpoint.text())
         setpointD = float(self.ui.mfcDsetpoint.text())
 
-        # Temporarily pause background monitor while we talk to the Alicats
-        self.mfc_monitor_worker.pause()
-        flowA = asyncio.run(alicatcontrol.change_rate('A', setpointA))
-        flowB = asyncio.run(alicatcontrol.change_rate('B', setpointB))
-        flowC = asyncio.run(alicatcontrol.change_rate('C', setpointC))
-        self.mfc_monitor_worker.resume()
-        #asyncio.run(alicatcontrol.change_rate('D', setpointD))
-        
-        # update readouts with current flow rate (SLPM) from controllers
+        manager = alicatcontrol.get_manager()
+        flowA = manager.set_flow_rate("A", setpointA)
+        flowB = manager.set_flow_rate("B", setpointB)
+        flowC = manager.set_flow_rate("C", setpointC)
+
         self.ui.mfcAreadout.display(flowA)
         self.ui.mfcBreadout.display(flowB)
         self.ui.mfcCreadout.display(flowC)
@@ -228,14 +229,11 @@ class MyDialog(QDialog):
         self.ui.mfcCsetpoint.setText("0.0")
         self.ui.mfcDsetpoint.setText("0.0")
 
-        self.mfc_monitor_worker.pause()
-        flowA = asyncio.run(alicatcontrol.change_rate('A', 0.0))
-        flowB = asyncio.run(alicatcontrol.change_rate('B', 0.0))
-        flowC = asyncio.run(alicatcontrol.change_rate('C', 0.0))
-        self.mfc_monitor_worker.resume()
-        #asyncio.run(alicatcontrol.change_rate('D', 0.0))
+        manager = alicatcontrol.get_manager()
+        flowA = manager.set_flow_rate("A", 0.0)
+        flowB = manager.set_flow_rate("B", 0.0)
+        flowC = manager.set_flow_rate("C", 0.0)
 
-        # update readouts with current flow rate (should be near 0.0 SLPM)
         self.ui.mfcAreadout.display(flowA)
         self.ui.mfcBreadout.display(flowB)
         self.ui.mfcCreadout.display(flowC)
@@ -246,15 +244,10 @@ class MyDialog(QDialog):
 
 
     def change_gas(self):
-        #This function will change the gas type for each controller
-        self.ui.mfcAgas.currentText()
-        self.ui.mfcBgas.currentText()
-        self.ui.mfcCgas.currentText()
-        self.ui.mfcDgas.currentText()
-
-        asyncio.run(alicatcontrol.set_gas('A', self.ui.mfcAgas.currentText()))
-        asyncio.run(alicatcontrol.set_gas('B', self.ui.mfcBgas.currentText()))
-        asyncio.run(alicatcontrol.set_gas('C', self.ui.mfcCgas.currentText()))
+        manager = alicatcontrol.get_manager()
+        manager.set_gas("A", self.ui.mfcAgas.currentText())
+        manager.set_gas("B", self.ui.mfcBgas.currentText())
+        manager.set_gas("C", self.ui.mfcCgas.currentText())
         #asyncio.run(alicatcontrol.set_gas('D', self.ui.mfcDgas.currentText()))
 
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
