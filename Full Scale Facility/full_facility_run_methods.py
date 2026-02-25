@@ -1,4 +1,6 @@
 # Test automation script for intiator testing without data acquisition (for now)
+import csv
+import os
 import nidaqmx
 from nidaqmx.constants import LineGrouping
 import nicontrol
@@ -6,7 +8,10 @@ import asyncio
 import alicatcontrol
 import time
 import gc
-#import os
+
+# Same base path as detonation test data CSV
+FILL_LOG_DIR = r"C:\Users\dedic-lab\Documents\Detonation_Facility_Testing"
+FILL_LOG_INTERVAL_S = 1.0  # log flow rates every 1 s during fill
 
 
 def _set_mfc_rates(setpoint_a, setpoint_b, setpoint_c):
@@ -17,7 +22,7 @@ def _set_mfc_rates(setpoint_a, setpoint_b, setpoint_c):
     manager.set_flow_rate("C", setpoint_c)
 
 
-async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_driver, on_fill_complete=None, on_mfc_setpoints_changed=None):
+async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_driver, on_fill_complete=None, on_mfc_setpoints_changed=None, testcount=None):
 
     print("Test starting")
 
@@ -73,19 +78,40 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     #turn_vacuum_off_array = [False, False, False, False, False, False, False, False] #Solenoid States to turn off vacuum pump
     #nicontrol.set_digital_output_2(turn_vacuum_off_array)
 
-    #2: Fill---------------------------------------------------------------------------------------------------------------------------------------------------
+    #2: Fill — set rates and log time / setpoint / actual flow every FILL_LOG_INTERVAL_S
     _set_mfc_rates(setpointA, setpointB, setpointC)
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(setpointA, setpointB, setpointC)
 
-    #Start Speaker After Half the Fill Time
-    await asyncio.sleep(fill_time/2) 
-    speaker_on_daq_2 = [True, True, True, False, False, False, False, False] #State for speaker on
-    nicontrol.set_digital_output_2(speaker_on_daq_2)
+    manager = alicatcontrol.get_manager()
+    fill_log_rows = []
+    start_fill = time.perf_counter()
+    speaker_done = False
+    speaker_on_daq_2 = [True, True, True, False, False, False, False, False]
 
-    
+    while True:
+        elapsed = time.perf_counter() - start_fill
+        flows = manager.read_flows()
+        fill_log_rows.append((
+            round(elapsed, 3),
+            setpointA, flows.get("A", 0.0),
+            setpointB, flows.get("B", 0.0),
+            setpointC, flows.get("C", 0.0),
+        ))
+        if elapsed >= fill_time / 2 and not speaker_done:
+            speaker_done = True
+            nicontrol.set_digital_output_2(speaker_on_daq_2)
+        if elapsed >= fill_time:
+            break
+        await asyncio.sleep(min(FILL_LOG_INTERVAL_S, fill_time - elapsed))
 
-    await asyncio.sleep(fill_time/2) 
+    if testcount is not None and fill_log_rows:
+        os.makedirs(FILL_LOG_DIR, exist_ok=True)
+        path = os.path.join(FILL_LOG_DIR, f"fill_flow_rates_test{testcount}.csv")
+        with open(path, "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["time_s", "setpoint_A_SLPM", "flow_A_SLPM", "setpoint_B_SLPM", "flow_B_SLPM", "setpoint_C_SLPM", "flow_C_SLPM"])
+            w.writerows(fill_log_rows)
 
     #read pressure
     if on_fill_complete is not None:

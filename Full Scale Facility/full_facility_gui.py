@@ -27,10 +27,11 @@ When updating gui in qt designer, must update the PYTHON file to see the updates
 
 
 
+#used to monitor the flows from the MFCs in the background and manage MFC flows
 class MFCMonitorWorker(QObject):
     flows_updated = Signal(float, float, float)
 
-    def __init__(self, interval_ms=500):
+    def __init__(self, interval_ms=100):
         super().__init__()
         self.interval_s = interval_ms / 1000.0
         self._running = True
@@ -64,19 +65,21 @@ class AutomationWorker(QObject):
     fill_phase_complete = Signal()
     mfc_readouts_updated = Signal(float, float, float)
 
-    def __init__(self, setpointA, setpointB, setpointC, setpointD, setpointC_driver):
+    def __init__(self, setpointA, setpointB, setpointC, setpointD, setpointC_driver, testcount=None):
         super().__init__()
         self.setpointA = setpointA
         self.setpointB = setpointB
         self.setpointC = setpointC
         self.setpointD = setpointD
         self.setpointC_driver = setpointC_driver
+        self.testcount = testcount
 
     def runauto(self):
         asyncio.run(full_facility_run_methods.automatic_test(
             self.setpointA, self.setpointB, self.setpointC, self.setpointD, self.setpointC_driver,
             on_fill_complete=self.fill_phase_complete.emit,
-            on_mfc_setpoints_changed=self.mfc_readouts_updated.emit
+            on_mfc_setpoints_changed=self.mfc_readouts_updated.emit,
+            testcount=self.testcount,
         ))
         self.finished.emit()
 
@@ -341,14 +344,14 @@ class MyDialog(QDialog):
         setpointD = float(self.ui.mfcDsetpoint.text())
 
 
-        self.testcount+=1
+        self.testcount += 1
         self.ui.test_num_readout.display(self.testcount)
 
         # Update vacuum gauge once when automatic test starts
         self.update_vacuum_pressure()
 
         #Michael change: now gives automation its own worker/thread
-        automation_worker = AutomationWorker(setpointA, setpointB, setpointC, setpointD, setpointC2)
+        automation_worker = AutomationWorker(setpointA, setpointB, setpointC, setpointD, setpointC2, testcount=self.testcount)
         automation_thread = QThread()
         automation_worker.moveToThread(automation_thread)
         automation_thread.started.connect(automation_worker.runauto)
