@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_full_facility_gui_scriptuJfSmp.ui'
+## Form generated from reading UI file 'ui_full_facility_gui_scriptOKOYfr.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -3303,7 +3303,7 @@ class Ui_full_facility_gui(object):
         self.mfcCreadout.setGeometry(QRect(440, 170, 64, 23))
         self.mfcreadoutlabel = QLabel(full_facility_gui)
         self.mfcreadoutlabel.setObjectName(u"mfcreadoutlabel")
-        self.mfcreadoutlabel.setGeometry(QRect(420, 30, 111, 31))
+        self.mfcreadoutlabel.setGeometry(QRect(440, 30, 111, 31))
         self.s3_label = QLabel(full_facility_gui)
         self.s3_label.setObjectName(u"s3_label")
         self.s3_label.setGeometry(QRect(1010, 140, 131, 20))
@@ -3558,7 +3558,7 @@ class Ui_full_facility_gui(object):
         self.mfcCsetpoint_2.setText(QCoreApplication.translate("full_facility_gui", u"0.0", None))
         self.SLPMlabel3_2.setText(QCoreApplication.translate("full_facility_gui", u"SLPM", None))
         self.driver_label.setText(QCoreApplication.translate("full_facility_gui", u"Driver Mixture:", None))
-        self.mfcreadoutlabel.setText(QCoreApplication.translate("full_facility_gui", u"Last Sent Flow Rate", None))
+        self.mfcreadoutlabel.setText(QCoreApplication.translate("full_facility_gui", u"Flow Rate", None))
         self.s3_label.setText(QCoreApplication.translate("full_facility_gui", u"S3: Purge (N Open)", None))
         self.openS3.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.openS4.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))

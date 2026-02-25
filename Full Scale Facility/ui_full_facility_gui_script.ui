@@ -4149,14 +4149,14 @@ QProgressBar::chunk
   <widget class="QLabel" name="mfcreadoutlabel">
    <property name="geometry">
     <rect>
-     <x>420</x>
+     <x>440</x>
      <y>30</y>
      <width>111</width>
      <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>Last Sent Flow Rate</string>
+    <string>Flow Rate</string>
    </property>
   </widget>
   <widget class="QLabel" name="s3_label">

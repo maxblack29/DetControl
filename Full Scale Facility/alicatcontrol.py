@@ -49,7 +49,7 @@ class AlicatManager:
         data = await self._mfcs[unit].get()
         if unit in gas_settings:
             gas_settings[unit]["setpoint"] = float(setpoint)
-        return float(data.get("volumetric_flow", setpoint))
+        return float(data.get("mass_flow", setpoint))
 
     async def _set_gas(self, unit, gas):
         await self._mfcs[unit].set_gas(gas)
@@ -59,7 +59,7 @@ class AlicatManager:
         out = {}
         for u in UNITS:
             data = await self._mfcs[u].get()
-            out[u] = float(data.get("volumetric_flow", 0.0))
+            out[u] = float(data.get("mass_flow", 0.0))
         return out
 
     def _run_loop(self):

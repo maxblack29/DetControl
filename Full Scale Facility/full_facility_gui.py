@@ -121,7 +121,7 @@ class MyDialog(QDialog):
         self.ui.setupUi(self)
         #self.plumbing_diagram = plumbing_diagram
         
-        self.daq1 = [False, False, True, False, False, False, False, False] #Startup DAQ1 States
+        self.daq1 = [True, True, True, False, False, False, False, False] #Startup DAQ1 States
         nicontrol.set_digital_output(self.daq1) #Sets the digital output to the daq1
 
         self.daq2 = [True, True, False, False, False, False, False, False] #Startup DAQ2 States

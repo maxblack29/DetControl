@@ -11,7 +11,7 @@ import gc
 
 # Same base path as detonation test data CSV
 FILL_LOG_DIR = r"C:\Users\dedic-lab\Documents\Detonation_Facility_Testing"
-FILL_LOG_INTERVAL_S = 1.0  # log flow rates every 1 s during fill
+FILL_LOG_INTERVAL_S = 0.5  # log flow rates every 0.5 s during fill
 
 
 def _set_mfc_rates(setpoint_a, setpoint_b, setpoint_c):
@@ -41,13 +41,15 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     fill_volume = 14.2 / 1000  # 14.2 L full facility volume → 0.0142 m³
 
     # Moles needed to fill the volume to 10 kPa absolute at 298 K
-    P_target = 4100  # Pa
+    P_target = 10000 # Pa
     T_gas = 298       # K
 
     n_needed = P_target * fill_volume / (R * T_gas)  # mol
 
     # Time required to fill (s)
     fill_time = n_needed / total_molar_flow_rate
+
+    print(fill_time) 
 
     await asyncio.sleep(1) 
 
