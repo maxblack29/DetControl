@@ -45,7 +45,7 @@ def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
     with nidaqmx.Task() as do_task:
         do_task.do_channels.add_do_chan(ignite_port, line_grouping=LineGrouping.CHAN_PER_LINE)
         do_task.write(on_states)
-        time.sleep(0.1)
+        time.sleep(0.0005) #half a ms pulse 
         do_task.write(off_states)
 
     # Read 8 pressure transducers over 10 ms (Mod5 PT1–PT4, Mod6 PT5–PT8) in one synchronized task

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_full_facility_gui_scriptVdHcfU.ui'
+## Form generated from reading UI file 'ui_full_facility_gui_scriptuJfSmp.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -3381,7 +3381,7 @@ class Ui_full_facility_gui(object):
         self.S4_state.setTextFormat(Qt.TextFormat.RichText)
         self.S5_state = QLabel(full_facility_gui)
         self.S5_state.setObjectName(u"S5_state")
-        self.S5_state.setGeometry(QRect(1340, 220, 41, 20))
+        self.S5_state.setGeometry(QRect(1340, 220, 71, 20))
         self.S5_state.setFont(font)
         self.S5_state.setTextFormat(Qt.TextFormat.RichText)
 
