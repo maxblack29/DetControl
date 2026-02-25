@@ -115,7 +115,7 @@ def read_pressure():
         data = ai_task.read(number_of_samples_per_channel=samples)
         avg = np.mean(data)
 
-    return avg * 103.421 / 10 # Convert voltage to kPa based on sensor specs
+    return avg * 103.421 / 10 # Convert voltage to kPa based on sensor specs (10 V = 15 psi) 
 
 def read_vacuum_pressure():
     ai_channel = "cDAQ9188-169338EMod3/ai1"
@@ -133,4 +133,4 @@ def read_vacuum_pressure():
         data = ai_task.read(number_of_samples_per_channel=samples)
         avg = np.mean(data)
 
-    return avg * 103.421 / 10 # Convert voltage to kPa based on sensor specs
+    return avg * 0.013332 # Convert voltage to kPa based on sensor specs (10 V = 1 tor)

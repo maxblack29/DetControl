@@ -277,11 +277,11 @@ class MyDialog(QDialog):
         s4_open = not bool(daq2[0])
         s5_open = bool(daq2[1])
 
-        self.ui.S1_label.setText("OPEN" if s1_open else "CLOSED")
-        self.ui.S2_label.setText("OPEN" if s2_open else "CLOSED")
-        self.ui.S3_label.setText("OPEN" if s3_open else "CLOSED")
-        self.ui.S4_label.setText("OPEN" if s4_open else "CLOSED")
-        self.ui.S5_label.setText("OPEN" if s5_open else "CLOSED")
+        self.ui.S1_state.setText("OPEN" if s1_open else "CLOSED")
+        self.ui.S2_state.setText("OPEN" if s2_open else "CLOSED")
+        self.ui.S3_state.setText("OPEN" if s3_open else "CLOSED")
+        self.ui.S4_state.setText("OPEN" if s4_open else "CLOSED")
+        self.ui.S5_state.setText("OPEN" if s5_open else "CLOSED")
 
   
     stop_test = False
