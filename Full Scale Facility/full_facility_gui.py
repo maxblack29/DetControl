@@ -379,11 +379,13 @@ class MyDialog(QDialog):
     #is run at end of fill phase
     def update_pressure(self):
         pressure = nicontrol.read_pressure()
+        self.post_fill_pressure = pressure
         self.ui.pressure_readout.display(pressure)
 
     #is run at start of automatic test
     def update_vacuum_pressure(self):
         vacuum_pressure = nicontrol.read_vacuum_pressure()
+        self.vacuum_pressure = vacuum_pressure
         self.ui.vacuum_pressure_readout.display(vacuum_pressure)
 
     def update_mfc_readouts(self, setpoint_a, setpoint_b, setpoint_c):

@@ -146,7 +146,7 @@ async def purge(setpointA, setpointB, setpointC, setpointD, on_mfc_setpoints_cha
 
     purge_complete_daq1 = [False, False, True, False, False, False, False, False]
     nicontrol.set_digital_output(purge_complete_daq1)
-    purge_complete_daq2 = [False, False, False, False, False, False, False, False]
+    purge_complete_daq2 = [True, True, False, False, False, False, False, False]
     nicontrol.set_digital_output_2(purge_complete_daq2)
     
     print("Purge complete!")
