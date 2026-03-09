@@ -24,9 +24,9 @@ import matplotlib.pyplot as plt
 from ui_full_facility_gui_script import Ui_full_facility_gui
 '''This calls the python file that was created FROM the .ui file (ui_full_facility_gui_script.py). 
 When updating gui in qt designer, must update the PYTHON file to see the updates.'''
+ 
 
-
-
+pauseUpdate = bool
 #used to monitor the flows from the MFCs in the background and manage MFC flows
 class MFCMonitorWorker(QObject):
     flows_updated = Signal(float, float, float)
@@ -51,10 +51,12 @@ class MFCMonitorWorker(QObject):
             if not self._paused:
                 try:
                     flows = alicatcontrol.get_manager().read_flows()
-                    a = flows.get("A", 0.0)
+                    # a = flows.get("A", 0.0)
                     b = flows.get("B", 0.0)
-                    c = flows.get("C", 0.0)
-                    self.flows_updated.emit(a, b, c)
+                    # c = flows.get("C", 0.0)
+                    # self.flows_updated.emit(a, b, c)
+                    self.flows_updated.emit(b)
+
                 except Exception:
                     pass
             time.sleep(self.interval_s)
@@ -114,7 +116,12 @@ class SolenoidWorker(QObject):
 
 
 class MyDialog(QDialog):
+
+
+
     def __init__(self, plumbing_diagram=None):
+
+        global pauseUpdate
         #MyDialog starts the GUI. this first secion is for initializing and connecting buttons. 
         super().__init__()
         self.ui = Ui_full_facility_gui()
@@ -188,6 +195,18 @@ class MyDialog(QDialog):
         self.solenoid_label_timer.timeout.connect(self.update_solenoid_labels)
         self.solenoid_label_timer.start(500)
         self.update_solenoid_labels()
+
+        # # Periodically refresh pressure gauge labels from last DAQ states
+        # if pauseUpdate:
+        #     self.vacuum_pressure_timer = QTimer(self)
+        #     self.vacuum_pressure_timer.timeout.connect(self.update_vacuum_pressure)
+        #     self.vacuum_pressure_timer.start(500)
+        #     self.update_vacuum_pressure()
+
+        #     self.pressure_timer = QTimer(self)
+        #     self.pressure_timer.timeout.connect(self.update_pressure)
+        #     self.pressure_timer.start(500)
+        #     self.update_pressure()
     
     def save_setpoints(self):
         #This function can be used to update the setpoints
@@ -207,13 +226,13 @@ class MyDialog(QDialog):
         setpointD = float(self.ui.mfcDsetpoint.text())
 
         manager = alicatcontrol.get_manager()
-        flowA = manager.set_flow_rate("A", setpointA)
+        # flowA = manager.set_flow_rate("A", setpointA)
         flowB = manager.set_flow_rate("B", setpointB)
-        flowC = manager.set_flow_rate("C", setpointC)
+        # flowC = manager.set_flow_rate("C", setpointC)
 
-        self.ui.mfcAreadout.display(flowA)
+        # self.ui.mfcAreadout.display(flowA)
         self.ui.mfcBreadout.display(flowB)
-        self.ui.mfcCreadout.display(flowC)
+        # self.ui.mfcCreadout.display(flowC)
 
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
 
@@ -233,13 +252,24 @@ class MyDialog(QDialog):
         self.ui.mfcDsetpoint.setText("0.0")
 
         manager = alicatcontrol.get_manager()
-        flowA = manager.set_flow_rate("A", 0.0)
+        # flowA = manager.set_flow_rate("A", 0.0)
         flowB = manager.set_flow_rate("B", 0.0)
-        flowC = manager.set_flow_rate("C", 0.0)
+        # flowC = manager.set_flow_rate("C", 0.0)
 
-        self.ui.mfcAreadout.display(flowA)
+        # self.ui.mfcAreadout.display(flowA)
         self.ui.mfcBreadout.display(flowB)
-        self.ui.mfcCreadout.display(flowC)
+        # self.ui.mfcCreadout.display(flowC)
+
+
+        # self.vacuum_pressure_timer = QTimer(self)
+        # self.vacuum_pressure_timer.timeout.connect(self.update_vacuum_pressure)
+        # self.vacuum_pressure_timer.start(500)
+        self.update_vacuum_pressure()
+
+        # self.pressure_timer = QTimer(self)
+        # self.pressure_timer.timeout.connect(self.update_pressure)
+        # self.pressure_timer.start(500)
+        self.update_pressure()
 
 
         print("All gas setpoints reset to 0.0 SLPM.")
@@ -248,9 +278,9 @@ class MyDialog(QDialog):
 
     def change_gas(self):
         manager = alicatcontrol.get_manager()
-        manager.set_gas("A", self.ui.mfcAgas.currentText())
+        # manager.set_gas("A", self.ui.mfcAgas.currentText())
         manager.set_gas("B", self.ui.mfcBgas.currentText())
-        manager.set_gas("C", self.ui.mfcCgas.currentText())
+        # manager.set_gas("C", self.ui.mfcCgas.currentText())
         #asyncio.run(alicatcontrol.set_gas('D', self.ui.mfcDgas.currentText()))
 
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
@@ -332,6 +362,8 @@ class MyDialog(QDialog):
     stop_test = False
 
     def begin_testing(self, stop_test):
+        global pauseUpdate
+        pauseUpdate = True # sean added
         button = self.ui.testautomation
         button.setEnabled(False)
         self.ui.testautomation.setStyleSheet("")
@@ -366,6 +398,7 @@ class MyDialog(QDialog):
         self._automation_threads.append((automation_thread, automation_worker))
 
         automation_thread.start()
+        pauseUpdate = False
     
     def ignite(self): 
         button = self.ui.igniteButton
@@ -383,7 +416,7 @@ class MyDialog(QDialog):
         ignite_worker.finished.connect(lambda: self.reenable(button))
 
         # keep the worker alive so it's not garbage collected while running 
-        if not hasattr(self, "_solenoid_threads"): 
+        if not hasattr(self, "_ignite_threads"): 
             self._ignite_threads = []
         self._ignite_threads.append((ignite_thread, ignite_worker))
 
@@ -429,7 +462,8 @@ class MyDialog(QDialog):
 
     #is run at start of automatic test
     def update_vacuum_pressure(self):
-        vacuum_pressure = nicontrol.read_vacuum_pressure()
+        vacuum_pressure = nicontrol.read_vacuum_pressure() * 1000
+        #print(vacuum_pressure) 
         self.vacuum_pressure = vacuum_pressure
         self.ui.vacuum_pressure_readout.display(vacuum_pressure)
 

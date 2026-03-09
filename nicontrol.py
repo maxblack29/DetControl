@@ -96,4 +96,22 @@ def read_vacuum_pressure():
         data = ai_task.read(number_of_samples_per_channel=samples)
         avg = np.mean(data)
 
-    return avg * 103.421 / 10 # Convert voltage to kPa based on sensor specs
+    return avg * 103.421 / 10 # Convert voltage to Pa based on sensor specs
+
+# def read_vacuum_pressure():
+#     ai_channel = "cDAQ9188-169338EMod8/ai1"
+#     sample_rate = 1000  # 1 kHz 
+#     duration = 0.1      # 100 ms
+#     samples = int(sample_rate * duration)
+
+#     with nidaqmx.Task() as ai_task:
+#         ai_task.ai_channels.add_ai_voltage_chan(ai_channel, min_val=0, max_val=10)
+#         ai_task.timing.cfg_samp_clk_timing(
+#             sample_rate, 
+#             sample_mode=AcquisitionType.FINITE, 
+#             samps_per_chan=samples
+#         )
+#         data = ai_task.read(number_of_samples_per_channel=samples)
+#         avg = np.mean(data)
+
+#     return avg * 103.421 / 10 # Convert voltage to Pa based on sensor specs

@@ -11,15 +11,15 @@ import gc
 
 # Same base path as detonation test data CSV
 FILL_LOG_DIR = r"C:\Users\dedic-lab\Documents\Detonation_Facility_Testing"
-FILL_LOG_INTERVAL_S = 0.5  # log flow rates every 0.5 s during fill
+FILL_LOG_INTERVAL_S = .01  # log flow rates every ___ s during fill
 
 
 def _set_mfc_rates(setpoint_a, setpoint_b, setpoint_c):
     """Set flow rates via the persistent MFC manager (no per-call COM open/close)."""
     manager = alicatcontrol.get_manager()
-    manager.set_flow_rate("A", setpoint_a)
+    # manager.set_flow_rate("A", setpoint_a)
     manager.set_flow_rate("B", setpoint_b)
-    manager.set_flow_rate("C", setpoint_c)
+    # manager.set_flow_rate("C", setpoint_c)
 
 
 async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_driver, on_fill_complete=None, on_mfc_setpoints_changed=None, testcount=None):
@@ -30,12 +30,14 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     T_std = 298         # K
     R = 8.314           # J/mol·K
 
-    molar_flow_rate_A = setpointA / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
+    # molar_flow_rate_A = setpointA / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
     molar_flow_rate_B = setpointB / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
-    molar_flow_rate_C = setpointC / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
+    # molar_flow_rate_C = setpointC / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
 
     # Total molar flow rate
-    total_molar_flow_rate = molar_flow_rate_A + molar_flow_rate_B + molar_flow_rate_C  # mol/s
+    # total_molar_flow_rate = molar_flow_rate_A + molar_flow_rate_B + molar_flow_rate_C  # mol/s
+    total_molar_flow_rate = molar_flow_rate_B  # mol/s
+
 
     # Volume to be filled (m³)
     fill_volume = 14.2 / 1000  # 14.2 L full facility volume → 0.0142 m³
@@ -47,11 +49,12 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     n_needed = P_target * fill_volume / (R * T_gas)  # mol
 
     # Time required to fill (s)
-    fill_time = n_needed / total_molar_flow_rate
+    #fill_time = n_needed / total_molar_flow_rate
+    fill_time = 5;
 
     print(fill_time) 
 
-    await asyncio.sleep(1) 
+    #await asyncio.sleep(1) 
 
     #BEGIN TEST 
     #1: Open up valves to MFCs and vacuum down to 60 milTorr (done manually in these first tests)-------------------------------------------------------------------------------------------------
@@ -90,24 +93,37 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     start_fill = time.perf_counter()
     speaker_done = False
     speaker_on_daq_2 = [True, True, True, False, False, False, False, False]
+    
+    # print("out loop")
+    # print(time.perf_counter() - start_fill) 
+    
+    # time.sleep(1)
+    nicontrol.read_mfcs(testcount)
 
     while True:
         elapsed = time.perf_counter() - start_fill
+        t1=time.perf_counter()
         flows = manager.read_flows()
+        t2=time.perf_counter()
+        print(t2-t1)
+        print("in loop")
+        print(time.perf_counter() - start_fill) 
         fill_log_rows.append((
             round(elapsed, 3),
-            setpointA, flows.get("A", 0.0),
+            # setpointA, flows.get("A", 0.0),
             setpointB, flows.get("B", 0.0),
-            setpointC, flows.get("C", 0.0),
+            # setpointC, flows.get("C", 0.0),
         ))
         if elapsed >= fill_time / 2 and not speaker_done:
             speaker_done = True
             nicontrol.set_digital_output_2(speaker_on_daq_2)
         if elapsed >= fill_time:
             break
-        await asyncio.sleep(min(FILL_LOG_INTERVAL_S, fill_time - elapsed))
+        #await asyncio.sleep(min(FILL_LOG_INTERVAL_S, fill_time - elapsed))
 
     if testcount is not None and fill_log_rows:
+        # print("write loop")
+        # print(time.perf_counter() - start_fill) 
         os.makedirs(FILL_LOG_DIR, exist_ok=True)
         path = os.path.join(FILL_LOG_DIR, f"fill_flow_rates_test{testcount}.csv")
         with open(path, "w", newline="") as f:
@@ -140,7 +156,7 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(0.0, 0.0, 0.0)
 
-    await asyncio.sleep(1)
+    #await asyncio.sleep(1)
 
     print("Fill complete, Ignite and press the standard purge button")
    
@@ -156,7 +172,7 @@ async def purge(setpointA, setpointB, setpointC, setpointD, on_mfc_setpoints_cha
     nicontrol.set_digital_output_2(purge_daq2)
     
     print("Purging...")
-    await asyncio.sleep(5)
+    await asyncio.sleep(60)
 
     purge_complete_daq1 = [False, False, True, False, False, False, False, False]
     nicontrol.set_digital_output(purge_complete_daq1)

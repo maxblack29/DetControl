@@ -16,7 +16,9 @@ gas_settings = {
 }
 
 DEFAULT_ADDRESS = "COM3"
-UNITS = ["A", "B", "C"]
+# UNITS = ["A", "B", "C"]
+UNITS = ["B"]
+
 
 
 class AlicatManager:
