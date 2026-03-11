@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_full_facility_gui_scriptOKOYfr.ui'
+## Form generated from reading UI file 'ui_full_facility_gui_scriptKudpKG.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -3384,6 +3384,18 @@ class Ui_full_facility_gui(object):
         self.S5_state.setGeometry(QRect(1340, 220, 71, 20))
         self.S5_state.setFont(font)
         self.S5_state.setTextFormat(Qt.TextFormat.RichText)
+        self.start_auto_read = QPushButton(full_facility_gui)
+        self.start_auto_read.setObjectName(u"start_auto_read")
+        self.start_auto_read.setGeometry(QRect(840, 250, 92, 31))
+        font1 = QFont()
+        font1.setPointSize(7)
+        self.start_auto_read.setFont(font1)
+        self.start_auto_read.setCheckable(False)
+        self.stop_auto_read = QPushButton(full_facility_gui)
+        self.stop_auto_read.setObjectName(u"stop_auto_read")
+        self.stop_auto_read.setGeometry(QRect(840, 310, 92, 31))
+        self.stop_auto_read.setFont(font1)
+        self.stop_auto_read.setCheckable(False)
 
         self.retranslateUi(full_facility_gui)
 
@@ -3577,5 +3589,7 @@ class Ui_full_facility_gui(object):
         self.S3_state.setText(QCoreApplication.translate("full_facility_gui", u"CLOSED", None))
         self.S4_state.setText(QCoreApplication.translate("full_facility_gui", u"OPEN", None))
         self.S5_state.setText(QCoreApplication.translate("full_facility_gui", u"OPEN", None))
+        self.start_auto_read.setText(QCoreApplication.translate("full_facility_gui", u"Start Auto Read", None))
+        self.stop_auto_read.setText(QCoreApplication.translate("full_facility_gui", u"Stop Auto Read", None))
     # retranslateUi
 
