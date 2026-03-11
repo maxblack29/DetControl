@@ -183,7 +183,7 @@ def read_vacuum_pressure():
 def read_mfcs(testcount):
     ai_channel = "cDAQ9188-169338EMod3/ai0:3"
     sample_rate = 1000  # 1 kHz 
-    duration = 15      # seconds
+    duration = 7      # seconds
     samples = int(sample_rate * duration)
 
     with nidaqmx.Task() as ai_task:
