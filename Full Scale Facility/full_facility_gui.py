@@ -275,6 +275,16 @@ class MyDialog(QDialog):
 
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
     def toggle_solenoid(self, index, state):
+        # Sync local DAQ state with the last values actually written by nicontrol,
+        # so we don't revert all lines to startup states when changing one solenoid.
+        try:
+            daq1, daq2 = nicontrol.get_daq_states()
+            daq1 = (daq1 + [False] * 8)[:8]
+            daq2 = (daq2 + [False] * 8)[:8]
+            self.daq1, self.daq2 = daq1, daq2
+        except Exception:
+            pass
+
         # Update the correct DAQ based on the solenoid index
         if index == 3:  # S4 is now on daq2
             self.daq2[index - 3] = not state  # Invert state for S4 (Open -> False, Close -> True)
@@ -445,15 +455,6 @@ class MyDialog(QDialog):
 
         purge_thread.start()
 
-    def reenable(self, button):
-        button.setEnabled(True)
-        button.setStyleSheet("")
-        # When automatic test finishes, re-enable pressure auto-read controls
-        if button is self.ui.testautomation:
-            self.automation_running = False
-            self.ui.start_auto_read.setEnabled(True)
-            self.ui.stop_auto_read.setEnabled(True)
-
     #is run at end of fill phase
     def update_pressure(self):
         pressure = nicontrol.read_pressure()
@@ -467,6 +468,8 @@ class MyDialog(QDialog):
         self.vacuum_pressure = vacuum_pressure
         self.ui.vacuum_pressure_readout.display(vacuum_pressure)
 
+
+    #starts auto read during vacuum phase
     def start_auto_read(self):
         """Begin periodically updating vacuum and fill pressures (for manual/vacuum phase)."""
         if self.automation_running:
@@ -483,12 +486,25 @@ class MyDialog(QDialog):
         self.update_vacuum_pressure()
         self.update_pressure()
 
+
+    #stops auto read during vacuum phase
     def stop_auto_read(self):
         """Stop auto-updating pressures; displays hold last values."""
         if self.vacuum_pressure_timer is not None:
             self.vacuum_pressure_timer.stop()
         if self.pressure_timer is not None:
             self.pressure_timer.stop()
+
+    #reenables the pressure auto-read controls after automatic test or purge is finished
+    def reenable(self, button):
+            button.setEnabled(True)
+            button.setStyleSheet("")
+            # When automatic test finishes, re-enable pressure auto-read controls
+            if button is self.ui.testautomation:
+                self.automation_running = False
+                self.ui.start_auto_read.setEnabled(True)
+                self.ui.stop_auto_read.setEnabled(True)
+
 
     def update_mfc_readouts(self, setpoint_a, setpoint_b, setpoint_c):
         """Update MFC A/B/C readout displays (e.g. when setpoints change in automatic test or purge)."""
