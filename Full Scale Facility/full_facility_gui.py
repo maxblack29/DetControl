@@ -122,7 +122,7 @@ class MyDialog(QDialog):
     def __init__(self, plumbing_diagram=None):
 
         global pauseUpdate
-        #MyDialog starts the GUI. this first secion is for initializing and connecting buttons. 
+        #MyDialog starts the GUI. this first section is for initializing and connecting buttons. 
         super().__init__()
         self.ui = Ui_full_facility_gui()
         self.ui.setupUi(self)
@@ -134,7 +134,10 @@ class MyDialog(QDialog):
         self.daq2 = [True, True, False, False, False, False, False, False] #Startup DAQ2 States
         nicontrol.set_digital_output_2(self.daq2) #Sets the digital output to the daq2 
 
-        self.testcount = 0 #zeroes the test count for data acquisition when gui is opened
+        self.testcount = 0  # zeroes the test count for data acquisition when gui is opened
+        self.automation_running = False
+        self.pressure_timer = None
+        self.vacuum_pressure_timer = None
 
         #Connect each open and close button
         self.ui.openS1.clicked.connect(lambda: self.toggle_solenoid(0, True))
@@ -172,6 +175,10 @@ class MyDialog(QDialog):
         self.ui.testautomation.clicked.connect(self.begin_testing)
         self.ui.purgebutton.clicked.connect(self.purge)
         self.ui.igniteButton.clicked.connect(self.ignite)
+
+        # Pressure auto-read controls (vacuum phase helper)
+        self.ui.start_auto_read.clicked.connect(self.start_auto_read)
+        self.ui.stop_auto_read.clicked.connect(self.stop_auto_read)
 
         self.vacuum_pressure = 0
         self.post_fill_pressure = 0
@@ -252,25 +259,8 @@ class MyDialog(QDialog):
         self.ui.mfcDsetpoint.setText("0.0")
 
         manager = alicatcontrol.get_manager()
-        # flowA = manager.set_flow_rate("A", 0.0)
         flowB = manager.set_flow_rate("B", 0.0)
-        # flowC = manager.set_flow_rate("C", 0.0)
-
-        # self.ui.mfcAreadout.display(flowA)
         self.ui.mfcBreadout.display(flowB)
-        # self.ui.mfcCreadout.display(flowC)
-
-
-        # self.vacuum_pressure_timer = QTimer(self)
-        # self.vacuum_pressure_timer.timeout.connect(self.update_vacuum_pressure)
-        # self.vacuum_pressure_timer.start(500)
-        self.update_vacuum_pressure()
-
-        # self.pressure_timer = QTimer(self)
-        # self.pressure_timer.timeout.connect(self.update_pressure)
-        # self.pressure_timer.start(500)
-        self.update_pressure()
-
 
         print("All gas setpoints reset to 0.0 SLPM.")
     
@@ -362,12 +352,17 @@ class MyDialog(QDialog):
     stop_test = False
 
     def begin_testing(self, stop_test):
-        global pauseUpdate
-        pauseUpdate = True # sean added
         button = self.ui.testautomation
         button.setEnabled(False)
         self.ui.testautomation.setStyleSheet("")
         self.ui.purgebutton.setStyleSheet("")
+
+        # During automatic test, prevent manual pressure auto-read from interfering
+        self.automation_running = True
+        self.ui.start_auto_read.setEnabled(False)
+        self.ui.stop_auto_read.setEnabled(False)
+        # Ensure any running auto-read timers are stopped
+        self.stop_auto_read()
 
         setpointA = float(self.ui.mfcAsetpoint.text())
         setpointB = float(self.ui.mfcBsetpoint.text())
@@ -453,6 +448,11 @@ class MyDialog(QDialog):
     def reenable(self, button):
         button.setEnabled(True)
         button.setStyleSheet("")
+        # When automatic test finishes, re-enable pressure auto-read controls
+        if button is self.ui.testautomation:
+            self.automation_running = False
+            self.ui.start_auto_read.setEnabled(True)
+            self.ui.stop_auto_read.setEnabled(True)
 
     #is run at end of fill phase
     def update_pressure(self):
@@ -466,6 +466,29 @@ class MyDialog(QDialog):
         #print(vacuum_pressure) 
         self.vacuum_pressure = vacuum_pressure
         self.ui.vacuum_pressure_readout.display(vacuum_pressure)
+
+    def start_auto_read(self):
+        """Begin periodically updating vacuum and fill pressures (for manual/vacuum phase)."""
+        if self.automation_running:
+            return  # ignore during automatic test
+        if self.vacuum_pressure_timer is None:
+            self.vacuum_pressure_timer = QTimer(self)
+            self.vacuum_pressure_timer.timeout.connect(self.update_vacuum_pressure)
+        if self.pressure_timer is None:
+            self.pressure_timer = QTimer(self)
+            self.pressure_timer.timeout.connect(self.update_pressure)
+        self.vacuum_pressure_timer.start(500)
+        self.pressure_timer.start(500)
+        # Take an immediate reading so the user sees it without waiting
+        self.update_vacuum_pressure()
+        self.update_pressure()
+
+    def stop_auto_read(self):
+        """Stop auto-updating pressures; displays hold last values."""
+        if self.vacuum_pressure_timer is not None:
+            self.vacuum_pressure_timer.stop()
+        if self.pressure_timer is not None:
+            self.pressure_timer.stop()
 
     def update_mfc_readouts(self, setpoint_a, setpoint_b, setpoint_c):
         """Update MFC A/B/C readout displays (e.g. when setpoints change in automatic test or purge)."""
