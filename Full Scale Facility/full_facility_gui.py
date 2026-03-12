@@ -261,10 +261,11 @@ class MyDialog(QDialog):
         manager = alicatcontrol.get_manager()
         flowB = manager.set_flow_rate("B", 0.0)
         self.ui.mfcBreadout.display(flowB)
+        self.update_vacuum_pressure()
+        self.update_pressure()
 
         print("All gas setpoints reset to 0.0 SLPM.")
     
-
 
     def change_gas(self):
         manager = alicatcontrol.get_manager()
@@ -276,7 +277,7 @@ class MyDialog(QDialog):
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
     def toggle_solenoid(self, index, state):
         # Sync local DAQ state with the last values actually written by nicontrol,
-        # so we don't revert all lines to startup states when changing one solenoid.
+        # so we don't revert all lines to startup states when changing one solenoid
         try:
             daq1, daq2 = nicontrol.get_daq_states()
             daq1 = (daq1 + [False] * 8)[:8]
