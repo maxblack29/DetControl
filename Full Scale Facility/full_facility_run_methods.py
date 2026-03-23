@@ -15,7 +15,7 @@ def _set_mfc_rates(setpoint_a, setpoint_b, setpoint_c):
     nicontrol.set_mfc_setpoints_analog(setpoint_a, setpoint_b, setpoint_c)
 
 
-async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_driver, on_fill_complete=None, on_mfc_setpoints_changed=None, testcount=None):
+async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_driver, on_fill_complete=None, on_mfc_setpoints_changed=None, fill_time_s=0.0, testcount=None):
 
     print("Test starting")
 
@@ -41,8 +41,9 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     n_needed = P_target * fill_volume / (R * T_gas)  # mol
 
     # Time required to fill (s)
-    fill_time = n_needed / total_molar_flow_rate if total_molar_flow_rate > 0 else 0.0
-    print(f"Calculated fill time: {fill_time:.2f} s")
+    # fill_time = n_needed / total_molar_flow_rate if total_molar_flow_rate > 0 else 0.0
+    fill_time = max(0.0, float(fill_time_s))
+    print(f"Using fill time input: {fill_time:.2f} s")
 
     #BEGIN TEST 
     #1: Open up valves to MFCs and vacuum down to 60 milTorr (done manually in these first tests)-------------------------------------------------------------------------------------------------

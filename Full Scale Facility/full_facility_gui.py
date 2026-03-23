@@ -55,13 +55,14 @@ class AutomationWorker(QObject):
     fill_phase_complete = Signal()
     mfc_readouts_updated = Signal(float, float, float)
 
-    def __init__(self, setpointA, setpointB, setpointC, setpointD, setpointC_driver, testcount=None):
+    def __init__(self, setpointA, setpointB, setpointC, setpointD, setpointC_driver, fill_time_s, testcount=None):
         super().__init__()
         self.setpointA = setpointA
         self.setpointB = setpointB
         self.setpointC = setpointC
         self.setpointD = setpointD
         self.setpointC_driver = setpointC_driver
+        self.fill_time_s = fill_time_s
         self.testcount = testcount
 
     def runauto(self):
@@ -69,6 +70,7 @@ class AutomationWorker(QObject):
             self.setpointA, self.setpointB, self.setpointC, self.setpointD, self.setpointC_driver,
             on_fill_complete=self.fill_phase_complete.emit,
             on_mfc_setpoints_changed=self.mfc_readouts_updated.emit,
+            fill_time_s=self.fill_time_s,
             testcount=self.testcount,
         ))
         self.finished.emit()
@@ -168,6 +170,7 @@ class MyDialog(QDialog):
 
         self.vacuum_pressure = 0
         self.post_fill_pressure = 0
+        self.ui.test_num_readout.setText("0")
 
         # Start persistent MFC manager (one COM connection per controller, kept open).
         try:
@@ -349,14 +352,28 @@ class MyDialog(QDialog):
         setpointD = float(self.ui.mfcDsetpoint.text())
 
 
-        self.testcount += 1
-        self.ui.test_num_readout.display(self.testcount)
+        # Keep editable QLineEdit behavior: use current text if valid, then increment.
+        try:
+            current_test_num = int(self.ui.test_num_readout.text())
+        except ValueError:
+            current_test_num = 0
+        self.testcount = current_test_num + 1
+        self.ui.test_num_readout.setText(str(self.testcount))
+
+        try:
+            fill_time_s = float(self.ui.fill_time.text())
+        except ValueError:
+            fill_time_s = 0.0
 
         # Update vacuum gauge once when automatic test starts
         self.update_vacuum_pressure()
 
         #Michael change: now gives automation its own worker/thread
-        automation_worker = AutomationWorker(setpointA, setpointB, setpointC, setpointD, setpointC2, testcount=self.testcount)
+        automation_worker = AutomationWorker(
+            setpointA, setpointB, setpointC, setpointD, setpointC2,
+            fill_time_s=fill_time_s,
+            testcount=self.testcount
+        )
         automation_thread = QThread()
         automation_worker.moveToThread(automation_thread)
         automation_thread.started.connect(automation_worker.runauto)
@@ -407,7 +424,7 @@ class MyDialog(QDialog):
         setpointC2 = 0.0
         setpointD = 0.0
 
-        purge_worker = AutomationWorker(setpointA, setpointB, setpointC, setpointD, setpointC2)
+        purge_worker = AutomationWorker(setpointA, setpointB, setpointC, setpointD, setpointC2, fill_time_s=0.0)
         purge_thread = QThread()
         purge_worker.moveToThread(purge_thread)
         purge_thread.started.connect(purge_worker.runstanpurge)
