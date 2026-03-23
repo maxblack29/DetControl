@@ -1,37 +1,26 @@
 import sys
-from PySide6.QtWidgets import QApplication, QDialog, QLabel
-from PySide6.QtCore import QTimer, QThread, Signal, QObject, Slot, QProcess
-from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QApplication, QDialog
+from PySide6.QtCore import QTimer, QThread, Signal, QObject
 import full_facility_run_methods
-from plumbingdiagram import Ui_plumbingdiagram
-from greenledwidget import GreenLed
 import nidaqmx  # might not be needed since I imported nicontrol
 import nicontrol
-from nicontrol import set_digital_output
 from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
 import alicatcontrol
 import asyncio
 #import dataacquisition
 import numpy as np
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
 import time
-
-import pdb
-import pyqtgraph as pg
-import matplotlib.pyplot as plt
 
 from ui_full_facility_gui_script import Ui_full_facility_gui
 '''This calls the python file that was created FROM the .ui file (ui_full_facility_gui_script.py). 
 When updating gui in qt designer, must update the PYTHON file to see the updates.'''
  
 
-pauseUpdate = bool
 #used to monitor the flows from the MFCs in the background and manage MFC flows
 class MFCMonitorWorker(QObject):
     flows_updated = Signal(float, float, float)
 
-    def __init__(self, interval_ms=100):
+    def __init__(self, interval_ms=1000):
         super().__init__()
         self.interval_s = interval_ms / 1000.0
         self._running = True
@@ -51,11 +40,10 @@ class MFCMonitorWorker(QObject):
             if not self._paused:
                 try:
                     flows = alicatcontrol.get_manager().read_flows()
-                    # a = flows.get("A", 0.0)
+                    a = flows.get("A", 0.0)
                     b = flows.get("B", 0.0)
-                    # c = flows.get("C", 0.0)
-                    # self.flows_updated.emit(a, b, c)
-                    self.flows_updated.emit(b)
+                    c = flows.get("C", 0.0)
+                    self.flows_updated.emit(a, b, c)
 
                 except Exception:
                     pass
@@ -120,8 +108,6 @@ class MyDialog(QDialog):
 
 
     def __init__(self, plumbing_diagram=None):
-
-        global pauseUpdate
         #MyDialog starts the GUI. this first section is for initializing and connecting buttons. 
         super().__init__()
         self.ui = Ui_full_facility_gui()
@@ -189,8 +175,8 @@ class MyDialog(QDialog):
         except Exception as e:
             print("MFC manager failed to start (check COM3 / Alicat):", e)
 
-        # Background MFC monitor: reads actual flows every 500 ms via the manager.
-        self.mfc_monitor_worker = MFCMonitorWorker(interval_ms=500)
+        # Background MFC monitor: serial readback at 1 Hz for GUI only.
+        self.mfc_monitor_worker = MFCMonitorWorker(interval_ms=1000)
         self.mfc_monitor_thread = QThread()
         self.mfc_monitor_worker.moveToThread(self.mfc_monitor_thread)
         self.mfc_monitor_worker.flows_updated.connect(self.update_mfc_readouts)
@@ -203,17 +189,6 @@ class MyDialog(QDialog):
         self.solenoid_label_timer.start(500)
         self.update_solenoid_labels()
 
-        # # Periodically refresh pressure gauge labels from last DAQ states
-        # if pauseUpdate:
-        #     self.vacuum_pressure_timer = QTimer(self)
-        #     self.vacuum_pressure_timer.timeout.connect(self.update_vacuum_pressure)
-        #     self.vacuum_pressure_timer.start(500)
-        #     self.update_vacuum_pressure()
-
-        #     self.pressure_timer = QTimer(self)
-        #     self.pressure_timer.timeout.connect(self.update_pressure)
-        #     self.pressure_timer.start(500)
-        #     self.update_pressure()
     
     def save_setpoints(self):
         #This function can be used to update the setpoints
@@ -232,14 +207,8 @@ class MyDialog(QDialog):
         setpointC = float(self.ui.mfcCsetpoint.text())
         setpointD = float(self.ui.mfcDsetpoint.text())
 
-        manager = alicatcontrol.get_manager()
-        # flowA = manager.set_flow_rate("A", setpointA)
-        flowB = manager.set_flow_rate("B", setpointB)
-        # flowC = manager.set_flow_rate("C", setpointC)
-
-        # self.ui.mfcAreadout.display(flowA)
-        self.ui.mfcBreadout.display(flowB)
-        # self.ui.mfcCreadout.display(flowC)
+        # Set MFC setpoints via analog output (Mod7 ao1:3).
+        nicontrol.set_mfc_setpoints_analog(setpointA, setpointB, setpointC)
 
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
 
@@ -258,9 +227,7 @@ class MyDialog(QDialog):
         self.ui.mfcCsetpoint.setText("0.0")
         self.ui.mfcDsetpoint.setText("0.0")
 
-        manager = alicatcontrol.get_manager()
-        flowB = manager.set_flow_rate("B", 0.0)
-        self.ui.mfcBreadout.display(flowB)
+        nicontrol.set_mfc_setpoints_analog(0.0, 0.0, 0.0)
         self.update_vacuum_pressure()
         self.update_pressure()
 
@@ -269,9 +236,9 @@ class MyDialog(QDialog):
 
     def change_gas(self):
         manager = alicatcontrol.get_manager()
-        # manager.set_gas("A", self.ui.mfcAgas.currentText())
+        manager.set_gas("A", self.ui.mfcAgas.currentText())
         manager.set_gas("B", self.ui.mfcBgas.currentText())
-        # manager.set_gas("C", self.ui.mfcCgas.currentText())
+        manager.set_gas("C", self.ui.mfcCgas.currentText())
         #asyncio.run(alicatcontrol.set_gas('D', self.ui.mfcDgas.currentText()))
 
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
@@ -404,7 +371,6 @@ class MyDialog(QDialog):
         self._automation_threads.append((automation_thread, automation_worker))
 
         automation_thread.start()
-        pauseUpdate = False
     
     def ignite(self): 
         button = self.ui.igniteButton
