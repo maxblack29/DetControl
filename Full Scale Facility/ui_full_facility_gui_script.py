@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_full_facility_gui_scriptKudpKG.ui'
+## Form generated from reading UI file 'ui_full_facility_gui_scriptAUZLjS.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -3351,9 +3351,6 @@ class Ui_full_facility_gui(object):
         self.closeS5 = QPushButton(full_facility_gui)
         self.closeS5.setObjectName(u"closeS5")
         self.closeS5.setGeometry(QRect(1240, 220, 92, 31))
-        self.test_num_readout = QLCDNumber(full_facility_gui)
-        self.test_num_readout.setObjectName(u"test_num_readout")
-        self.test_num_readout.setGeometry(QRect(1560, 310, 71, 31))
         self.test_num_label = QLabel(full_facility_gui)
         self.test_num_label.setObjectName(u"test_num_label")
         self.test_num_label.setGeometry(QRect(1510, 310, 41, 31))
@@ -3396,6 +3393,15 @@ class Ui_full_facility_gui(object):
         self.stop_auto_read.setGeometry(QRect(840, 310, 92, 31))
         self.stop_auto_read.setFont(font1)
         self.stop_auto_read.setCheckable(False)
+        self.test_num_readout = QLineEdit(full_facility_gui)
+        self.test_num_readout.setObjectName(u"test_num_readout")
+        self.test_num_readout.setGeometry(QRect(1550, 310, 71, 31))
+        self.fill_time = QLineEdit(full_facility_gui)
+        self.fill_time.setObjectName(u"fill_time")
+        self.fill_time.setGeometry(QRect(440, 250, 61, 21))
+        self.fill_time_label = QLabel(full_facility_gui)
+        self.fill_time_label.setObjectName(u"fill_time_label")
+        self.fill_time_label.setGeometry(QRect(370, 250, 71, 20))
 
         self.retranslateUi(full_facility_gui)
 
@@ -3591,5 +3597,6 @@ class Ui_full_facility_gui(object):
         self.S5_state.setText(QCoreApplication.translate("full_facility_gui", u"OPEN", None))
         self.start_auto_read.setText(QCoreApplication.translate("full_facility_gui", u"Start Auto Read", None))
         self.stop_auto_read.setText(QCoreApplication.translate("full_facility_gui", u"Stop Auto Read", None))
+        self.fill_time_label.setText(QCoreApplication.translate("full_facility_gui", u"Fill Time (s)", None))
     # retranslateUi
 
