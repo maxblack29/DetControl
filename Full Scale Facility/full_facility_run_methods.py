@@ -19,26 +19,26 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
 
     print("Test starting")
 
-    P_std = 101300      # Pa
-    T_std = 298         # K
-    R = 8.314           # J/mol·K
+    # P_std = 101300      # Pa
+    # T_std = 298         # K
+    # R = 8.314           # J/mol·K
 
-    molar_flow_rate_A = setpointA / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
-    molar_flow_rate_B = setpointB / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
-    molar_flow_rate_C = setpointC / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
+    # molar_flow_rate_A = setpointA / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
+    # molar_flow_rate_B = setpointB / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
+    # molar_flow_rate_C = setpointC / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
 
-    # Total molar flow rate
-    total_molar_flow_rate = molar_flow_rate_A + molar_flow_rate_B + molar_flow_rate_C  # mol/s
+    # # Total molar flow rate
+    # total_molar_flow_rate = molar_flow_rate_A + molar_flow_rate_B + molar_flow_rate_C  # mol/s
 
 
-    # Volume to be filled (m³)
-    fill_volume = 14.2 / 1000  # 14.2 L full facility volume → 0.0142 m³
+    # # Volume to be filled (m³)
+    # fill_volume = 14.2 / 1000  # 14.2 L full facility volume → 0.0142 m³
 
-    # Moles needed to fill the volume to 10 kPa absolute at 298 K
-    P_target = 10000 # Pa
-    T_gas = 298       # K
+    # # Moles needed to fill the volume to 10 kPa absolute at 298 K
+    # P_target = 10000 # Pa
+    # T_gas = 298       # K
 
-    n_needed = P_target * fill_volume / (R * T_gas)  # mol
+    # n_needed = P_target * fill_volume / (R * T_gas)  # mol
 
     # Time required to fill (s)
     # fill_time = n_needed / total_molar_flow_rate if total_molar_flow_rate > 0 else 0.0
