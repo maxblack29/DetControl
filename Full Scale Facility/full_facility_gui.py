@@ -54,7 +54,7 @@ class MFCMonitorWorker(QObject):
                     a = flows.get("A", 0.0)
                     b = flows.get("B", 0.0)
                     c = flows.get("C", 0.0)
-                    self.flows_updated.emit(a, b, c)
+                    self.flows_updated.emit(a,b,c)
 
                 except Exception:
                     pass
