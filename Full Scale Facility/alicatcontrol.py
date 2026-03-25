@@ -16,13 +16,14 @@ gas_settings = {
 }
 
 DEFAULT_ADDRESS = "COM3"
-# UNITS = ["A", "B", "C"]
+# Controllers to open on this COM port (Alicat unit letters). Use ["B"] when only B is
+# powered/on-bus; set to ["A", "B", "C"] (etc.) when the rest are online.
 UNITS = ["B"]
 
 
 
 class AlicatManager:
-    """Keeps FlowController connections open for A, B, C. Runs one asyncio loop in a dedicated thread."""
+    """Keeps FlowController connections open for each entry in UNITS. Runs one asyncio loop in a dedicated thread."""
 
     def __init__(self, address=DEFAULT_ADDRESS):
         self._address = address
@@ -30,6 +31,7 @@ class AlicatManager:
         self._thread = None
         self._mfcs = {}  # unit -> FlowController (after __aenter__)
         self._ready = threading.Event()
+        self._last_gas = {}  # unit -> last gas string sent (avoid redundant set_gas)
 
     async def _open_all(self):
         for unit in UNITS:
@@ -54,7 +56,23 @@ class AlicatManager:
         return float(data.get("mass_flow", setpoint))
 
     async def _set_gas(self, unit, gas):
-        await self._mfcs[unit].set_gas(gas)
+        gas = str(gas).strip()
+        if self._last_gas.get(unit) == gas:
+            return
+        mfc = self._mfcs[unit]
+        try:
+            await mfc.set_gas(gas)
+        except OSError as e:
+            # Second attempt after a short pause (device busy / serial timing).
+            if "Cannot set gas" in str(e):
+                await asyncio.sleep(0.2)
+                await mfc.set_gas(gas)
+            else:
+                raise
+        await asyncio.sleep(0.05)
+        self._last_gas[unit] = gas
+        if unit in gas_settings:
+            gas_settings[unit]["gas"] = gas
         print(f"Set gas for controller {unit} to {gas}")
 
     async def _read_flows(self):
@@ -90,10 +108,14 @@ class AlicatManager:
 
     def set_flow_rate(self, unit, setpoint):
         """Set flow rate for one unit; returns current volumetric flow (SLPM)."""
+        if unit not in self._mfcs:
+            return 0.0
         return self._submit(self._set_flow_rate(unit, float(setpoint)))
 
     def set_gas(self, unit, gas):
-        """Set gas type for one unit."""
+        """Set gas type for one unit. No-op if that unit is not in UNITS (not opened)."""
+        if unit not in self._mfcs:
+            return
         self._submit(self._set_gas(unit, gas))
 
     def read_flows(self):

@@ -51,11 +51,10 @@ class MFCMonitorWorker(QObject):
             if not self._paused:
                 try:
                     flows = alicatcontrol.get_manager().read_flows()
-                    # a = flows.get("A", 0.0)
+                    a = flows.get("A", 0.0)
                     b = flows.get("B", 0.0)
-                    # c = flows.get("C", 0.0)
-                    # self.flows_updated.emit(a, b, c)
-                    self.flows_updated.emit(b)
+                    c = flows.get("C", 0.0)
+                    self.flows_updated.emit(a, b, c)
 
                 except Exception:
                     pass
@@ -268,11 +267,19 @@ class MyDialog(QDialog):
     
 
     def change_gas(self):
+        # Each combo is connected to this slot; only update the MFC whose combo changed.
+        # Serial commands only go to units listed in alicatcontrol.UNITS (e.g. ["B"] while A/C are off).
+        combo = self.sender()
         manager = alicatcontrol.get_manager()
-        # manager.set_gas("A", self.ui.mfcAgas.currentText())
-        manager.set_gas("B", self.ui.mfcBgas.currentText())
-        # manager.set_gas("C", self.ui.mfcCgas.currentText())
-        #asyncio.run(alicatcontrol.set_gas('D', self.ui.mfcDgas.currentText()))
+        U = alicatcontrol.UNITS
+        if combo is self.ui.mfcAgas and "A" in U:
+            manager.set_gas("A", self.ui.mfcAgas.currentText())
+        elif combo is self.ui.mfcBgas and "B" in U:
+            manager.set_gas("B", self.ui.mfcBgas.currentText())
+        elif combo is self.ui.mfcCgas and "C" in U:
+            manager.set_gas("C", self.ui.mfcCgas.currentText())
+        elif combo is self.ui.mfcDgas and "D" in U:
+            manager.set_gas("D", self.ui.mfcDgas.currentText())
 
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
     def toggle_solenoid(self, index, state):
