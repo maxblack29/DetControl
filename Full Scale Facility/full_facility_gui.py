@@ -6,7 +6,7 @@ import nidaqmx  # might not be needed since I imported nicontrol
 import nicontrol
 from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
 import alicatcontrol
-import klinger_control
+# import klinger_control  # analog-branch: Klinger integration deferred for later testing
 import asyncio
 #import dataacquisition
 import numpy as np
@@ -101,7 +101,7 @@ class SolenoidWorker(QObject):
     
     def runignite(self):
         nicontrol.set_ignite_read_pressure(self.testcount, self.vacuum_pressure, self.post_fill_pressure)
-        klinger_control.return_to_negative_29500()
+        # klinger_control.return_to_negative_29500()  # analog-branch: Klinger deferred
         self.finished.emit()
 
 
@@ -181,11 +181,10 @@ class MyDialog(QDialog):
             print("MFC manager failed to start (check COM3 / Alicat):", e)
 
         # Klinger startup positioning: RX4000 then NX-29500 (handshake after each).
-        try:
-            klinger_control.initialize_at_startup()
-        except Exception as e:
-            # Don't crash the whole GUI if Klinger isn't connected.
-            print("Klinger init failed:", e)
+        # try:
+        #     klinger_control.initialize_at_startup()
+        # except Exception as e:
+        #     print("Klinger init failed:", e)
 
         # Background MFC monitor: serial readback at 1 Hz for GUI only.
         self.mfc_monitor_worker = MFCMonitorWorker(interval_ms=1000)
@@ -247,11 +246,19 @@ class MyDialog(QDialog):
     
 
     def change_gas(self):
+        # Each combo is connected to this slot; only update the MFC whose combo changed.
+        # Serial commands only go to units listed in alicatcontrol.UNITS (e.g. ["B"] while A/C are off).
+        combo = self.sender()
         manager = alicatcontrol.get_manager()
-        manager.set_gas("A", self.ui.mfcAgas.currentText())
-        manager.set_gas("B", self.ui.mfcBgas.currentText())
-        manager.set_gas("C", self.ui.mfcCgas.currentText())
-        #asyncio.run(alicatcontrol.set_gas('D', self.ui.mfcDgas.currentText()))
+        U = alicatcontrol.UNITS
+        if combo is self.ui.mfcAgas and "A" in U:
+            manager.set_gas("A", self.ui.mfcAgas.currentText())
+        elif combo is self.ui.mfcBgas and "B" in U:
+            manager.set_gas("B", self.ui.mfcBgas.currentText())
+        elif combo is self.ui.mfcCgas and "C" in U:
+            manager.set_gas("C", self.ui.mfcCgas.currentText())
+        elif combo is self.ui.mfcDgas and "D" in U:
+            manager.set_gas("D", self.ui.mfcDgas.currentText())
 
     #Toggles the solenoid states based on button clicks from the GUI. Will highlight the active state green based on user input.
     def toggle_solenoid(self, index, state):

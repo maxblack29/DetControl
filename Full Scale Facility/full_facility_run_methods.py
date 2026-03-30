@@ -4,8 +4,8 @@ import os
 import nicontrol
 import asyncio
 import time
-import klinger_control
-import threading
+# import klinger_control  # analog-branch: Klinger integration deferred for later testing
+# import threading
 
 # Same base path as detonation test data CSV
 FILL_LOG_DIR = r"C:\Users\dedic-lab\Documents\Detonation_Facility_Testing"
@@ -48,7 +48,7 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
     print(f"Using fill time input: {fill_time:.2f} s")
 
     # Move the Klinger stage to zero in the background (don't block the test start).
-    threading.Thread(target=klinger_control.move_to_zero, daemon=True).start()
+    # threading.Thread(target=klinger_control.move_to_zero, daemon=True).start()
 
     #BEGIN TEST 
     #1: Open up valves to MFCs and vacuum down to 60 milTorr (done manually in these first tests)-------------------------------------------------------------------------------------------------
