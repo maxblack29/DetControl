@@ -6,6 +6,7 @@ import nidaqmx  # might not be needed since I imported nicontrol
 import nicontrol
 from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
 import alicatcontrol
+import klinger_control
 import asyncio
 #import dataacquisition
 import numpy as np
@@ -99,7 +100,8 @@ class SolenoidWorker(QObject):
         self.finished.emit()
     
     def runignite(self):
-        nicontrol.set_ignite_read_pressure(self.testcount, self.vacuum_pressure, self.post_fill_pressure) 
+        nicontrol.set_ignite_read_pressure(self.testcount, self.vacuum_pressure, self.post_fill_pressure)
+        klinger_control.return_to_negative_29500()
         self.finished.emit()
 
 
@@ -177,6 +179,13 @@ class MyDialog(QDialog):
             alicatcontrol.start_manager()
         except Exception as e:
             print("MFC manager failed to start (check COM3 / Alicat):", e)
+
+        # Klinger startup positioning: RX4000 then NX-29500 (handshake after each).
+        try:
+            klinger_control.initialize_at_startup()
+        except Exception as e:
+            # Don't crash the whole GUI if Klinger isn't connected.
+            print("Klinger init failed:", e)
 
         # Background MFC monitor: serial readback at 1 Hz for GUI only.
         self.mfc_monitor_worker = MFCMonitorWorker(interval_ms=1000)
