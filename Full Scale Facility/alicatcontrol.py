@@ -94,10 +94,6 @@ gas_settings = {
 }
 
 DEFAULT_ADDRESS = "COM3"
-<<<<<<< HEAD
-# Controllers to open on this COM port (Alicat unit letters)
-UNITS = ["A", "B", "C"]
-=======
 # Match Alicat front-panel unit IDs (A–Z). Must match hardware addressing on the multidrop line.
 UNITS = ["A", "B", "C"]
 
@@ -112,7 +108,6 @@ def _flow_kwargs():
         "baudrate": DEFAULT_BAUDRATE,
         "timeout": DEFAULT_SERIAL_TIMEOUT,
     }
->>>>>>> bd9bae6f7cc0f362f8fb177ce2510fd83112400b
 
 
 class AlicatManager:
