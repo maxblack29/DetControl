@@ -1,17 +1,33 @@
-import serial
-import time
+import serial 
+import time 
+import threading
 
 # ---------------- SERIAL SETUP ----------------
 ser = serial.Serial(
-    port='COM3',            # update this to the correct port
+    port='COM3',
     baudrate=9600,
     bytesize=serial.EIGHTBITS,
     parity=serial.PARITY_NONE,
     stopbits=serial.STOPBITS_ONE,
-    timeout=1
+    timeout=0.1   # shorter timeout helps live updates
+ser.reset_input_buffer() 
 )
 
-XON = b'\x11' #character that klinger outputs when ready
+XON = b'\x11'
+
+# ---------------- LIVE SERIAL READER ----------------
+def read_serial():
+    """Continuously read and print incoming serial data"""
+    while True:
+        if ser.in_waiting > 0:
+            data = ser.read(ser.in_waiting)
+            try:
+                print(data.decode(errors='ignore'), end='')
+            except:
+                print(data)
+
+# Start background thread
+threading.Thread(target=read_serial, daemon=True).start()
 
 # ---------------- HELPERS ----------------
 def wait_for_xon():
@@ -23,8 +39,8 @@ def wait_for_xon():
 
 def send(cmd):
     """Send a command safely with handshake"""
-    print(f"Sending: {cmd}")
-    ser.write((cmd + '\r').encode()) #adds a carriage return to the command
+    print(f"\nSending: {cmd}")
+    ser.write((cmd + '\r').encode())
 
 # ---------------- MAIN PROGRAM ----------------
 print("Klinger X-axis test ready.")
@@ -37,21 +53,18 @@ while True:
     if user_input.lower() == 'q':
         break
 
-    # ---- Set high speed ----
     send("RX4000")
+    wait_for_xon()
 
-    # ---- Move to -29500 ----
     send("NX-29500")
-    wait_for_xon()   # wait until move complete
-    print("Reached -29500")
+    wait_for_xon()
+    print("\nReached -29500")
 
-    # ---- Carriage return / turnaround pause ----
     time.sleep(1)
 
-    # ---- Move back to origin ----
-    send("NX0")   # faster than OX unless you NEED re-homing
+    send("NX0")
     wait_for_xon()
-    print("Returned to origin (0)\n")
+    print("\nReturned to origin (0)\n")
 
 # ---------------- CLEANUP ----------------
 ser.close()
