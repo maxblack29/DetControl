@@ -16,9 +16,8 @@ gas_settings = {
 }
 
 DEFAULT_ADDRESS = "COM3"
-# Controllers to open on this COM port (Alicat unit letters). Use ["B"] when only B is
-# powered/on-bus; set to ["A", "B", "C"] (etc.) when the rest are online.
-UNITS = ["B"]
+# Controllers to open on this COM port (Alicat unit letters)
+UNITS = ["A", "B", "C"]
 
 
 class AlicatManager:
