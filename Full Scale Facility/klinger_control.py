@@ -1,78 +1,86 @@
-import serial
-import time
+import serial 
+import time 
 import threading
 
 # ---------------- SERIAL SETUP ----------------
-SERIAL_PORT = 'COM3'  # update this to the correct port
-ser = None
-
-def _ensure_serial_open():
-    """Open the serial port on-demand (avoids import-time COM conflicts)."""
-    global ser
-    if ser is None or not getattr(ser, "is_open", False):
-        ser = serial.Serial(
-            port=SERIAL_PORT,
-            baudrate=9600,
-            bytesize=serial.EIGHTBITS,
-            parity=serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            timeout=1,
-        )
-    return ser
+ser = serial.Serial(
+    port='COM1',
+    baudrate=9600,
+    bytesize=serial.EIGHTBITS,
+    parity=serial.PARITY_NONE,
+    stopbits=serial.STOPBITS_ONE,
+    timeout = 0.1
+)
+ser.reset_input_buffer() 
 
 
-XON = b'\x11' #character that klinger outputs when ready
+XON = b'\x11'
 
-#Commands List: 
-MOVE_TO_NEGATIVE_29500 = "NX-29500"
-MOVE_TO_ZERO = "NX0"
-SET_HIGH_SPEED = "RX4000"
+# ---------------- LIVE SERIAL READER ----------------
+def read_serial():
+    """Continuously read and print incoming serial data"""
+    while True:
+        if ser.in_waiting > 0:
+            data = ser.read(ser.in_waiting)
+            try:
+                print(data.decode(errors='ignore'), end='')
+            except:
+                print(data)
+
+# Start background thread
+threading.Thread(target=read_serial, daemon=True).start()
 
 # ---------------- HELPERS ----------------
-_serial_lock = threading.Lock()
-
-def wait_for_xon(timeout_s=10.0):
-    """Wait until controller sends XON (ready)."""
-    s = _ensure_serial_open()
-    deadline = time.time() + float(timeout_s)
-    while time.time() < deadline:
-        data = s.read(1)
+def wait_for_xon():
+    """Wait until controller sends XON (ready)"""
+    while True:
+        data = ser.read(1)
         if data == XON:
             return
-    raise TimeoutError("Timed out waiting for XON from Klinger.")
 
 def send(cmd):
     """Send a command safely with handshake"""
-    print(f"Sending: {cmd}")
-    s = _ensure_serial_open()
-    s.write((cmd + '\r').encode()) #adds a carriage return to the command
+    print(f"\nSending: {cmd}")
+    ser.write((cmd + '\r').encode())
 
-def send_and_wait(cmd, timeout_s=10.0):
-    """Send one command, then wait for XON before returning."""
-    with _serial_lock:
-        s = _ensure_serial_open()
-        # Clear any stale bytes so we don't accidentally match an older XON.
-        try:
-            s.reset_input_buffer()
-        except Exception:
-            pass
-        send(cmd)
-        wait_for_xon(timeout_s=timeout_s)
+# ---------------- MAIN PROGRAM ----------------
+print("Klinger X-axis test ready.")
+print("Press ENTER to move to -29500 and back to 0.")
+print("Type 'q' to quit.\n")
 
-def set_high_speed(timeout_s=10.0):
-    send_and_wait(SET_HIGH_SPEED, timeout_s=timeout_s)
+while True:
+    user_input = input("Command: ")
 
-def move_to_negative_29500(timeout_s=10.0):
-    send_and_wait(MOVE_TO_NEGATIVE_29500, timeout_s=timeout_s)
+    if user_input.lower() == 'q':
+        break
 
-def move_to_zero(timeout_s=10.0):
-    send_and_wait(MOVE_TO_ZERO, timeout_s=timeout_s)
+    send("RX4000")
+    time.sleep(0.2)
+    send("-X")
+    time.sleep(0.2)
+    send("NX29500")
+    time.sleep(0.2)
+    send("MX")
 
-def initialize_at_startup(timeout_s=10.0):
-    """RX4000 then NX-29500, with XON after each command."""
-    set_high_speed(timeout_s=timeout_s)
-    move_to_negative_29500(timeout_s=timeout_s)
+    wait_for_xon()
+    print("\nReached -29500")
 
-def return_to_negative_29500(timeout_s=10.0):
-    """Return the klinger stage to -29500."""
-    move_to_negative_29500(timeout_s=timeout_s)
+    send("RX4000")
+    time.sleep(0.2)
+    send("+X")
+    time.sleep(0.2)
+    send("NX29500")
+    time.sleep(0.2)
+    send("MX")
+
+    wait_for_xon()
+    print("\nReached 0")
+
+    
+
+    time.sleep(1)
+
+
+# ---------------- CLEANUP ----------------
+ser.close()
+print("Program exited.")
