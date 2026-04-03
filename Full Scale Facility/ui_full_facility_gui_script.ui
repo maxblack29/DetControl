@@ -2707,7 +2707,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S2: Oxidizer and Diluent</string>
+    <string>S2: Driver Fuel</string>
    </property>
   </widget>
   <widget class="QLabel" name="s1_label">
@@ -2720,7 +2720,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S1: Fuel</string>
+    <string>S1: Driver Mix</string>
    </property>
   </widget>
   <widget class="QPushButton" name="openS1">
@@ -2801,7 +2801,7 @@ QProgressBar::chunk
    <property name="geometry">
     <rect>
      <x>1490</x>
-     <y>170</y>
+     <y>260</y>
      <width>151</width>
      <height>61</height>
     </rect>
@@ -2814,7 +2814,7 @@ QProgressBar::chunk
    <property name="geometry">
     <rect>
      <x>1490</x>
-     <y>30</y>
+     <y>20</y>
      <width>151</width>
      <height>61</height>
     </rect>
@@ -2827,7 +2827,7 @@ QProgressBar::chunk
    <property name="geometry">
     <rect>
      <x>1490</x>
-     <y>100</y>
+     <y>180</y>
      <width>151</width>
      <height>61</height>
     </rect>
@@ -2839,7 +2839,7 @@ QProgressBar::chunk
   <widget class="QComboBox" name="mfcDgas">
    <property name="geometry">
     <rect>
-     <x>680</x>
+     <x>670</x>
      <y>90</y>
      <width>81</width>
      <height>21</height>
@@ -4169,7 +4169,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S3: Purge (N Open)</string>
+    <string>S3: Driver Ox </string>
    </property>
   </widget>
   <widget class="QPushButton" name="openS3">
@@ -4240,7 +4240,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S4: Exhaust (N Open)</string>
+    <string>S4: Reactant Mix</string>
    </property>
   </widget>
   <widget class="QLCDNumber" name="pressure_readout">
@@ -4325,7 +4325,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S5: Fill Pressure Gauge</string>
+    <string>S5: Purge (N Open)</string>
    </property>
   </widget>
   <widget class="QPushButton" name="openS5">
@@ -4360,8 +4360,8 @@ QProgressBar::chunk
   <widget class="QLabel" name="test_num_label">
    <property name="geometry">
     <rect>
-     <x>1510</x>
-     <y>310</y>
+     <x>1500</x>
+     <y>360</y>
      <width>41</width>
      <height>31</height>
     </rect>
@@ -4521,7 +4521,7 @@ QProgressBar::chunk
    <property name="geometry">
     <rect>
      <x>1550</x>
-     <y>310</y>
+     <y>360</y>
      <width>71</width>
      <height>31</height>
     </rect>
@@ -4530,7 +4530,7 @@ QProgressBar::chunk
   <widget class="QLineEdit" name="fill_time">
    <property name="geometry">
     <rect>
-     <x>440</x>
+     <x>450</x>
      <y>250</y>
      <width>61</width>
      <height>21</height>
@@ -4540,14 +4540,176 @@ QProgressBar::chunk
   <widget class="QLabel" name="fill_time_label">
    <property name="geometry">
     <rect>
-     <x>370</x>
+     <x>330</x>
      <y>250</y>
-     <width>71</width>
+     <width>131</width>
      <height>20</height>
     </rect>
    </property>
    <property name="text">
-    <string>Fill Time (s)</string>
+    <string>Reactant Fill Time (s)</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="openS7">
+   <property name="geometry">
+    <rect>
+     <x>1140</x>
+     <y>300</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="s7_label">
+   <property name="geometry">
+    <rect>
+     <x>1010</x>
+     <y>300</y>
+     <width>131</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>S7: Gauge Cluster</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="closeS6">
+   <property name="geometry">
+    <rect>
+     <x>1240</x>
+     <y>260</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Close</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="closeS7">
+   <property name="geometry">
+    <rect>
+     <x>1240</x>
+     <y>300</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Close</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="S6_state">
+   <property name="geometry">
+    <rect>
+     <x>1340</x>
+     <y>260</y>
+     <width>61</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>OPEN</string>
+   </property>
+   <property name="textFormat">
+    <enum>Qt::TextFormat::RichText</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="s6_label">
+   <property name="geometry">
+    <rect>
+     <x>1010</x>
+     <y>260</y>
+     <width>131</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>S6: Exhaust (N Open)</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="openS6">
+   <property name="geometry">
+    <rect>
+     <x>1140</x>
+     <y>260</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="S7_state">
+   <property name="geometry">
+    <rect>
+     <x>1340</x>
+     <y>300</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>OPEN</string>
+   </property>
+   <property name="textFormat">
+    <enum>Qt::TextFormat::RichText</enum>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="driverButton">
+   <property name="geometry">
+    <rect>
+     <x>1490</x>
+     <y>100</y>
+     <width>151</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Driver Sequence</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="driver_fill_time">
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>290</y>
+     <width>61</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="fill_time_label_2">
+   <property name="geometry">
+    <rect>
+     <x>330</x>
+     <y>290</y>
+     <width>131</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Driver Fill Time (s)</string>
    </property>
   </widget>
  </widget>
