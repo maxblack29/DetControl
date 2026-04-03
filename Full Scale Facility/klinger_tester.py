@@ -4,14 +4,15 @@ import threading
 
 # ---------------- SERIAL SETUP ----------------
 ser = serial.Serial(
-    port='COM3',
+    port='COM1',
     baudrate=9600,
     bytesize=serial.EIGHTBITS,
     parity=serial.PARITY_NONE,
     stopbits=serial.STOPBITS_ONE,
-    timeout=0.1   # shorter timeout helps live updates
-ser.reset_input_buffer() 
+    timeout = 0.1
 )
+ser.reset_input_buffer() 
+
 
 XON = b'\x11'
 
@@ -54,17 +55,31 @@ while True:
         break
 
     send("RX4000")
-    wait_for_xon()
+    time.sleep(0.2)
+    send("-X")
+    time.sleep(0.2)
+    send("NX29500")
+    time.sleep(0.2)
+    send("MX")
 
-    send("NX-29500")
     wait_for_xon()
     print("\nReached -29500")
 
+    send("RX4000")
+    time.sleep(0.2)
+    send("+X")
+    time.sleep(0.2)
+    send("NX29500")
+    time.sleep(0.2)
+    send("MX")
+
+    wait_for_xon()
+    print("\nReached 0")
+
+    
+
     time.sleep(1)
 
-    send("NX0")
-    wait_for_xon()
-    print("\nReturned to origin (0)\n")
 
 # ---------------- CLEANUP ----------------
 ser.close()
