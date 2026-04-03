@@ -9,9 +9,14 @@ import nidaqmx.system
 system = nidaqmx.system.System.local()
 
 # MFC analog mapping and scale limits (0-5 V corresponds to max SLPM)
-MFC_MAX_SLPM = {"A": 20.0, "B": 20.0, "C": 50.0}
-MFC_AO_CHANNELS = "cDAQ9188-169338EMod7/ao0:2"  # A, B, C setpoint outputs
-MFC_AI_CHANNELS = "cDAQ9188-169338EMod8/ai0:2"  # A, B, C flow feedback inputs
+MFC_MAX_SLPM = {"A": 20.0, "B": 20.0, "C": 50.0, "D": 50.0}
+MFC_AO_CHANNELS = "cDAQ9188-169338EMod7/ao0:3"  # A, B, C, D setpoint outputs
+MFC_AI_CHANNELS = "cDAQ9188-169338EMod8/ai0:3"  # A, B, C, D flow feedback inputs
+
+# Mod1 (set_digital_output) line indices: S1–S4 on 0–3, S5 on 6 (4–5 unused).
+# Mod2 (set_digital_output_2): S6 on 0, S7 on 1, timing output on 6, speaker on 7.
+DAQ2_LINE_TIMING_OUTPUT = 6
+DAQ2_LINE_SPEAKER = 7
 
 
 # Track last DAQ output states so the GUI can show current solenoid status.
@@ -52,12 +57,13 @@ def _volts_to_slpm(voltage, max_slpm):
     return float(voltage) * float(max_slpm) / 5.0
 
 
-def set_mfc_setpoints_analog(setpoint_a, setpoint_b, setpoint_c):
-    """Write analog setpoints to Mod7 AO channels (A,B,C on ao1:3)."""
+def set_mfc_setpoints_analog(setpoint_a, setpoint_b, setpoint_c, setpoint_d=0.0):
+    """Write analog setpoints to Mod7 AO channels (A,B,C,D on ao0:3)."""
     voltages = [
         _slpm_to_volts(setpoint_a, MFC_MAX_SLPM["A"]),
         _slpm_to_volts(setpoint_b, MFC_MAX_SLPM["B"]),
         _slpm_to_volts(setpoint_c, MFC_MAX_SLPM["C"]),
+        _slpm_to_volts(setpoint_d, MFC_MAX_SLPM["D"]),
     ]
     with nidaqmx.Task() as ao_task:
         ao_task.ao_channels.add_ao_voltage_chan(MFC_AO_CHANNELS, min_val=0.0, max_val=5.0)
@@ -66,7 +72,7 @@ def set_mfc_setpoints_analog(setpoint_a, setpoint_b, setpoint_c):
 
 def read_mfc_flows_analog_once():
     "used during fill to read the mfc flows and add to flow rate csv"
-    """Single-sample read of Mod8 ai1:3 converted to SLPM (A, B, C)."""
+    """Single-sample read of Mod8 ai0:3 converted to SLPM (A, B, C, D)."""
     with nidaqmx.Task() as ai_task:
         ai_task.ai_channels.add_ai_voltage_chan(MFC_AI_CHANNELS, min_val=0.0, max_val=5.0)
         data = ai_task.read(number_of_samples_per_channel=1, timeout=2.0)
@@ -74,26 +80,41 @@ def read_mfc_flows_analog_once():
     va = data[0] if data.size >= 1 else 0.0
     vb = data[1] if data.size >= 2 else 0.0
     vc = data[2] if data.size >= 3 else 0.0
+    vd = data[3] if data.size >= 4 else 0.0
     return (
         _volts_to_slpm(va, MFC_MAX_SLPM["A"]),
         _volts_to_slpm(vb, MFC_MAX_SLPM["B"]),
         _volts_to_slpm(vc, MFC_MAX_SLPM["C"]),
+        _volts_to_slpm(vd, MFC_MAX_SLPM["D"]),
     )
 
 
+def set_daq2_line(line_index, value):
+    """Set one Mod2 line while preserving the other seven (uses last written state)."""
+    global _daq2_state
+    s = list((_daq2_state + [False] * 8)[:8])
+    s[line_index] = bool(value)
+    set_digital_output_2(s)
+
+
 def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
+    """Pulse timing / output signal on Mod2 line 6; speaker stays on line 7."""
     ignite_port = "cDAQ9188-169338EMod2/port0/line0:7"
-    on_states = [True, False, True, False, False, False, True, False]  # ignite is on port 6
-    off_states = [True, False, True, False, False, False, False, False]  # Daq2 states post fill
-
-
+    _, d2 = get_daq_states()
+    base = list((d2 + [False] * 8)[:8])
+    on_states = list(base)
+    on_states[DAQ2_LINE_TIMING_OUTPUT] = True
+    off_states = list(base)
+    off_states[DAQ2_LINE_TIMING_OUTPUT] = False
 
     # Send signal to ignite
     with nidaqmx.Task() as do_task:
         do_task.do_channels.add_do_chan(ignite_port, line_grouping=LineGrouping.CHAN_PER_LINE)
         do_task.write(on_states)
-        time.sleep(0.010) #half a ms pulse 
+        time.sleep(0.010)
         do_task.write(off_states)
+    global _daq2_state
+    _daq2_state = off_states
     print("timing box signal sent")
 
          # Read 8 pressure transducers over 10 ms (Mod5 PT1–PT4, Mod6 PT5–PT8) in one synchronized task
@@ -134,12 +155,12 @@ def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
             sample_mode=AcquisitionType.FINITE,
             samps_per_chan=samples
         )
-        # Trigger waiting disabled for now so ignite test runs immediately.
-        # ai_task.triggers.start_trigger.cfg_dig_edge_start_trig(
-        #     trigger_source="/cDAQ9188-169338E/PFI1",
-        #     trigger_edge=Edge.FALLING
-        # )
-        # print("Waiting for trigger on PFI1")
+
+        ai_task.triggers.start_trigger.cfg_dig_edge_start_trig(
+            trigger_source="/cDAQ9188-169338E/PFI1",
+            trigger_edge=Edge.FALLING
+        )
+        print("Waiting for trigger on PFI1")
         data = ai_task.read(number_of_samples_per_channel=samples,timeout=10.0)
         print("acquisition complete")
    

@@ -6,7 +6,7 @@ import nidaqmx  # might not be needed since I imported nicontrol
 import nicontrol
 from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
 import alicatcontrol
-# import klinger_control  # analog-branch: Klinger integration deferred for later testing
+import klinger_control
 import asyncio
 #import dataacquisition
 import numpy as np
@@ -54,7 +54,7 @@ class MFCMonitorWorker(QObject):
 class AutomationWorker(QObject):
     finished = Signal()
     fill_phase_complete = Signal()
-    mfc_readouts_updated = Signal(float, float, float)
+    mfc_readouts_updated = Signal(float, float, float, float)
 
     def __init__(self, setpointA, setpointB, setpointC, setpointD, setpointC_driver, fill_time_s, testcount=None):
         super().__init__()
@@ -84,6 +84,28 @@ class AutomationWorker(QObject):
         self.finished.emit()
 
 
+class DriverWorker(QObject):
+    finished = Signal()
+    mfc_readouts_updated = Signal(float, float, float, float)
+
+    def __init__(self, setpoint_d, setpoint_c_ox, driver_fill_time_s):
+        super().__init__()
+        self.setpoint_d = setpoint_d
+        self.setpoint_c_ox = setpoint_c_ox
+        self.driver_fill_time_s = driver_fill_time_s
+
+    def run(self):
+        asyncio.run(
+            full_facility_run_methods.driver_sequence(
+                self.setpoint_d,
+                self.setpoint_c_ox,
+                self.driver_fill_time_s,
+                on_mfc_setpoints_changed=self.mfc_readouts_updated.emit,
+            )
+        )
+        self.finished.emit()
+
+
 class SolenoidWorker(QObject):
     finished = Signal()
     def __init__(self, daq1, daq2, testcount, vacuum_pressure, post_fill_pressure):
@@ -101,7 +123,7 @@ class SolenoidWorker(QObject):
     
     def runignite(self):
         nicontrol.set_ignite_read_pressure(self.testcount, self.vacuum_pressure, self.post_fill_pressure)
-        # klinger_control.return_to_negative_29500()  # analog-branch: Klinger deferred
+        klinger_control.move_to_zero()
         self.finished.emit()
 
 
@@ -118,16 +140,22 @@ class MyDialog(QDialog):
         self.ui.setupUi(self)
         #self.plumbing_diagram = plumbing_diagram
         
-        self.daq1 = [True, True, True, False, False, False, False, False] #Startup DAQ1 States
-        nicontrol.set_digital_output(self.daq1) #Sets the digital output to the daq1
+        # Mod1: S1–S4 @ 0–3, S5 purge (NO) @ 6. Mod2: S6 exhaust (NO) @ 0, S7 gauge @ 1; timing @ 6, speaker @ 7.
+        self.daq1 = [False, False, False, True, False, False, True, False]
+        nicontrol.set_digital_output(self.daq1)
 
-        self.daq2 = [True, True, False, False, False, False, False, False] #Startup DAQ2 States
-        nicontrol.set_digital_output_2(self.daq2) #Sets the digital output to the daq2 
+        self.daq2 = [True, True, False, False, False, False, False, False]
+        nicontrol.set_digital_output_2(self.daq2)
 
         self.testcount = 0  # zeroes the test count for data acquisition when gui is opened
         self.automation_running = False
+        self.purge_running = False
         self.pressure_timer = None
         self.vacuum_pressure_timer = None
+        self._solenoid_threads = []
+        self._automation_threads = []
+        self._driver_threads = []
+        self._ignite_threads = []
 
         #Connect each open and close button
         self.ui.openS1.clicked.connect(lambda: self.toggle_solenoid(0, True))
@@ -138,9 +166,12 @@ class MyDialog(QDialog):
         self.ui.closeS3.clicked.connect(lambda: self.toggle_solenoid(2,False))  
         self.ui.openS4.clicked.connect(lambda: self.toggle_solenoid(3, True))  
         self.ui.closeS4.clicked.connect(lambda: self.toggle_solenoid(3, False)) 
-        self.ui.openS5.clicked.connect(lambda: self.toggle_solenoid(4, True))  
-        self.ui.closeS5.clicked.connect(lambda: self.toggle_solenoid(4, False)) 
-
+        self.ui.openS5.clicked.connect(lambda: self.toggle_solenoid(4, True))
+        self.ui.closeS5.clicked.connect(lambda: self.toggle_solenoid(4, False))
+        self.ui.openS6.clicked.connect(lambda: self.toggle_solenoid(5, True))
+        self.ui.closeS6.clicked.connect(lambda: self.toggle_solenoid(5, False))
+        self.ui.openS7.clicked.connect(lambda: self.toggle_solenoid(6, True))
+        self.ui.closeS7.clicked.connect(lambda: self.toggle_solenoid(6, False))
 
         #Connects the update setpoints button
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
@@ -165,6 +196,7 @@ class MyDialog(QDialog):
         self.ui.testautomation.clicked.connect(self.begin_testing)
         self.ui.purgebutton.clicked.connect(self.purge)
         self.ui.igniteButton.clicked.connect(self.ignite)
+        self.ui.driverButton.clicked.connect(self.begin_driver_sequence)
 
         # Pressure auto-read controls (vacuum phase helper)
         self.ui.start_auto_read.clicked.connect(self.start_auto_read)
@@ -180,17 +212,13 @@ class MyDialog(QDialog):
         except Exception as e:
             print("MFC manager failed to start (check COM3 / Alicat):", e)
 
-        # Klinger startup positioning: RX4000 then NX-29500 (handshake after each).
-        # try:
-        #     klinger_control.initialize_at_startup()
-        # except Exception as e:
-        #     print("Klinger init failed:", e)
-
         # Background MFC monitor: serial readback at 1 Hz for GUI only.
         self.mfc_monitor_worker = MFCMonitorWorker(interval_ms=1000)
         self.mfc_monitor_thread = QThread()
         self.mfc_monitor_worker.moveToThread(self.mfc_monitor_thread)
-        self.mfc_monitor_worker.flows_updated.connect(self.update_mfc_readouts)
+        self.mfc_monitor_worker.flows_updated.connect(
+            lambda a, b, c: self.update_mfc_readouts(a, b, c, 0.0)
+        )
         self.mfc_monitor_thread.started.connect(self.mfc_monitor_worker.run)
         self.mfc_monitor_thread.start()
 
@@ -218,8 +246,8 @@ class MyDialog(QDialog):
         setpointC = float(self.ui.mfcCsetpoint.text())
         setpointD = float(self.ui.mfcDsetpoint.text())
 
-        # Set MFC setpoints via analog output (Mod7 ao1:3).
-        nicontrol.set_mfc_setpoints_analog(setpointA, setpointB, setpointC)
+        # Set MFC setpoints via analog output (Mod7 ao0:3).
+        nicontrol.set_mfc_setpoints_analog(setpointA, setpointB, setpointC, setpointD)
 
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
 
@@ -237,8 +265,9 @@ class MyDialog(QDialog):
         self.ui.mfcBsetpoint.setText("0.0")
         self.ui.mfcCsetpoint.setText("0.0")
         self.ui.mfcDsetpoint.setText("0.0")
+        self.ui.mfcCsetpoint_2.setText("0.0")
 
-        nicontrol.set_mfc_setpoints_analog(0.0, 0.0, 0.0)
+        nicontrol.set_mfc_setpoints_analog(0.0, 0.0, 0.0, 0.0)
         self.update_vacuum_pressure()
         self.update_pressure()
 
@@ -272,15 +301,15 @@ class MyDialog(QDialog):
         except Exception:
             pass
 
-        # Update the correct DAQ based on the solenoid index
-        if index == 3:  # S4 is now on daq2
-            self.daq2[index - 3] = not state  # Invert state for S4 (Open -> False, Close -> True)
-        elif index == 4:  #S5 is on DAQ2 port 1
-            self.daq2[1] = state  
-        elif index == 2:  # S3 is on daq1
-            self.daq1[index] = not state  # Invert state for S3 (Open -> False, Close -> True)
+        # S1–S4: Mod1 lines 0–3 (NC). S5: Mod1 line 6 (NO). S6: Mod2 line 0 (NO). S7: Mod2 line 1 (NC).
+        if index == 4:
+            self.daq1[6] = not state
+        elif index == 5:
+            self.daq2[0] = not state
+        elif index == 6:
+            self.daq2[1] = state
         else:
-            self.daq1[index] = state  # Directly update daq1 for other solenoids
+            self.daq1[index] = state
 
         open_button = getattr(self.ui, f"openS{index+1}")
         close_button = getattr(self.ui, f"closeS{index+1}")
@@ -306,9 +335,6 @@ class MyDialog(QDialog):
         solenoid_worker.finished.connect(lambda: self.reenable(open_button))
         solenoid_worker.finished.connect(lambda: self.reenable(close_button))
 
-        # Keep the worker alive so it's not garbage collected while running
-        if not hasattr(self, "_solenoid_threads"):
-            self._solenoid_threads = []
         self._solenoid_threads.append((solenoid_thread, solenoid_worker))
 
         solenoid_thread.start()
@@ -317,33 +343,30 @@ class MyDialog(QDialog):
         print(f"Solenoid S{index+1} {'Open' if state else 'Closed'}.")
 
     def update_solenoid_labels(self):
-        """Update S1–S5 labels based on last DAQ states in nicontrol."""
+        """Update solenoid status labels from last DAQ states (see nicontrol line map)."""
         try:
             daq1, daq2 = nicontrol.get_daq_states()
         except AttributeError:
             daq1, daq2 = self.daq1, self.daq2
 
-        # Ensure arrays are long enough
         daq1 = (daq1 + [False] * 8)[:8]
         daq2 = (daq2 + [False] * 8)[:8]
 
-        # Mapping and normally-open rules:
-        # S1: DAQ1 port 0 (True = OPEN)
-        # S2: DAQ1 port 1 (True = OPEN)
-        # S3: DAQ1 port 2, normally open (False = OPEN, True = CLOSED)
-        # S4: DAQ2 port 0, normally open (False = OPEN, True = CLOSED)
-        # S5: DAQ2 port 1 (True = OPEN)
         s1_open = bool(daq1[0])
         s2_open = bool(daq1[1])
-        s3_open = not bool(daq1[2])
-        s4_open = not bool(daq2[0])
-        s5_open = bool(daq2[1])
+        s3_open = bool(daq1[2])
+        s4_open = bool(daq1[3])
+        s5_open = not bool(daq1[6])
+        s6_open = not bool(daq2[0])
+        s7_open = bool(daq2[1])
 
         self.ui.S1_state.setText("OPEN" if s1_open else "CLOSED")
         self.ui.S2_state.setText("OPEN" if s2_open else "CLOSED")
         self.ui.S3_state.setText("OPEN" if s3_open else "CLOSED")
         self.ui.S4_state.setText("OPEN" if s4_open else "CLOSED")
         self.ui.S5_state.setText("OPEN" if s5_open else "CLOSED")
+        self.ui.S6_state.setText("OPEN" if s6_open else "CLOSED")
+        self.ui.S7_state.setText("OPEN" if s7_open else "CLOSED")
 
   
     stop_test = False
@@ -356,6 +379,7 @@ class MyDialog(QDialog):
 
         # During automatic test, prevent manual pressure auto-read from interfering
         self.automation_running = True
+        self.ui.driverButton.setEnabled(False)
         self.ui.start_auto_read.setEnabled(False)
         self.ui.stop_auto_read.setEnabled(False)
         # Ensure any running auto-read timers are stopped
@@ -398,12 +422,34 @@ class MyDialog(QDialog):
         automation_worker.fill_phase_complete.connect(self.update_pressure)
         automation_worker.mfc_readouts_updated.connect(self.update_mfc_readouts)
 
-        #keep the worker alive so it's not garbage collected while running 
-        if not hasattr(self, "_automation_threads"):
-            self._automation_threads = []
         self._automation_threads.append((automation_thread, automation_worker))
 
         automation_thread.start()
+
+    def begin_driver_sequence(self):
+        button = self.ui.driverButton
+        button.setEnabled(False)
+        self.ui.testautomation.setEnabled(False)
+
+        setpoint_d = float(self.ui.mfcDsetpoint.text())
+        setpoint_c_ox = float(self.ui.mfcCsetpoint_2.text())
+        try:
+            driver_fill_s = float(self.ui.driver_fill_time.text())
+        except ValueError:
+            driver_fill_s = 0.0
+
+        driver_worker = DriverWorker(setpoint_d, setpoint_c_ox, driver_fill_s)
+        driver_thread = QThread()
+        driver_worker.moveToThread(driver_thread)
+        driver_thread.started.connect(driver_worker.run)
+        driver_worker.finished.connect(driver_thread.quit)
+        driver_worker.finished.connect(lambda: self.reenable(button))
+        driver_worker.finished.connect(lambda: self.ui.testautomation.setEnabled(True))
+        driver_worker.mfc_readouts_updated.connect(self.update_mfc_readouts)
+
+        self._driver_threads.append((driver_thread, driver_worker))
+
+        driver_thread.start()
     
     def ignite(self): 
         button = self.ui.igniteButton
@@ -420,9 +466,6 @@ class MyDialog(QDialog):
         ignite_worker.finished.connect(ignite_thread.quit)
         ignite_worker.finished.connect(lambda: self.reenable(button))
 
-        # keep the worker alive so it's not garbage collected while running 
-        if not hasattr(self, "_ignite_threads"): 
-            self._ignite_threads = []
         self._ignite_threads.append((ignite_thread, ignite_worker))
 
         ignite_thread.start()
@@ -431,6 +474,9 @@ class MyDialog(QDialog):
         button = self.ui.purgebutton
 
         button.setEnabled(False)
+        self.purge_running = True
+        if hasattr(self.ui, "driverButton"):
+            self.ui.driverButton.setEnabled(False)
         self.ui.testautomation.setStyleSheet("")
         self.ui.purgebutton.setStyleSheet("")
 
@@ -448,9 +494,6 @@ class MyDialog(QDialog):
         purge_worker.finished.connect(lambda: self.reenable(button))
         purge_worker.mfc_readouts_updated.connect(self.update_mfc_readouts)
 
-        # keep a reference so it's not garbage collected and prematurely closed 
-        if not hasattr(self, "_automation_threads"):
-            self._automation_threads = []
         self._automation_threads.append((purge_thread, purge_worker))
 
         purge_thread.start()
@@ -499,14 +542,19 @@ class MyDialog(QDialog):
     def reenable(self, button):
             button.setEnabled(True)
             button.setStyleSheet("")
-            # When automatic test finishes, re-enable pressure auto-read controls
             if button is self.ui.testautomation:
                 self.automation_running = False
                 self.ui.start_auto_read.setEnabled(True)
                 self.ui.stop_auto_read.setEnabled(True)
+                if hasattr(self.ui, "driverButton"):
+                    self.ui.driverButton.setEnabled(True)
+            if button is self.ui.purgebutton:
+                self.purge_running = False
+                if hasattr(self.ui, "driverButton"):
+                    self.ui.driverButton.setEnabled(True)
 
 
-    def update_mfc_readouts(self, setpoint_a, setpoint_b, setpoint_c):
+    def update_mfc_readouts(self, setpoint_a, setpoint_b, setpoint_c, setpoint_d=0.0):
         """Update MFC A/B/C readout displays (e.g. when setpoints change in automatic test or purge)."""
         self.ui.mfcAreadout.display(setpoint_a)
         self.ui.mfcBreadout.display(setpoint_b)

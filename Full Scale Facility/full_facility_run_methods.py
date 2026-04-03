@@ -3,98 +3,77 @@ import csv
 import os
 import nicontrol
 import asyncio
+import threading
 import time
-# import klinger_control  # analog-branch: Klinger integration deferred for later testing
-# import threading
+
+import klinger_control
 
 # Same base path as detonation test data CSV
 FILL_LOG_DIR = r"C:\Users\dedic-lab\Documents\Detonation_Facility_Testing"
 FILL_LOG_INTERVAL_S = 0.1  # target dt for analog logging during fill
 
+# Mod1: S1–S4 on 0–3, S5 purge (NO) on 6. Mod2: S6 exhaust (NO) on 0, S7 gauge on 1; timing on 6, speaker on 7.
+# True = NC open; NO valves: True = closed, False = open.
 
-def _set_mfc_rates(setpoint_a, setpoint_b, setpoint_c):
-    """Set flow rates through analog output (Mod7 ao0:2, 0-5 V)."""
-    nicontrol.set_mfc_setpoints_analog(setpoint_a, setpoint_b, setpoint_c)
+def _pad8(x):
+    return list((list(x) + [False] * 8)[:8])
 
 
-async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_driver, on_fill_complete=None, on_mfc_setpoints_changed=None, fill_time_s=0.0, testcount=None):
+# Start reactant fill: driver lines closed, reactant mix open, purge closed, exhaust closed, gauge open.
+FILL_START_DAQ1 = [False, False, False, True, False, False, True, False]
+FILL_START_DAQ2 = [True, True, False, False, False, False, False, False]
+
+# After fill: reactant mix closed; speaker off (line 7 False).
+POST_FILL_DAQ1 = [False, False, False, False, False, False, True, False]
+POST_FILL_DAQ2 = [True, True, False, False, False, False, False, False]
+
+# Idle / post-purge: same as GUI startup default.
+PURGE_COMPLETE_DAQ1 = [False, False, False, True, False, False, True, False]
+PURGE_COMPLETE_DAQ2 = [True, True, False, False, False, False, False, False]
+
+
+def _set_mfc_rates(setpoint_a, setpoint_b, setpoint_c, setpoint_d=0.0):
+    """Set flow rates through analog output (Mod7 ao0:3, 0–5 V)."""
+    nicontrol.set_mfc_setpoints_analog(setpoint_a, setpoint_b, setpoint_c, setpoint_d)
+
+
+async def automatic_test(
+    setpointA, setpointB, setpointC, setpointD, setpointC_driver,
+    on_fill_complete=None, on_mfc_setpoints_changed=None, fill_time_s=0.0, testcount=None,
+):
 
     print("Test starting")
 
-    # P_std = 101300      # Pa
-    # T_std = 298         # K
-    # R = 8.314           # J/mol·K
+    try:
+        threading.Thread(target=klinger_control.move_to_negative_29500, daemon=True).start()
+    except Exception as e:
+        print("Klinger automatic-test move to -29500 could not start:", e)
 
-    # molar_flow_rate_A = setpointA / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
-    # molar_flow_rate_B = setpointB / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
-    # molar_flow_rate_C = setpointC / 60 * 1e-3 * P_std / (R * T_std)  # mol/s
-
-    # # Total molar flow rate
-    # total_molar_flow_rate = molar_flow_rate_A + molar_flow_rate_B + molar_flow_rate_C  # mol/s
-
-
-    # # Volume to be filled (m³)
-    # fill_volume = 14.2 / 1000  # 14.2 L full facility volume → 0.0142 m³
-
-    # # Moles needed to fill the volume to 10 kPa absolute at 298 K
-    # P_target = 10000 # Pa
-    # T_gas = 298       # K
-
-    # n_needed = P_target * fill_volume / (R * T_gas)  # mol
-
-    # Time required to fill (s)
-    # fill_time = n_needed / total_molar_flow_rate if total_molar_flow_rate > 0 else 0.0
     fill_time = max(0.0, float(fill_time_s))
     print(f"Using fill time input: {fill_time:.2f} s")
 
-    # Move the Klinger stage to zero in the background (don't block the test start).
-    # threading.Thread(target=klinger_control.move_to_zero, daemon=True).start()
-
-    #BEGIN TEST 
-    #1: Open up valves to MFCs and vacuum down to 60 milTorr (done manually in these first tests)-------------------------------------------------------------------------------------------------
-
-    #print("Vacuuming down...")
-
-    #turn_vacuum_on_array = [True, False, False, False, False, False, False, False] #Solenoid States to turn on vacuum pump
-    #nicontrol.set_digital_output_2(turn_vacuum_on_array)
-
-     #vacuum_solenoids = [True, True, True, True, True, True, True, False] #Solenoid States for Vacuuming Down. All open except S4 and S6 (normally closed) 
-     #nicontrol.set_digital_output(vacuum_solenoids)
-
-    #check vacuum state
-    # vacuum_running = False
-    # while vacuum_running:
-    #     await(1)
-    #     vacuum_running = nicontrol.read_vaccuum_state(threshold = 1) #if receiving voltage above 1, vacuuming is complete
-
     print("Vacuum down complete. Starting fill sequence...")
-        
-    daq_1 = [True, True, True, False, False, False, False, False] #DAQ 1 States Post Vacuuming Down. Fuel and Oxidizer/Diluent open, purge closed
-    nicontrol.set_digital_output(daq_1)
-    daq_2 = [True, True, False, False, False, False, False, False] #DAQ 2 States Post Vacuuming Down. Exhaust closed, Pressure reading open
-    nicontrol.set_digital_output_2(daq_2)
 
-    #turn_vacuum_off_array = [False, False, False, False, False, False, False, False] #Solenoid States to turn off vacuum pump
-    #nicontrol.set_digital_output_2(turn_vacuum_off_array)
+    nicontrol.set_digital_output(_pad8(FILL_START_DAQ1))
+    nicontrol.set_digital_output_2(_pad8(FILL_START_DAQ2))
 
-    #2: Fill — set rates and log time / setpoint / actual flow every FILL_LOG_INTERVAL_S
-    _set_mfc_rates(setpointA, setpointB, setpointC)
+    _set_mfc_rates(setpointA, setpointB, setpointC, 0.0)
     if on_mfc_setpoints_changed is not None:
-        on_mfc_setpoints_changed(setpointA, setpointB, setpointC)
+        on_mfc_setpoints_changed(setpointA, setpointB, setpointC, 0.0)
 
-    # Log analog MFC feedback during fill at FILL_LOG_INTERVAL_S
-    speaker_on_daq_2 = [True, True, True, False, False, False, False, False]
     fill_rows = []
     start_fill = time.perf_counter()
     speaker_done = False
 
     while True:
         elapsed = time.perf_counter() - start_fill
-        flow_a, flow_b, flow_c = nicontrol.read_mfc_flows_analog_once()
-        fill_rows.append([elapsed, setpointA, flow_a, setpointB, flow_b, setpointC, flow_c])
+        flow_a, flow_b, flow_c, flow_d = nicontrol.read_mfc_flows_analog_once()
+        fill_rows.append(
+            [elapsed, setpointA, flow_a, setpointB, flow_b, setpointC, flow_c, 0.0, flow_d]
+        )
 
         if (not speaker_done) and elapsed >= (fill_time / 2.0):
-            nicontrol.set_digital_output_2(speaker_on_daq_2)
+            nicontrol.set_daq2_line(nicontrol.DAQ2_LINE_SPEAKER, True)
             speaker_done = True
         if elapsed >= fill_time:
             break
@@ -105,53 +84,101 @@ async def automatic_test(setpointA, setpointB, setpointC, setpointD, setpointC_d
         path = os.path.join(FILL_LOG_DIR, f"fill_flow_rates_test{testcount}.csv")
         with open(path, "w", newline="") as f:
             w = csv.writer(f)
-            w.writerow(["time_s", "setpoint_A_SLPM", "flow_A_SLPM", "setpoint_B_SLPM", "flow_B_SLPM", "setpoint_C_SLPM", "flow_C_SLPM"])
+            w.writerow(
+                [
+                    "time_s",
+                    "setpoint_A_SLPM",
+                    "flow_A_SLPM",
+                    "setpoint_B_SLPM",
+                    "flow_B_SLPM",
+                    "setpoint_C_SLPM",
+                    "flow_C_SLPM",
+                    "setpoint_D_SLPM",
+                    "flow_D_SLPM",
+                ]
+            )
             w.writerows(fill_rows)
 
-    #read pressure
     if on_fill_complete is not None:
         on_fill_complete()
 
-    # #Zero MFCs and Close Fill Solenoids
-    post_fill_daq1 = [False, False, True, True, False, False, False, False] #Daq1 states post fill 
-    nicontrol.set_digital_output(post_fill_daq1)
-    post_fill_daq2 = [True, False, True, False, False, False, False, False] #Daq2 states post fill 
-    nicontrol.set_digital_output_2(post_fill_daq2)
-    
+    nicontrol.set_digital_output(_pad8(POST_FILL_DAQ1))
+    nicontrol.set_digital_output_2(_pad8(POST_FILL_DAQ2))
 
-    #Driver Line
-    # await asyncio.gather(
-    #     connect('A', 0.0), 
-    #     connect('B', 0.0),
-    #     connect('C', setpointC_driver),
-    #     connect('D', setpointD)
-    # )
-
-    # await asyncio.sleep(1) #1 second fill for driver gas 
-
-    _set_mfc_rates(0.0, 0.0, 0.0)
+    _set_mfc_rates(0.0, 0.0, 0.0, 0.0)
     if on_mfc_setpoints_changed is not None:
-        on_mfc_setpoints_changed(0.0, 0.0, 0.0)
+        on_mfc_setpoints_changed(0.0, 0.0, 0.0, 0.0)
 
-    print("Fill complete, Ignite and press the standard purge button")
-   
+    print("Fill complete. Run driver sequence if needed, then Ignite; use Purge when done.")
+
+
+async def driver_sequence(
+    setpoint_d,
+    setpoint_c_ox,
+    driver_fill_time_s,
+    on_mfc_setpoints_changed=None,
+):
+    """Driver line: MFC D carrier, S2 fuel pulse, S3 oxidizer (MFC C setpoint 2), S1 mix for driver_fill_time."""
+    d1, d2 = nicontrol.get_daq_states()
+    d1 = _pad8(d1)
+    d2 = _pad8(d2)
+
+    t_mix = max(0.0, float(driver_fill_time_s))
+
+    _set_mfc_rates(0.0, 0.0, 0.0, float(setpoint_d))
+    if on_mfc_setpoints_changed is not None:
+        on_mfc_setpoints_changed(0.0, 0.0, 0.0, float(setpoint_d))
+    await asyncio.sleep(0.05)
+
+    # Driver fuel 2 s
+    d1[1] = True
+    nicontrol.set_digital_output(d1)
+    nicontrol.set_digital_output_2(d2)
+    await asyncio.sleep(2.0)
+    d1[1] = False
+    nicontrol.set_digital_output(d1)
+
+    # Driver oxidizer (same MFC C gas, second setpoint) 2 s
+    _set_mfc_rates(0.0, 0.0, float(setpoint_c_ox), float(setpoint_d))
+    if on_mfc_setpoints_changed is not None:
+        on_mfc_setpoints_changed(0.0, 0.0, float(setpoint_c_ox), float(setpoint_d))
+    d1[2] = True
+    nicontrol.set_digital_output(d1)
+    await asyncio.sleep(2.0)
+    d1[2] = False
+    nicontrol.set_digital_output(d1)
+    _set_mfc_rates(0.0, 0.0, 0.0, float(setpoint_d))
+    if on_mfc_setpoints_changed is not None:
+        on_mfc_setpoints_changed(0.0, 0.0, 0.0, float(setpoint_d))
+
+    # Driver mix for driver_fill_time
+    d1[0] = True
+    nicontrol.set_digital_output(d1)
+    await asyncio.sleep(t_mix)
+    d1[0] = False
+    nicontrol.set_digital_output(d1)
+
+    _set_mfc_rates(0.0, 0.0, 0.0, 0.0)
+    if on_mfc_setpoints_changed is not None:
+        on_mfc_setpoints_changed(0.0, 0.0, 0.0, 0.0)
+
+    print("Driver sequence complete. You may Ignite.")
+
 
 async def purge(setpointA, setpointB, setpointC, setpointD, on_mfc_setpoints_changed=None):
-    _set_mfc_rates(0.0, 0.0, 0.0)
+    _set_mfc_rates(0.0, 0.0, 0.0, 0.0)
     if on_mfc_setpoints_changed is not None:
-        on_mfc_setpoints_changed(0.0, 0.0, 0.0)
+        on_mfc_setpoints_changed(0.0, 0.0, 0.0, 0.0)
 
-    purge_daq1 = [False, False, False, False, False, False, False, False]
+    purge_daq1 = [False] * 8
+    purge_daq2 = [False] * 8
     nicontrol.set_digital_output(purge_daq1)
-    purge_daq2 = [False, False, False, False, False, False, False, False]
     nicontrol.set_digital_output_2(purge_daq2)
-    
+
     print("Purging...")
     await asyncio.sleep(60)
 
-    purge_complete_daq1 = [False, False, True, False, False, False, False, False]
-    nicontrol.set_digital_output(purge_complete_daq1)
-    purge_complete_daq2 = [True, True, False, False, False, False, False, False]
-    nicontrol.set_digital_output_2(purge_complete_daq2)
-    
+    nicontrol.set_digital_output(_pad8(PURGE_COMPLETE_DAQ1))
+    nicontrol.set_digital_output_2(_pad8(PURGE_COMPLETE_DAQ2))
+
     print("Purge complete!")
