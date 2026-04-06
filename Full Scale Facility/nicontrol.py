@@ -13,6 +13,8 @@ system = nidaqmx.system.System.local()
 MFC_MAX_SLPM = {"A": 20.0, "B": 20.0, "C": 50.0, "D": 50.0}
 MFC_AO_CHANNELS = "cDAQ9188-169338EMod7/ao0:3"  # A, B, C, D setpoint outputs
 MFC_AI_CHANNELS = "cDAQ9188-169338EMod8/ai0:3"  # A, B, C, D flow feedback inputs
+# Facility fill gauge (same transducer as read_pressure; used in fast fill logging path)
+FILL_GAUGE_AI_CHANNEL = "cDAQ9188-169338EMod3/ai0"
 
 # Mod1 (set_digital_output) line indices: S1–S4 on 0–3, S5 on 6 (4–5 unused).
 # Mod2 (set_digital_output_2): S6 on 0, S7 on 1, timing output on 6, speaker on 7.
@@ -88,6 +90,38 @@ def read_mfc_flows_analog_once():
     vc = data[2] if data.size >= 3 else 0.0
     vd = data[3] if data.size >= 4 else 0.0
     return (
+        _volts_to_slpm(va, MFC_MAX_SLPM["A"]),
+        _volts_to_slpm(vb, MFC_MAX_SLPM["B"]),
+        _volts_to_slpm(vc, MFC_MAX_SLPM["C"]),
+        _volts_to_slpm(vd, MFC_MAX_SLPM["D"]),
+    )
+
+
+def read_fill_gauge_and_mfc_flows():
+    """One AI task: facility gauge + MFC feedback (single sample each).
+
+    Use this in fill CSV loops instead of read_pressure() + read_mfc_flows_analog_once().
+    read_pressure() averages 100 ms of samples per call; two separate tasks per row made
+    the loop ~0.5–2 s per row on some systems. This path is much closer to FILL_LOG_INTERVAL_S.
+    """
+    with _ai_read_lock:
+        with nidaqmx.Task() as ai_task:
+            ai_task.ai_channels.add_ai_voltage_chan(
+                FILL_GAUGE_AI_CHANNEL, min_val=0, max_val=10
+            )
+            ai_task.ai_channels.add_ai_voltage_chan(
+                MFC_AI_CHANNELS, min_val=0.0, max_val=5.0
+            )
+            data = ai_task.read(number_of_samples_per_channel=1, timeout=2.0)
+    data = np.asarray(data, dtype=np.float64).reshape(-1)
+    v_g = float(data[0]) if data.size >= 1 else 0.0
+    va = float(data[1]) if data.size >= 2 else 0.0
+    vb = float(data[2]) if data.size >= 3 else 0.0
+    vc = float(data[3]) if data.size >= 4 else 0.0
+    vd = float(data[4]) if data.size >= 5 else 0.0
+    p_kpa = v_g * 103.421 / 10.0
+    return (
+        p_kpa,
         _volts_to_slpm(va, MFC_MAX_SLPM["A"]),
         _volts_to_slpm(vb, MFC_MAX_SLPM["B"]),
         _volts_to_slpm(vc, MFC_MAX_SLPM["C"]),
@@ -208,7 +242,7 @@ def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
 
 
 def read_pressure():
-    ai_channel = "cDAQ9188-169338EMod3/ai0"
+    ai_channel = FILL_GAUGE_AI_CHANNEL
     sample_rate = 1000  # 1 kHz 
     duration = 0.1      # 100 ms
     samples = int(sample_rate * duration)
