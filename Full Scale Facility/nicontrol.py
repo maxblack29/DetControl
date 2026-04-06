@@ -1,6 +1,7 @@
 import nidaqmx
 from nidaqmx.constants import LineGrouping, AcquisitionType, Edge
 import numpy as np
+import threading
 import time
 from datetime import datetime
 import csv
@@ -22,6 +23,10 @@ DAQ2_LINE_SPEAKER = 7
 # Track last DAQ output states so the GUI can show current solenoid status.
 _daq1_state = [False] * 8
 _daq2_state = [False] * 8
+
+# Serialize AI reads: concurrent Task() use (e.g. GUI timer + automation thread) hits
+# DaqReadError "The specified resource is reserved" on cDAQ.
+_ai_read_lock = threading.Lock()
 
 
 def set_digital_output(states):  # for Mod1
@@ -73,9 +78,10 @@ def set_mfc_setpoints_analog(setpoint_a, setpoint_b, setpoint_c, setpoint_d=0.0)
 def read_mfc_flows_analog_once():
     "used during fill to read the mfc flows and add to flow rate csv"
     """Single-sample read of Mod8 ai0:3 converted to SLPM (A, B, C, D)."""
-    with nidaqmx.Task() as ai_task:
-        ai_task.ai_channels.add_ai_voltage_chan(MFC_AI_CHANNELS, min_val=0.0, max_val=5.0)
-        data = ai_task.read(number_of_samples_per_channel=1, timeout=2.0)
+    with _ai_read_lock:
+        with nidaqmx.Task() as ai_task:
+            ai_task.ai_channels.add_ai_voltage_chan(MFC_AI_CHANNELS, min_val=0.0, max_val=5.0)
+            data = ai_task.read(number_of_samples_per_channel=1, timeout=2.0)
     data = np.asarray(data, dtype=np.float64).reshape(-1)
     va = data[0] if data.size >= 1 else 0.0
     vb = data[1] if data.size >= 2 else 0.0
@@ -207,17 +213,18 @@ def read_pressure():
     duration = 0.1      # 100 ms
     samples = int(sample_rate * duration)
 
-    with nidaqmx.Task() as ai_task:
-        ai_task.ai_channels.add_ai_voltage_chan(ai_channel, min_val=0, max_val=10)
-        ai_task.timing.cfg_samp_clk_timing(
-            sample_rate, 
-            sample_mode=AcquisitionType.FINITE, 
-            samps_per_chan=samples
-        )
-        data = ai_task.read(number_of_samples_per_channel=samples)
-        avg = np.mean(data)
+    with _ai_read_lock:
+        with nidaqmx.Task() as ai_task:
+            ai_task.ai_channels.add_ai_voltage_chan(ai_channel, min_val=0, max_val=10)
+            ai_task.timing.cfg_samp_clk_timing(
+                sample_rate,
+                sample_mode=AcquisitionType.FINITE,
+                samps_per_chan=samples,
+            )
+            data = ai_task.read(number_of_samples_per_channel=samples)
+            avg = np.mean(data)
 
-    return avg * 103.421 / 10 # Convert voltage to kPa based on sensor specs (10 V = 15 psi) 
+    return avg * 103.421 / 10  # Convert voltage to kPa based on sensor specs (10 V = 15 psi)
 
 def read_vacuum_pressure():
     ai_channel = "cDAQ9188-169338EMod3/ai1"
@@ -225,17 +232,18 @@ def read_vacuum_pressure():
     duration = 0.1      # 100 ms
     samples = int(sample_rate * duration)
 
-    with nidaqmx.Task() as ai_task:
-        ai_task.ai_channels.add_ai_voltage_chan(ai_channel, min_val=0, max_val=10)
-        ai_task.timing.cfg_samp_clk_timing(
-            sample_rate, 
-            sample_mode=AcquisitionType.FINITE, 
-            samps_per_chan=samples
-        )
-        data = ai_task.read(number_of_samples_per_channel=samples)
-        avg = np.mean(data)
+    with _ai_read_lock:
+        with nidaqmx.Task() as ai_task:
+            ai_task.ai_channels.add_ai_voltage_chan(ai_channel, min_val=0, max_val=10)
+            ai_task.timing.cfg_samp_clk_timing(
+                sample_rate,
+                sample_mode=AcquisitionType.FINITE,
+                samps_per_chan=samples,
+            )
+            data = ai_task.read(number_of_samples_per_channel=samples)
+            avg = np.mean(data)
 
-    return avg * 0.013332 # Convert voltage to kPa based on sensor specs (10 V = 1 tor)
+    return avg * 0.013332  # Convert voltage to kPa based on sensor specs (10 V = 1 tor)
 
 
 
