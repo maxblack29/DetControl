@@ -98,12 +98,7 @@ def read_mfc_flows_analog_once():
 
 
 def read_fill_gauge_and_mfc_flows():
-    """One AI task: facility gauge + MFC feedback (single sample each).
-
-    Use this in fill CSV loops instead of read_pressure() + read_mfc_flows_analog_once().
-    read_pressure() averages 100 ms of samples per call; two separate tasks per row made
-    the loop ~0.5–2 s per row on some systems. This path is much closer to FILL_LOG_INTERVAL_S.
-    """
+    """One AI task: facility gauge + MFC feedback (single sample each)."""
     with _ai_read_lock:
         with nidaqmx.Task() as ai_task:
             ai_task.ai_channels.add_ai_voltage_chan(
@@ -127,6 +122,82 @@ def read_fill_gauge_and_mfc_flows():
         _volts_to_slpm(vc, MFC_MAX_SLPM["C"]),
         _volts_to_slpm(vd, MFC_MAX_SLPM["D"]),
     )
+
+
+def acquire_fill_mfc_log(duration_s, sample_rate_hz):
+    """Finite-rate acquisition: facility gauge (Mod3 ai0) + MFC feedback (Mod8 ai0:3).
+
+    Same pattern as cfg_samp_clk_timing FINITE + read; one sample clock for all channels.
+    Returns dict with numpy arrays and metadata (duration_s, sample_rate_hz).
+    """
+    duration_s = float(duration_s)
+    sr = float(sample_rate_hz)
+    empty = {
+        "time_s": np.array([]),
+        "pressure_kpa": np.array([]),
+        "flow_a": np.array([]),
+        "flow_b": np.array([]),
+        "flow_c": np.array([]),
+        "flow_d": np.array([]),
+        "duration_s": 0.0,
+        "sample_rate_hz": sr,
+    }
+    if duration_s <= 0 or sr <= 0:
+        return empty
+
+    n = int(round(sr * duration_s))
+    if n < 2:
+        n = 2
+    timeout_s = max(duration_s + 15.0, 5.0)
+
+    with _ai_read_lock:
+        with nidaqmx.Task() as ai_task:
+            ai_task.ai_channels.add_ai_voltage_chan(
+                FILL_GAUGE_AI_CHANNEL, min_val=0, max_val=10
+            )
+            ai_task.ai_channels.add_ai_voltage_chan(
+                MFC_AI_CHANNELS, min_val=0.0, max_val=5.0
+            )
+            ai_task.timing.cfg_samp_clk_timing(
+                sr,
+                sample_mode=AcquisitionType.FINITE,
+                samps_per_chan=n,
+            )
+            data = ai_task.read(
+                number_of_samples_per_channel=n,
+                timeout=timeout_s,
+            )
+
+    data = np.asarray(data, dtype=np.float64)
+    if data.ndim == 1:
+        data = data.reshape(1, -1)
+    # nidaqmx may return (n_ch, n_samp) or (n_samp, n_ch)
+    if data.shape[0] != 5 and data.shape[1] == 5:
+        data = data.T
+    if data.shape[0] < 5:
+        raise RuntimeError(
+            f"acquire_fill_mfc_log: expected 5 AI channels, got shape {data.shape}"
+        )
+
+    v_g = data[0]
+    va, vb, vc, vd = data[1], data[2], data[3], data[4]
+    p_kpa = v_g * 103.421 / 10.0
+    fa = va * MFC_MAX_SLPM["A"] / 5.0
+    fb = vb * MFC_MAX_SLPM["B"] / 5.0
+    fc = vc * MFC_MAX_SLPM["C"] / 5.0
+    fd = vd * MFC_MAX_SLPM["D"] / 5.0
+    time_s = np.arange(n, dtype=np.float64) / sr
+    dur = n / sr
+    return {
+        "time_s": time_s,
+        "pressure_kpa": p_kpa,
+        "flow_a": fa,
+        "flow_b": fb,
+        "flow_c": fc,
+        "flow_d": fd,
+        "duration_s": float(dur),
+        "sample_rate_hz": sr,
+    }
 
 
 def set_daq2_line(line_index, value):
