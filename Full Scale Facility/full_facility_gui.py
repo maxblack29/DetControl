@@ -86,20 +86,42 @@ class AutomationWorker(QObject):
 
 class DriverWorker(QObject):
     finished = Signal()
+    fill_phase_complete = Signal()
     mfc_readouts_updated = Signal(float, float, float, float)
 
-    def __init__(self, setpoint_d, setpoint_c_ox, driver_fill_time_s):
+    def __init__(
+        self,
+        setpointA,
+        setpointB,
+        setpointC,
+        setpointD,
+        setpointC_driver,
+        fill_time_s,
+        testcount,
+        driver_fill_time_s,
+    ):
         super().__init__()
-        self.setpoint_d = setpoint_d
-        self.setpoint_c_ox = setpoint_c_ox
+        self.setpointA = setpointA
+        self.setpointB = setpointB
+        self.setpointC = setpointC
+        self.setpointD = setpointD
+        self.setpointC_driver = setpointC_driver
+        self.fill_time_s = fill_time_s
+        self.testcount = testcount
         self.driver_fill_time_s = driver_fill_time_s
 
     def run(self):
         asyncio.run(
-            full_facility_run_methods.driver_sequence(
-                self.setpoint_d,
-                self.setpoint_c_ox,
-                self.driver_fill_time_s,
+            full_facility_run_methods.fill_and_driver_sequence(
+                self.setpointA,
+                self.setpointB,
+                self.setpointC,
+                self.setpointD,
+                self.setpointC_driver,
+                fill_time_s=self.fill_time_s,
+                testcount=self.testcount,
+                driver_fill_time_s=self.driver_fill_time_s,
+                on_fill_complete=self.fill_phase_complete.emit,
                 on_mfc_setpoints_changed=self.mfc_readouts_updated.emit,
             )
         )
@@ -431,20 +453,48 @@ class MyDialog(QDialog):
         button.setEnabled(False)
         self.ui.testautomation.setEnabled(False)
 
-        setpoint_d = float(self.ui.mfcDsetpoint.text())
-        setpoint_c_ox = float(self.ui.mfcCsetpoint_2.text())
+        setpointA = float(self.ui.mfcAsetpoint.text())
+        setpointB = float(self.ui.mfcBsetpoint.text())
+        setpointC = float(self.ui.mfcCsetpoint.text())
+        setpointC_driver = float(self.ui.mfcCsetpoint_2.text())
+        setpointD = float(self.ui.mfcDsetpoint.text())
+
+        try:
+            current_test_num = int(self.ui.test_num_readout.text())
+        except ValueError:
+            current_test_num = 0
+        self.testcount = current_test_num + 1
+        self.ui.test_num_readout.setText(str(self.testcount))
+
+        try:
+            fill_time_s = float(self.ui.fill_time.text())
+        except ValueError:
+            fill_time_s = 0.0
+
         try:
             driver_fill_s = float(self.ui.driver_fill_time.text())
         except ValueError:
             driver_fill_s = 0.0
 
-        driver_worker = DriverWorker(setpoint_d, setpoint_c_ox, driver_fill_s)
+        self.update_vacuum_pressure()
+
+        driver_worker = DriverWorker(
+            setpointA,
+            setpointB,
+            setpointC,
+            setpointD,
+            setpointC_driver,
+            fill_time_s,
+            self.testcount,
+            driver_fill_s,
+        )
         driver_thread = QThread()
         driver_worker.moveToThread(driver_thread)
         driver_thread.started.connect(driver_worker.run)
         driver_worker.finished.connect(driver_thread.quit)
         driver_worker.finished.connect(lambda: self.reenable(button))
         driver_worker.finished.connect(lambda: self.ui.testautomation.setEnabled(True))
+        driver_worker.fill_phase_complete.connect(self.update_pressure)
         driver_worker.mfc_readouts_updated.connect(self.update_mfc_readouts)
 
         self._driver_threads.append((driver_thread, driver_worker))
@@ -475,8 +525,7 @@ class MyDialog(QDialog):
 
         button.setEnabled(False)
         self.purge_running = True
-        if hasattr(self.ui, "driverButton"):
-            self.ui.driverButton.setEnabled(False)
+        self.ui.driverButton.setEnabled(False)
         self.ui.testautomation.setStyleSheet("")
         self.ui.purgebutton.setStyleSheet("")
 
