@@ -1,4 +1,3 @@
-# Test automation script for intiator testing without data acquisition (for now)
 import csv
 import os
 import nicontrol
@@ -25,7 +24,12 @@ FILL_START_DAQ2 = [True, True, False, False, False, False, False, False]
 
 # After fill: reactant mix closed; speaker off (line 7 False).
 POST_FILL_DAQ1 = [False, False, False, False, False, False, True, False]
-POST_FILL_DAQ2 = [True, True, False, False, False, False, False, False]
+POST_FILL_DAQ2 = [True, False, False, False, False, False, False, False]
+
+#Purge States
+purge_daq1 = [True, False, False, True, False, False, False, False]
+purge_daq2 = [False] * 8
+
 
 # Idle / post-purge: same as GUI startup default.
 PURGE_COMPLETE_DAQ1 = [False, False, False, True, False, False, True, False]
@@ -44,22 +48,29 @@ async def automatic_test(
 
     print("Test starting")
 
+    #moves klinger motor in background
     try:
         threading.Thread(target=klinger_control.move_to_negative_29500, daemon=True).start()
     except Exception as e:
         print("Klinger automatic-test move to -29500 could not start:", e)
-
+    
+    #fill time from GUI box
     fill_time = max(0.0, float(fill_time_s))
     print(f"Using fill time input: {fill_time:.2f} s")
 
+    #assumes vacuum done before test. will add auto vacuum in future 
     print("Vacuum down complete. Starting fill sequence...")
 
+    #fill solenoids
     nicontrol.set_digital_output(_pad8(FILL_START_DAQ1))
     nicontrol.set_digital_output_2(_pad8(FILL_START_DAQ2))
 
+    #fill setpoints
     _set_mfc_rates(setpointA, setpointB, setpointC, 0.0)
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(setpointA, setpointB, setpointC, 0.0)
+    
+    #creates fill log and runs speaker halfway thru fill
 
     fill_rows = []
     start_fill = time.perf_counter()
@@ -99,9 +110,11 @@ async def automatic_test(
             )
             w.writerows(fill_rows)
 
+    #signals fill complete to update GUI
     if on_fill_complete is not None:
         on_fill_complete()
 
+    #post fill solenoids 
     nicontrol.set_digital_output(_pad8(POST_FILL_DAQ1))
     nicontrol.set_digital_output_2(_pad8(POST_FILL_DAQ2))
 
@@ -170,8 +183,6 @@ async def purge(setpointA, setpointB, setpointC, setpointD, on_mfc_setpoints_cha
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(0.0, 0.0, 0.0, 0.0)
 
-    purge_daq1 = [False] * 8
-    purge_daq2 = [False] * 8
     nicontrol.set_digital_output(purge_daq1)
     nicontrol.set_digital_output_2(purge_daq2)
 

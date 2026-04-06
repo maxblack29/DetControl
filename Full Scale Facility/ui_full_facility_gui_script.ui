@@ -2820,7 +2820,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>Begin Testing</string>
+    <string>No Driver Fill Sequence</string>
    </property>
   </widget>
   <widget class="QPushButton" name="igniteButton">
@@ -4686,7 +4686,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>Driver Sequence</string>
+    <string>Fill with Driver</string>
    </property>
   </widget>
   <widget class="QLineEdit" name="driver_fill_time">

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_full_facility_gui_scriptMdYXGv.ui'
+## Form generated from reading UI file 'ui_full_facility_gui_scriptTSkUyl.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -3573,7 +3573,7 @@ class Ui_full_facility_gui(object):
         self.closeS2.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
         self.closeS1.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
         self.purgebutton.setText(QCoreApplication.translate("full_facility_gui", u"Purge", None))
-        self.testautomation.setText(QCoreApplication.translate("full_facility_gui", u"Begin Testing", None))
+        self.testautomation.setText(QCoreApplication.translate("full_facility_gui", u"No Driver Fill Sequence", None))
         self.igniteButton.setText(QCoreApplication.translate("full_facility_gui", u"Ignite", None))
         self.mfcDgas.setItemText(0, QCoreApplication.translate("full_facility_gui", u"Air", None))
         self.mfcDgas.setItemText(1, QCoreApplication.translate("full_facility_gui", u"Ar", None))
@@ -3645,7 +3645,7 @@ class Ui_full_facility_gui(object):
         self.s6_label.setText(QCoreApplication.translate("full_facility_gui", u"S6: Exhaust (N Open)", None))
         self.openS6.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.S7_state.setText(QCoreApplication.translate("full_facility_gui", u"OPEN", None))
-        self.driverButton.setText(QCoreApplication.translate("full_facility_gui", u"Driver Sequence", None))
+        self.driverButton.setText(QCoreApplication.translate("full_facility_gui", u"Fill with Driver", None))
         self.fill_time_label_2.setText(QCoreApplication.translate("full_facility_gui", u"Driver Fill Time (s)", None))
     # retranslateUi
 
