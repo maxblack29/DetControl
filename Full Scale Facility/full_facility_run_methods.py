@@ -71,13 +71,16 @@ async def automatic_test(
     _ = (setpointD, setpointC_driver)
     print("Test starting")
 
+    #klinger moves in background 
     try:
         threading.Thread(target=klinger_control.move_to_negative_29500, daemon=True).start()
     except Exception as e:
         print("Klinger automatic-test move to -29500 could not start:", e)
 
+
     fill_time = max(0.0, float(fill_time_s))
     print(f"Using fill time input: {fill_time:.2f} s")
+    #assumes vacuum done before test. will add auto vacuum in future 
     print("Vacuum down complete. Starting fill sequence...")
 
     # Phase: open reactant routing, enable gauge; MFC setpoints apply for the timed fill below.
@@ -87,7 +90,7 @@ async def automatic_test(
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(setpointA, setpointB, setpointC, 0.0)
 
-    # Phase: reactant_fill — hold for fill_time_s; log pressure/MFC feedback; speaker at ~half fill (timing cue).
+    # Phase: reactant ill — hold for fill_time_s; log pressure/MFC feedback; speaker at ~half fill (timing cue).
     fill_rows = []
     start_fill = time.perf_counter()
     speaker_done = False
@@ -116,7 +119,7 @@ async def automatic_test(
     if on_fill_complete is not None:
         on_fill_complete()
 
-    # Phase: post fill — zero MFCs, close reactant feed, safe idle (operator may ignite / later purge).
+    # Phase: Post Fill — zero MFCs, close reactant feed, safe idle (operator may ignite / later purge).
     nicontrol.set_digital_output(_pad8(POST_FILL_AFTER_REACTANT_ONLY_DAQ1))
     nicontrol.set_digital_output_2(_pad8(POST_FILL_AFTER_REACTANT_ONLY_DAQ2))
     _set_mfc_rates(0.0, 0.0, 0.0, 0.0)
@@ -138,7 +141,11 @@ async def fill_and_driver_sequence(
     _ = (setpointD, setpointC_driver)
     driver_mix_time_s = max(0.0, float(driver_fill_time_s))
 
+    #assumes vacuum done before test. will add auto vacuum in future 
+    print("Vacuum down complete. Starting fill sequence...")
     print("Fill + driver sequence starting (reactant fill, then driver valves).")
+    
+    #klinger moves in background 
     try:
         threading.Thread(target=klinger_control.move_to_negative_29500, daemon=True).start()
     except Exception as e:
@@ -147,7 +154,7 @@ async def fill_and_driver_sequence(
     fill_time = max(0.0, float(fill_time_s))
     print(f"Using fill time input: {fill_time:.2f} s; driver mix segment: {driver_mix_time_s:.2f} s")
 
-    # Phase: open reactant routing (same as automatic_test).
+    # Phase: open reactant routing (same as Begin Testing).
     nicontrol.set_digital_output(_pad8(FILL_START_DAQ1))
     nicontrol.set_digital_output_2(_pad8(FILL_START_DAQ2))
     _set_mfc_rates(setpointA, setpointB, setpointC, 0.0)
@@ -176,7 +183,7 @@ async def fill_and_driver_sequence(
     if on_fill_complete is not None:
         on_fill_complete()
 
-    # Phase: isolate after fill, prep for driver path (do not print “ignite” until driver is done).
+    # Phase: isolate after fill, prep for driver 
     nicontrol.set_digital_output(_pad8(POST_FILL_BEFORE_DRIVER_DAQ1))
     nicontrol.set_digital_output_2(_pad8(POST_FILL_BEFORE_DRIVER_DAQ2))
     _set_mfc_rates(0.0, 0.0, 0.0, 0.0)
@@ -189,9 +196,11 @@ async def fill_and_driver_sequence(
     d2 = _pad8(d2)
     first_driver = True
 
+    #Phase: fuel driver for 2 seconds 
     d1[1] = True
     nicontrol.set_digital_output(d1)
     nicontrol.set_digital_output_2(d2)
+
     t_end = time.perf_counter() + 2.0
     while time.perf_counter() < t_end:
         elapsed = time.perf_counter() - start_fill
@@ -207,8 +216,10 @@ async def fill_and_driver_sequence(
     d1[1] = False
     nicontrol.set_digital_output(d1)
 
+    #Phase: oxidizer driver for 2 seconds 
     d1[2] = True
     nicontrol.set_digital_output(d1)
+
     t_end = time.perf_counter() + 2.0
     while time.perf_counter() < t_end:
         elapsed = time.perf_counter() - start_fill
@@ -219,11 +230,14 @@ async def fill_and_driver_sequence(
         if rem <= 0:
             break
         await asyncio.sleep(min(FILL_LOG_INTERVAL_S, rem))
+    
     d1[2] = False
     nicontrol.set_digital_output(d1)
 
+    #Phase: mix driver for driver_mix_time_s seconds 
     d1[0] = True
     nicontrol.set_digital_output(d1)
+
     t_end = time.perf_counter() + driver_mix_time_s
     while time.perf_counter() < t_end:
         elapsed = time.perf_counter() - start_fill
@@ -234,9 +248,11 @@ async def fill_and_driver_sequence(
         if rem <= 0:
             break
         await asyncio.sleep(min(FILL_LOG_INTERVAL_S, rem))
+
     d1[0] = False
     nicontrol.set_digital_output(d1)
 
+    #log csv 
     if testcount is not None and len(fill_rows) > 0:
         os.makedirs(FILL_LOG_DIR, exist_ok=True)
         path = os.path.join(FILL_LOG_DIR, f"fill_flow_rates_test{testcount}.csv")
@@ -248,9 +264,6 @@ async def fill_and_driver_sequence(
     # Phase: end — driver lines safe; same end posture as other tests for ignite / purge.
     nicontrol.set_digital_output(_pad8(END_TEST_DAQ1))
     nicontrol.set_digital_output_2(_pad8(END_TEST_DAQ2))
-    _set_mfc_rates(0.0, 0.0, 0.0, 0.0)
-    if on_mfc_setpoints_changed is not None:
-        on_mfc_setpoints_changed(0.0, 0.0, 0.0, 0.0)
 
     print("Reactant fill and driver valve sequence complete. Ignite when ready; use Purge when done.")
 
