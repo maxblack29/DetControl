@@ -453,6 +453,13 @@ class MyDialog(QDialog):
         button.setEnabled(False)
         self.ui.testautomation.setEnabled(False)
 
+        # Same as begin_testing: stop periodic pressure reads so they do not contend with
+        # fill_and_driver_sequence (NI-DAQmx: "The specified resource is reserved").
+        self.automation_running = True
+        self.ui.start_auto_read.setEnabled(False)
+        self.ui.stop_auto_read.setEnabled(False)
+        self.stop_auto_read()
+
         setpointA = float(self.ui.mfcAsetpoint.text())
         setpointB = float(self.ui.mfcBsetpoint.text())
         setpointC = float(self.ui.mfcCsetpoint.text())
@@ -601,6 +608,10 @@ class MyDialog(QDialog):
                 self.purge_running = False
                 if hasattr(self.ui, "driverButton"):
                     self.ui.driverButton.setEnabled(True)
+            if hasattr(self.ui, "driverButton") and button is self.ui.driverButton:
+                self.automation_running = False
+                self.ui.start_auto_read.setEnabled(True)
+                self.ui.stop_auto_read.setEnabled(True)
 
 
     def update_mfc_readouts(self, setpoint_a, setpoint_b, setpoint_c, setpoint_d=0.0):
