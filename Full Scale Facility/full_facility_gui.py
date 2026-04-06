@@ -163,7 +163,7 @@ class MyDialog(QDialog):
         #self.plumbing_diagram = plumbing_diagram
         
         # Mod1: S1–S4 @ 0–3, S5 purge (NO) @ 6. Mod2: S6 exhaust (NO) @ 0, S7 gauge @ 1; timing @ 6, speaker @ 7.
-        self.daq1 = [False, False, False, True, False, False, True, False]
+        self.daq1 = [True, False, False, True, False, False, True, False]
         nicontrol.set_digital_output(self.daq1)
 
         self.daq2 = [True, True, False, False, False, False, False, False]

@@ -38,7 +38,7 @@ END_TEST_DAQ2 = [True, False, False, False, False, False, False, False]
 purge_daq1 = [True, False, False, True, False, False, False, False]
 purge_daq2 = [False] * 8
 
-PURGE_COMPLETE_DAQ1 = [False, False, False, True, False, False, True, False]
+PURGE_COMPLETE_DAQ1 = [True, False, False, True, False, False, True, False]
 PURGE_COMPLETE_DAQ2 = [True, True, False, False, False, False, False, False]
 
 CSV_HEADER = (
