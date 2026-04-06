@@ -8,6 +8,7 @@ import time
 import klinger_control
 
 FILL_LOG_DIR = r"C:\Users\dedic-lab\Documents\Detonation_Facility_Testing"
+# Sleep after each CSV row; actual row period is this plus DAQ time (use nicontrol.read_fill_gauge_and_mfc_flows).
 FILL_LOG_INTERVAL_S = 0.1
 
 # Mod1: S1–S4 on 0–3, S5 purge (NO) on 6. Mod2: S6 on 0, S7 gauge on 1; timing 6, speaker 7.
@@ -90,14 +91,13 @@ async def automatic_test(
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(setpointA, setpointB, setpointC, 0.0)
 
-    # Phase: reactant ill — hold for fill_time_s; log pressure/MFC feedback; speaker at ~half fill (timing cue).
+    # Phase: reactant fill — hold for fill_time_s; log pressure/MFC feedback; speaker at ~half fill (timing cue).
     fill_rows = []
     start_fill = time.perf_counter()
     speaker_done = False
     while True:
         elapsed = time.perf_counter() - start_fill
-        p = nicontrol.read_pressure()
-        fa, fb, fc, fd = nicontrol.read_mfc_flows_analog_once()
+        p, fa, fb, fc, fd = nicontrol.read_fill_gauge_and_mfc_flows()
         fill_rows.append(
             [elapsed, "reactant_fill", "", p, setpointA, fa, setpointB, fb, setpointC, fc, 0.0, fd]
         )
@@ -167,8 +167,7 @@ async def fill_and_driver_sequence(
     speaker_done = False
     while True:
         elapsed = time.perf_counter() - start_fill
-        p = nicontrol.read_pressure()
-        fa, fb, fc, fd = nicontrol.read_mfc_flows_analog_once()
+        p, fa, fb, fc, fd = nicontrol.read_fill_gauge_and_mfc_flows()
         fill_rows.append(
             [elapsed, "reactant_fill", "", p, setpointA, fa, setpointB, fb, setpointC, fc, 0.0, fd]
         )
@@ -204,8 +203,7 @@ async def fill_and_driver_sequence(
     t_end = time.perf_counter() + 2.0
     while time.perf_counter() < t_end:
         elapsed = time.perf_counter() - start_fill
-        p = nicontrol.read_pressure()
-        fa, fb, fc, fd = nicontrol.read_mfc_flows_analog_once()
+        p, fa, fb, fc, fd = nicontrol.read_fill_gauge_and_mfc_flows()
         ev = "driver_start" if first_driver else ""
         first_driver = False
         fill_rows.append([elapsed, "driver", ev, p, 0.0, fa, 0.0, fb, 0.0, fc, 0.0, fd])
@@ -223,8 +221,7 @@ async def fill_and_driver_sequence(
     t_end = time.perf_counter() + 2.0
     while time.perf_counter() < t_end:
         elapsed = time.perf_counter() - start_fill
-        p = nicontrol.read_pressure()
-        fa, fb, fc, fd = nicontrol.read_mfc_flows_analog_once()
+        p, fa, fb, fc, fd = nicontrol.read_fill_gauge_and_mfc_flows()
         fill_rows.append([elapsed, "driver", "", p, 0.0, fa, 0.0, fb, 0.0, fc, 0.0, fd])
         rem = t_end - time.perf_counter()
         if rem <= 0:
@@ -241,8 +238,7 @@ async def fill_and_driver_sequence(
     t_end = time.perf_counter() + driver_mix_time_s
     while time.perf_counter() < t_end:
         elapsed = time.perf_counter() - start_fill
-        p = nicontrol.read_pressure()
-        fa, fb, fc, fd = nicontrol.read_mfc_flows_analog_once()
+        p, fa, fb, fc, fd = nicontrol.read_fill_gauge_and_mfc_flows()
         fill_rows.append([elapsed, "driver", "", p, 0.0, fa, 0.0, fb, 0.0, fc, 0.0, fd])
         rem = t_end - time.perf_counter()
         if rem <= 0:
