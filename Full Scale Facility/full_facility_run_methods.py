@@ -151,9 +151,10 @@ async def automatic_test(
 
     fill_time = max(0.0, float(fill_time_s))
     print(f"Using fill time input: {fill_time:.2f} s; MFC log rate {FILL_LOG_SAMPLE_RATE_HZ:.0f} Hz")
+    
+    await _pre_fill_vacuum_shutdown()
     print("Vacuum down complete. Starting fill sequence...")
 
-    await _pre_fill_vacuum_shutdown()
 
     nicontrol.set_digital_output(_pad8(FILL_START_DAQ1))
     nicontrol.set_digital_output_2(_pad8(FILL_START_DAQ2))

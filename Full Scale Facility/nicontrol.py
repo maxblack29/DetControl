@@ -19,29 +19,6 @@ _daq2_state = [False] * 8
 _ai_read_lock = threading.Lock()
 
 
-# Fill CSV: register AI channels for one multi-channel task (used only by acquire_fill_mfc_log).
-# - Mod3 ai0: facility pressure gauge (0–10 V → kPa in acquire_fill_mfc_log; same default coupling as read_pressure).
-# - Mod8 ai0–ai3: MFC A–D flow feedback (0–5 V full scale per MFC_MAX_SLPM). RSE matches typical single-ended wiring.
-# Channel order is fixed: index 0 = gauge, 1–4 = A–D so row indexing in acquire_fill_mfc_log stays stable.
-
-
-def _add_mod8_mfc_feedback_channels(ai_task):
-    """Mod8 ai0–ai3: MFC A–D 0–5 V feedback (RSE). Same wiring/scaling as fill CSV MFC columns."""
-    for suffix in ("ai0", "ai1", "ai2", "ai3"):
-        ai_task.ai_channels.add_ai_voltage_chan(
-            f"{MFC8_DEVICE}/{suffix}",
-            min_val=0.0,
-            max_val=5.0,
-            terminal_config=TerminalConfiguration.RSE,
-        )
-
-
-def _add_fill_log_ai_channels(ai_task):
-    # Order must stay: row 0 = gauge, rows 1–4 = MFC A–D (see acquire_fill_mfc_log).
-    ai_task.ai_channels.add_ai_voltage_chan(FILL_GAUGE_AI_CHANNEL, min_val=0, max_val=10)
-    _add_mod8_mfc_feedback_channels(ai_task)
-
-
 def read_mfc_flows_analog_slpm():
     """Mod8 ai0:3 voltages → A–D SLPM (same formula as acquire_fill_mfc_log). For GUI background monitor."""
     with _ai_read_lock:
@@ -67,7 +44,7 @@ def read_mfc_flows_analog_slpm():
 DAQ2_LINE_TIMING_OUTPUT = 6
 DAQ2_LINE_SPEAKER = 7
 
-
+#DAQ1 controller 
 def set_digital_output(states):
     global _daq1_state
     device_name = "cDAQ9188-169338EMod1/port0/line0:7"
@@ -76,7 +53,7 @@ def set_digital_output(states):
         task.write(states)
     _daq1_state = list(states)
 
-
+#DAQ2 controller
 def set_digital_output_2(states):
     global _daq2_state
     device_name = "cDAQ9188-169338EMod2/port0/line0:7"
@@ -88,10 +65,6 @@ def set_digital_output_2(states):
 
 def get_daq_states():
     return _daq1_state[:], _daq2_state[:]
-
-
-# MFC command path (Mod7 analog out): same full-scale convention as readback — 0–5 V = 0–max SLPM per MFC_MAX_SLPM.
-# Used when you change setpoints in the GUI or during tests; not part of acquire_fill_mfc_log itself.
 
 
 def _slpm_to_volts(setpoint_slpm, max_slpm):
@@ -112,13 +85,8 @@ def set_mfc_setpoints_analog(setpoint_a, setpoint_b, setpoint_c, setpoint_d=0.0)
         ao_task.write(voltages, auto_start=True)
 
 
-# Fill CSV: acquire time-aligned voltage streams, convert to kPa + SLPM for logging.
-# Uses FINITE sampling at sample_rate_hz for duration_s (≈ n = round(sr * duration) samples per channel).
-# Holds _ai_read_lock for the whole read so nothing else opens a conflicting AI task on the cDAQ.
-# Output dict: time_s, pressure_kPa, flow_a–d (numpy arrays). full_facility_run_methods merges this with
+# Output: time_s, pressure_kPa, flow_a–d (numpy arrays). full_facility_run_methods merges this with
 # phase/setpoint columns and writes fill_flow_rates_test{testcount}.csv.
-
-
 def acquire_fill_mfc_log(duration_s, sample_rate_hz):
     duration_s = float(duration_s)
     sr = float(sample_rate_hz)
@@ -132,9 +100,10 @@ def acquire_fill_mfc_log(duration_s, sample_rate_hz):
         "duration_s": 0.0,
         "sample_rate_hz": sr,
     }
+
+    #this part checks if the duration and sample rate are valid
     if duration_s <= 0 or sr <= 0:
         return empty
-
     n = max(2, int(round(sr * duration_s)))
     timeout_s = max(duration_s + 15.0, 5.0)
 
@@ -146,9 +115,12 @@ def acquire_fill_mfc_log(duration_s, sample_rate_hz):
                 sample_mode=AcquisitionType.FINITE,
                 samps_per_chan=n,
             )
+            #this reads the data from the task
             data = ai_task.read(number_of_samples_per_channel=n, timeout=timeout_s)
 
-    data = np.asarray(data, dtype=np.float64)
+    data = np.asarray(data, dtype=np.float64) #converts the data to a numpy array
+
+    #this part checks if the data is in the correct format
     # Usually (5, n); if you ever see (n, 5), flip once so row 0 stays the gauge.
     if (
         data.ndim == 2
@@ -160,15 +132,17 @@ def acquire_fill_mfc_log(duration_s, sample_rate_hz):
         raise RuntimeError(
             f"acquire_fill_mfc_log: expected {_FILL_LOG_N_AI_CH} channels x samples, got {data.shape}"
         )
+
     # Per-sample conversion: gauge uses facility kPa scale; each MFC uses V × (full_scale_SLPM / 5 V).
-    v_g = data[0]
-    va, vb, vc, vd = data[1], data[2], data[3], data[4]
+    v_g = data[0] #gauge voltage
+    va, vb, vc, vd = data[1], data[2], data[3], data[4] #mfc voltages
     p_kpa = v_g * 103.421 / 10.0
     fa = va * MFC_MAX_SLPM["A"] / 5.0
     fb = vb * MFC_MAX_SLPM["B"] / 5.0
     fc = vc * MFC_MAX_SLPM["C"] / 5.0
     fd = vd * MFC_MAX_SLPM["D"] / 5.0
-    time_s = np.arange(n, dtype=np.float64) / sr
+    time_s = np.arange(n, dtype=np.float64) / sr #time array from the number of samples and the sample rate
+    
     return {
         "time_s": time_s,
         "pressure_kpa": p_kpa,
@@ -181,13 +155,27 @@ def acquire_fill_mfc_log(duration_s, sample_rate_hz):
     }
 
 
-def set_daq2_line(line_index, value):
-    global _daq2_state
-    s = list((_daq2_state + [False] * 8)[:8])
-    s[line_index] = bool(value)
-    set_digital_output_2(s)
+#helper function for acquire_fill_mfc_log: only reads mod8 mfc channels 
+def _add_mod8_mfc_feedback_channels(ai_task):
+    """Mod8 ai0–ai3: MFC A–D 0–5 V feedback (RSE). Same wiring/scaling as fill CSV MFC columns."""
+    for suffix in ("ai0", "ai1", "ai2", "ai3"):
+        ai_task.ai_channels.add_ai_voltage_chan(
+            f"{MFC8_DEVICE}/{suffix}",
+            min_val=0.0,
+            max_val=5.0,
+            terminal_config=TerminalConfiguration.RSE,
+        )
 
 
+#helper function for acquire_fill_mfc_log: combines the mod8 mfc channels with the mod3 channel into 1 task 
+def _add_fill_log_ai_channels(ai_task):
+    # Order must stay: row 0 = gauge, rows 1–4 = MFC A–D (see acquire_fill_mfc_log).
+    ai_task.ai_channels.add_ai_voltage_chan(FILL_GAUGE_AI_CHANNEL, min_val=0, max_val=10)
+    _add_mod8_mfc_feedback_channels(ai_task)
+
+
+
+#ignites the facility and reads the pressure taps
 def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
     ignite_port = "cDAQ9188-169338EMod2/port0/line0:7"
     _, d2 = get_daq_states()
@@ -262,6 +250,7 @@ def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
             )
 
 
+#reads the pressure from the fill gauge
 def read_pressure():
     ai_channel = FILL_GAUGE_AI_CHANNEL
     sample_rate = 1000
@@ -280,6 +269,7 @@ def read_pressure():
     return avg * 103.421 / 10
 
 
+#reads the pressure from the vacuum gauge
 def read_vacuum_pressure():
     ai_channel = "cDAQ9188-169338EMod3/ai1"
     sample_rate = 1000
