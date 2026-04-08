@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1737</width>
-    <height>445</height>
+    <height>471</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -2707,7 +2707,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S2: Driver Fuel</string>
+    <string>S2: Driver Fuel Mix</string>
    </property>
   </widget>
   <widget class="QLabel" name="s1_label">
@@ -2720,7 +2720,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S1: Driver Mix</string>
+    <string>S1: Driver Fuel</string>
    </property>
   </widget>
   <widget class="QPushButton" name="openS1">
@@ -4240,7 +4240,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S4: Reactant Mix</string>
+    <string>S4: Driver Ox Mix</string>
    </property>
   </widget>
   <widget class="QLCDNumber" name="pressure_readout">
@@ -4325,7 +4325,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S5: Purge (N Open)</string>
+    <string>S5: Reactant Mix</string>
    </property>
   </widget>
   <widget class="QPushButton" name="openS5">
@@ -4573,7 +4573,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S7: Gauge Cluster</string>
+    <string>S7: Exhaust</string>
    </property>
   </widget>
   <widget class="QPushButton" name="closeS6">
@@ -4639,7 +4639,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S6: Exhaust (N Open)</string>
+    <string>S6: Purge</string>
    </property>
   </widget>
   <widget class="QPushButton" name="openS6">
@@ -4764,7 +4764,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S9: Vacuum Pump</string>
+    <string>S9: Vacuum Valve</string>
    </property>
   </widget>
   <widget class="QLabel" name="s8_label">
@@ -4777,7 +4777,7 @@ QProgressBar::chunk
     </rect>
    </property>
    <property name="text">
-    <string>S8: Vacuum Valve</string>
+    <string>S8: Gauge Cluster</string>
    </property>
   </widget>
   <widget class="QPushButton" name="closeS9">
@@ -4836,6 +4836,69 @@ QProgressBar::chunk
    </property>
    <property name="text">
     <string>Open</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="closeS10">
+   <property name="geometry">
+    <rect>
+     <x>1240</x>
+     <y>420</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Close</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="openS10">
+   <property name="geometry">
+    <rect>
+     <x>1140</x>
+     <y>420</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="s10_label">
+   <property name="geometry">
+    <rect>
+     <x>1010</x>
+     <y>420</y>
+     <width>131</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>S10: Vacuum Pump</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="S10_state">
+   <property name="geometry">
+    <rect>
+     <x>1340</x>
+     <y>420</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>OPEN</string>
+   </property>
+   <property name="textFormat">
+    <enum>Qt::TextFormat::RichText</enum>
    </property>
   </widget>
  </widget>

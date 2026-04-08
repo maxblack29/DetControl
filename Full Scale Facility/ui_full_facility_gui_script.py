@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_full_facility_gui_scriptXVsigL.ui'
+## Form generated from reading UI file 'ui_full_facility_gui_scriptOiRMlv.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -23,7 +23,7 @@ class Ui_full_facility_gui(object):
     def setupUi(self, full_facility_gui):
         if not full_facility_gui.objectName():
             full_facility_gui.setObjectName(u"full_facility_gui")
-        full_facility_gui.resize(1737, 445)
+        full_facility_gui.resize(1737, 471)
         full_facility_gui.setStyleSheet(u"/*Copyright (c) DevSec Studio. All rights reserved.\n"
 "\n"
 "MIT License\n"
@@ -3467,6 +3467,20 @@ class Ui_full_facility_gui(object):
         self.openS9 = QPushButton(full_facility_gui)
         self.openS9.setObjectName(u"openS9")
         self.openS9.setGeometry(QRect(1140, 380, 92, 31))
+        self.closeS10 = QPushButton(full_facility_gui)
+        self.closeS10.setObjectName(u"closeS10")
+        self.closeS10.setGeometry(QRect(1240, 420, 92, 31))
+        self.openS10 = QPushButton(full_facility_gui)
+        self.openS10.setObjectName(u"openS10")
+        self.openS10.setGeometry(QRect(1140, 420, 92, 31))
+        self.s10_label = QLabel(full_facility_gui)
+        self.s10_label.setObjectName(u"s10_label")
+        self.s10_label.setGeometry(QRect(1010, 420, 131, 20))
+        self.S10_state = QLabel(full_facility_gui)
+        self.S10_state.setObjectName(u"S10_state")
+        self.S10_state.setGeometry(QRect(1340, 420, 71, 20))
+        self.S10_state.setFont(font)
+        self.S10_state.setTextFormat(Qt.TextFormat.RichText)
 
         self.retranslateUi(full_facility_gui)
 
@@ -3480,6 +3494,7 @@ class Ui_full_facility_gui(object):
         self.closeS7.setDefault(True)
         self.closeS9.setDefault(True)
         self.closeS8.setDefault(True)
+        self.closeS10.setDefault(True)
 
 
         QMetaObject.connectSlotsByName(full_facility_gui)
@@ -3596,8 +3611,8 @@ class Ui_full_facility_gui(object):
         self.mfcAgas.setItemText(29, QCoreApplication.translate("full_facility_gui", u"P-5", None))
 
         self.solenoidstatelabel.setText(QCoreApplication.translate("full_facility_gui", u"Solenoid States:", None))
-        self.s2_label.setText(QCoreApplication.translate("full_facility_gui", u"S2: Driver Fuel", None))
-        self.s1_label.setText(QCoreApplication.translate("full_facility_gui", u"S1: Driver Mix", None))
+        self.s2_label.setText(QCoreApplication.translate("full_facility_gui", u"S2: Driver Fuel Mix", None))
+        self.s1_label.setText(QCoreApplication.translate("full_facility_gui", u"S1: Driver Fuel", None))
         self.openS1.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.openS2.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.closeS2.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
@@ -3651,11 +3666,11 @@ class Ui_full_facility_gui(object):
         self.openS4.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.closeS3.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
         self.closeS4.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
-        self.s4_label.setText(QCoreApplication.translate("full_facility_gui", u"S4: Reactant Mix", None))
+        self.s4_label.setText(QCoreApplication.translate("full_facility_gui", u"S4: Driver Ox Mix", None))
         self.pressure_label.setText(QCoreApplication.translate("full_facility_gui", u"Post Fill Pressure (kPa)", None))
         self.pressure_label_2.setText(QCoreApplication.translate("full_facility_gui", u"Vacuum Pressure Reading", None))
         self.pressure_label_3.setText(QCoreApplication.translate("full_facility_gui", u"(kPa)", None))
-        self.s5_label.setText(QCoreApplication.translate("full_facility_gui", u"S5: Purge (N Open)", None))
+        self.s5_label.setText(QCoreApplication.translate("full_facility_gui", u"S5: Reactant Mix", None))
         self.openS5.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.closeS5.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
         self.test_num_label.setText(QCoreApplication.translate("full_facility_gui", u"Test #", None))
@@ -3668,22 +3683,26 @@ class Ui_full_facility_gui(object):
         self.stop_auto_read.setText(QCoreApplication.translate("full_facility_gui", u"Stop Auto Read", None))
         self.fill_time_label.setText(QCoreApplication.translate("full_facility_gui", u"Reactant Fill Time (s)", None))
         self.openS7.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
-        self.s7_label.setText(QCoreApplication.translate("full_facility_gui", u"S7: Gauge Cluster", None))
+        self.s7_label.setText(QCoreApplication.translate("full_facility_gui", u"S7: Exhaust", None))
         self.closeS6.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
         self.closeS7.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
         self.S6_state.setText(QCoreApplication.translate("full_facility_gui", u"OPEN", None))
-        self.s6_label.setText(QCoreApplication.translate("full_facility_gui", u"S6: Exhaust (N Open)", None))
+        self.s6_label.setText(QCoreApplication.translate("full_facility_gui", u"S6: Purge", None))
         self.openS6.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.S7_state.setText(QCoreApplication.translate("full_facility_gui", u"OPEN", None))
         self.driverButton.setText(QCoreApplication.translate("full_facility_gui", u"Fill with Driver", None))
         self.fill_time_label_2.setText(QCoreApplication.translate("full_facility_gui", u"Driver Fill Time (s)", None))
         self.S9_state.setText(QCoreApplication.translate("full_facility_gui", u"OPEN", None))
         self.S8_state.setText(QCoreApplication.translate("full_facility_gui", u"OPEN", None))
-        self.s9_label.setText(QCoreApplication.translate("full_facility_gui", u"S9: Vacuum Pump", None))
-        self.s8_label.setText(QCoreApplication.translate("full_facility_gui", u"S8: Vacuum Valve", None))
+        self.s9_label.setText(QCoreApplication.translate("full_facility_gui", u"S9: Vacuum Valve", None))
+        self.s8_label.setText(QCoreApplication.translate("full_facility_gui", u"S8: Gauge Cluster", None))
         self.closeS9.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
         self.closeS8.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
         self.openS8.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.openS9.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
+        self.closeS10.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
+        self.openS10.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
+        self.s10_label.setText(QCoreApplication.translate("full_facility_gui", u"S10: Vacuum Pump", None))
+        self.S10_state.setText(QCoreApplication.translate("full_facility_gui", u"OPEN", None))
     # retranslateUi
 
