@@ -77,24 +77,24 @@ def set_mfc_setpoints_analog(setpoint_a, setpoint_b, setpoint_c, setpoint_d=0.0)
         ao_task.write(voltages, auto_start=True)
 
 
-def read_mfc_flows_analog_once():
-    "used during fill to read the mfc flows and add to flow rate csv"
-    """Single-sample read of Mod8 ai0:3 converted to SLPM (A, B, C, D)."""
-    with _ai_read_lock:
-        with nidaqmx.Task() as ai_task:
-            ai_task.ai_channels.add_ai_voltage_chan(MFC_AI_CHANNELS, min_val=0.0, max_val=5.0)
-            data = ai_task.read(number_of_samples_per_channel=1, timeout=2.0)
-    data = np.asarray(data, dtype=np.float64).reshape(-1)
-    va = data[0] if data.size >= 1 else 0.0
-    vb = data[1] if data.size >= 2 else 0.0
-    vc = data[2] if data.size >= 3 else 0.0
-    vd = data[3] if data.size >= 4 else 0.0
-    return (
-        _volts_to_slpm(va, MFC_MAX_SLPM["A"]),
-        _volts_to_slpm(vb, MFC_MAX_SLPM["B"]),
-        _volts_to_slpm(vc, MFC_MAX_SLPM["C"]),
-        _volts_to_slpm(vd, MFC_MAX_SLPM["D"]),
-    )
+# def read_mfc_flows_analog_once():
+#     "used during fill to read the mfc flows and add to flow rate csv"
+#     """Single-sample read of Mod8 ai0:3 converted to SLPM (A, B, C, D)."""
+#     with _ai_read_lock:
+#         with nidaqmx.Task() as ai_task:
+#             ai_task.ai_channels.add_ai_voltage_chan(MFC_AI_CHANNELS, min_val=0.0, max_val=5.0)
+#             data = ai_task.read(number_of_samples_per_channel=1, timeout=2.0)
+#     data = np.asarray(data, dtype=np.float64).reshape(-1)
+#     va = data[0] if data.size >= 1 else 0.0
+#     vb = data[1] if data.size >= 2 else 0.0
+#     vc = data[2] if data.size >= 3 else 0.0
+#     vd = data[3] if data.size >= 4 else 0.0
+#     return (
+#         _volts_to_slpm(va, MFC_MAX_SLPM["A"]),
+#         _volts_to_slpm(vb, MFC_MAX_SLPM["B"]),
+#         _volts_to_slpm(vc, MFC_MAX_SLPM["C"]),
+#         _volts_to_slpm(vd, MFC_MAX_SLPM["D"]),
+#     )
 
 
 def read_fill_gauge_and_mfc_flows():

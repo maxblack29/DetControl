@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_full_facility_gui_scriptTSkUyl.ui'
+## Form generated from reading UI file 'ui_full_facility_gui_scriptXVsigL.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -23,7 +23,7 @@ class Ui_full_facility_gui(object):
     def setupUi(self, full_facility_gui):
         if not full_facility_gui.objectName():
             full_facility_gui.setObjectName(u"full_facility_gui")
-        full_facility_gui.resize(1737, 418)
+        full_facility_gui.resize(1737, 445)
         full_facility_gui.setStyleSheet(u"/*Copyright (c) DevSec Studio. All rights reserved.\n"
 "\n"
 "MIT License\n"
@@ -3439,6 +3439,34 @@ class Ui_full_facility_gui(object):
         self.fill_time_label_2 = QLabel(full_facility_gui)
         self.fill_time_label_2.setObjectName(u"fill_time_label_2")
         self.fill_time_label_2.setGeometry(QRect(330, 290, 131, 20))
+        self.S9_state = QLabel(full_facility_gui)
+        self.S9_state.setObjectName(u"S9_state")
+        self.S9_state.setGeometry(QRect(1340, 380, 71, 20))
+        self.S9_state.setFont(font)
+        self.S9_state.setTextFormat(Qt.TextFormat.RichText)
+        self.S8_state = QLabel(full_facility_gui)
+        self.S8_state.setObjectName(u"S8_state")
+        self.S8_state.setGeometry(QRect(1340, 340, 61, 20))
+        self.S8_state.setFont(font)
+        self.S8_state.setTextFormat(Qt.TextFormat.RichText)
+        self.s9_label = QLabel(full_facility_gui)
+        self.s9_label.setObjectName(u"s9_label")
+        self.s9_label.setGeometry(QRect(1010, 380, 131, 20))
+        self.s8_label = QLabel(full_facility_gui)
+        self.s8_label.setObjectName(u"s8_label")
+        self.s8_label.setGeometry(QRect(1010, 340, 131, 20))
+        self.closeS9 = QPushButton(full_facility_gui)
+        self.closeS9.setObjectName(u"closeS9")
+        self.closeS9.setGeometry(QRect(1240, 380, 92, 31))
+        self.closeS8 = QPushButton(full_facility_gui)
+        self.closeS8.setObjectName(u"closeS8")
+        self.closeS8.setGeometry(QRect(1240, 340, 92, 31))
+        self.openS8 = QPushButton(full_facility_gui)
+        self.openS8.setObjectName(u"openS8")
+        self.openS8.setGeometry(QRect(1140, 340, 92, 31))
+        self.openS9 = QPushButton(full_facility_gui)
+        self.openS9.setObjectName(u"openS9")
+        self.openS9.setGeometry(QRect(1140, 380, 92, 31))
 
         self.retranslateUi(full_facility_gui)
 
@@ -3450,6 +3478,8 @@ class Ui_full_facility_gui(object):
         self.closeS5.setDefault(True)
         self.closeS6.setDefault(True)
         self.closeS7.setDefault(True)
+        self.closeS9.setDefault(True)
+        self.closeS8.setDefault(True)
 
 
         QMetaObject.connectSlotsByName(full_facility_gui)
@@ -3647,5 +3677,13 @@ class Ui_full_facility_gui(object):
         self.S7_state.setText(QCoreApplication.translate("full_facility_gui", u"OPEN", None))
         self.driverButton.setText(QCoreApplication.translate("full_facility_gui", u"Fill with Driver", None))
         self.fill_time_label_2.setText(QCoreApplication.translate("full_facility_gui", u"Driver Fill Time (s)", None))
+        self.S9_state.setText(QCoreApplication.translate("full_facility_gui", u"OPEN", None))
+        self.S8_state.setText(QCoreApplication.translate("full_facility_gui", u"OPEN", None))
+        self.s9_label.setText(QCoreApplication.translate("full_facility_gui", u"S9: Vacuum Pump", None))
+        self.s8_label.setText(QCoreApplication.translate("full_facility_gui", u"S8: Vacuum Valve", None))
+        self.closeS9.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
+        self.closeS8.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
+        self.openS8.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
+        self.openS9.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
     # retranslateUi
 
