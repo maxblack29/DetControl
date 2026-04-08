@@ -15,11 +15,31 @@ import time
 from ui_full_facility_gui_script import Ui_full_facility_gui
 '''This calls the python file that was created FROM the .ui file (ui_full_facility_gui_script.py). 
 When updating gui in qt designer, must update the PYTHON file to see the updates.'''
- 
 
-#used to monitor the flows from the MFCs in the background and manage MFC flows
+
+# GUI S1–S10 → (which_daq: 1=Mod1 / 2=Mod2, channel 0–7, invert_line_for_normally_open).
+SOLENOID_GUI_MAP = [
+    (1, 1, False),  # S1 driver fuel
+    (1, 0, False),  # S2 driver fuel mix
+    (1, 2, False),  # S3 driver ox
+    (1, 4, False),  # S4 driver ox mix
+    (1, 3, False),  # S5 reactant mix
+    (1, 6, True),   # S6 purge NO
+    (2, 0, True),   # S7 exhaust NO
+    (2, 1, False),  # S8 gauge cluster
+    (1, 5, False),  # S9 vacuum valve
+    (2, 3, False),  # S10 vacuum pump
+]
+
+
+def _solenoid_line_seems_open(line_high, invert):
+    """High DAQ line vs logical OPEN for status labels (matches toggle_solenoid)."""
+    return (not line_high) if invert else bool(line_high)
+
+
+# Background MFC readouts: Mod8 analog feedback → SLPM (same scaling as fill CSV), not Alicat serial.
 class MFCMonitorWorker(QObject):
-    flows_updated = Signal(float, float, float)
+    flows_updated = Signal(float, float, float, float)
 
     def __init__(self, interval_ms=1000):
         super().__init__()
@@ -40,12 +60,8 @@ class MFCMonitorWorker(QObject):
         while self._running:
             if not self._paused:
                 try:
-                    flows = alicatcontrol.get_manager().read_flows()
-                    a = flows.get("A", 0.0)
-                    b = flows.get("B", 0.0)
-                    c = flows.get("C", 0.0)
-                    self.flows_updated.emit(a, b, c)
-
+                    a, b, c, d = nicontrol.read_mfc_flows_analog_slpm()
+                    self.flows_updated.emit(a, b, c, d)
                 except Exception:
                     pass
             time.sleep(self.interval_s)
@@ -162,11 +178,11 @@ class MyDialog(QDialog):
         self.ui.setupUi(self)
         #self.plumbing_diagram = plumbing_diagram
         
-        # Mod1: S1–S4 @ 0–3, S5 purge (NO) @ 6. Mod2: S6 exhaust (NO) @ 0, S7 gauge @ 1; timing @ 6, speaker @ 7.
-        self.daq1 = [True, False, False, True, False, False, True, False]
+        # DAQ line map: full_facility_run_methods + nicontrol (Mod2 lines 6–7 = timing / speaker).
+        self.daq1 = list(full_facility_run_methods.PURGE_COMPLETE_DAQ1)
         nicontrol.set_digital_output(self.daq1)
 
-        self.daq2 = [True, True, False, False, False, False, False, False]
+        self.daq2 = list(full_facility_run_methods.PURGE_COMPLETE_DAQ2)
         nicontrol.set_digital_output_2(self.daq2)
 
         self.testcount = 0  # zeroes the test count for data acquisition when gui is opened
@@ -194,6 +210,12 @@ class MyDialog(QDialog):
         self.ui.closeS6.clicked.connect(lambda: self.toggle_solenoid(5, False))
         self.ui.openS7.clicked.connect(lambda: self.toggle_solenoid(6, True))
         self.ui.closeS7.clicked.connect(lambda: self.toggle_solenoid(6, False))
+        self.ui.openS8.clicked.connect(lambda: self.toggle_solenoid(7, True))
+        self.ui.closeS8.clicked.connect(lambda: self.toggle_solenoid(7, False))
+        self.ui.openS9.clicked.connect(lambda: self.toggle_solenoid(8, True))
+        self.ui.closeS9.clicked.connect(lambda: self.toggle_solenoid(8, False))
+        self.ui.openS10.clicked.connect(lambda: self.toggle_solenoid(9, True))
+        self.ui.closeS10.clicked.connect(lambda: self.toggle_solenoid(9, False))
 
         #Connects the update setpoints button
         self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
@@ -234,13 +256,11 @@ class MyDialog(QDialog):
         except Exception as e:
             print("MFC manager failed to start (check COM3 / Alicat):", e)
 
-        # Background MFC monitor: serial readback at 1 Hz for GUI only.
+        # Background MFC monitor: Mod8 voltage → SLPM at 1 Hz (Alicat serial still used for gas selection only).
         self.mfc_monitor_worker = MFCMonitorWorker(interval_ms=1000)
         self.mfc_monitor_thread = QThread()
         self.mfc_monitor_worker.moveToThread(self.mfc_monitor_thread)
-        self.mfc_monitor_worker.flows_updated.connect(
-            lambda a, b, c: self.update_mfc_readouts(a, b, c, 0.0)
-        )
+        self.mfc_monitor_worker.flows_updated.connect(self.update_mfc_readouts)
         self.mfc_monitor_thread.started.connect(self.mfc_monitor_worker.run)
         self.mfc_monitor_thread.start()
 
@@ -323,15 +343,15 @@ class MyDialog(QDialog):
         except Exception:
             pass
 
-        # S1–S4: Mod1 lines 0–3 (NC). S5: Mod1 line 6 (NO). S6: Mod2 line 0 (NO). S7: Mod2 line 1 (NC).
-        if index == 4:
-            self.daq1[6] = not state
-        elif index == 5:
-            self.daq2[0] = not state
-        elif index == 6:
-            self.daq2[1] = state
+        if index < 0 or index >= len(SOLENOID_GUI_MAP):
+            print(f"Solenoid index {index} out of range.")
+            return
+        board, ch, invert = SOLENOID_GUI_MAP[index]
+        wire = (not state) if invert else state
+        if board == 1:
+            self.daq1[ch] = wire
         else:
-            self.daq1[index] = state
+            self.daq2[ch] = wire
 
         open_button = getattr(self.ui, f"openS{index+1}")
         close_button = getattr(self.ui, f"closeS{index+1}")
@@ -374,21 +394,20 @@ class MyDialog(QDialog):
         daq1 = (daq1 + [False] * 8)[:8]
         daq2 = (daq2 + [False] * 8)[:8]
 
-        s1_open = bool(daq1[0])
-        s2_open = bool(daq1[1])
-        s3_open = bool(daq1[2])
-        s4_open = bool(daq1[3])
-        s5_open = not bool(daq1[6])
-        s6_open = not bool(daq2[0])
-        s7_open = bool(daq2[1])
-
-        self.ui.S1_state.setText("OPEN" if s1_open else "CLOSED")
-        self.ui.S2_state.setText("OPEN" if s2_open else "CLOSED")
-        self.ui.S3_state.setText("OPEN" if s3_open else "CLOSED")
-        self.ui.S4_state.setText("OPEN" if s4_open else "CLOSED")
-        self.ui.S5_state.setText("OPEN" if s5_open else "CLOSED")
-        self.ui.S6_state.setText("OPEN" if s6_open else "CLOSED")
-        self.ui.S7_state.setText("OPEN" if s7_open else "CLOSED")
+        s_open = [
+            _solenoid_line_seems_open(daq1[1], False),
+            _solenoid_line_seems_open(daq1[0], False),
+            _solenoid_line_seems_open(daq1[2], False),
+            _solenoid_line_seems_open(daq1[4], False),
+            _solenoid_line_seems_open(daq1[3], False),
+            _solenoid_line_seems_open(daq1[6], True),
+            _solenoid_line_seems_open(daq2[0], True),
+            _solenoid_line_seems_open(daq2[1], False),
+            _solenoid_line_seems_open(daq1[5], False),
+            _solenoid_line_seems_open(daq2[3], False),
+        ]
+        for i, o in enumerate(s_open):
+            getattr(self.ui, f"S{i + 1}_state").setText("OPEN" if o else "CLOSED")
 
   
     stop_test = False
