@@ -172,8 +172,12 @@ class AlicatManager:
     async def _read_flows(self):
         out = {}
         for u in UNITS:
-            data = await self._mfcs[u].get()
-            out[u] = float(data.get("mass_flow", 0.0))
+            try:
+                data = await self._mfcs[u].get()
+                out[u] = float(data.get("mass_flow", 0.0))
+            except Exception as e:
+                print(f"Alicat read unit {u} failed: {e}")
+                out[u] = 0.0
             await asyncio.sleep(0.02)
         return out
 
@@ -214,8 +218,12 @@ class AlicatManager:
         self._submit(self._set_gas(unit, gas))
 
     def read_flows(self):
-        """Return dict {'A': flow_a, 'B': flow_b, 'C': flow_c} in SLPM."""
-        return self._submit(self._read_flows())
+        """Return dict {'A': flow_a, 'B': flow_b, 'C': flow_c} in SLPM. On any failure, returns zeros."""
+        try:
+            return self._submit(self._read_flows())
+        except Exception as e:
+            print("Alicat read_flows failed:", e)
+            return {u: 0.0 for u in UNITS}
 
     def stop(self):
         if self._loop is None:

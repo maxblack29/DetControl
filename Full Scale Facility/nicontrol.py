@@ -19,26 +19,6 @@ _daq2_state = [False] * 8
 _ai_read_lock = threading.Lock()
 
 
-#SLPM from voltages, used for the background GUI monitor
-def read_mfc_flows_analog_slpm():
-    """Mod8 ai0:3 voltages → A–D SLPM (same formula as acquire_fill_mfc_log). For GUI background monitor."""
-    with _ai_read_lock:
-        with nidaqmx.Task() as ai_task:
-            _add_mod8_mfc_feedback_channels(ai_task)
-            data = ai_task.read(number_of_samples_per_channel=1, timeout=2.0)
-    data = np.asarray(data, dtype=np.float64).reshape(-1)
-    pad = max(0, 4 - data.size)
-    if pad:
-        data = np.pad(data, (0, pad))
-    va, vb, vc, vd = (float(data[i]) for i in range(4))
-    return (
-        va * MFC_MAX_SLPM["A"] / 5.0,
-        vb * MFC_MAX_SLPM["B"] / 5.0,
-        vc * MFC_MAX_SLPM["C"] / 5.0,
-        vd * MFC_MAX_SLPM["D"] / 5.0,
-    )
-
-
 # Mod1 port0: 0=S2 fuel mix, 1=S1 fuel, 2=S3 ox, 3=S5 reactant mix, 4=S4 ox mix,
 # 5=S9 vacuum valve, 6=S6 purge (NO), 7=unused.
 # Mod2 port0: 0=S7 exhaust (NO), 1=S8 gauge, 3=S10 vacuum pump; 6=timing out, 7=speaker.
@@ -87,8 +67,7 @@ def set_mfc_setpoints_analog(setpoint_a, setpoint_b, setpoint_c, setpoint_d=0.0)
         ao_task.write(voltages, auto_start=True)
 
 
-# Output: time_s, pressure_kPa, flow_a–d (numpy arrays). full_facility_run_methods merges this with
-# phase/setpoint columns and writes fill_flow_rates_test{testcount}.csv.
+# Output: time_s, pressure_kPa, flow_a–d (numpy arrays). fill_log_csv adds phase/event and writes CSV.
 def acquire_fill_mfc_log(duration_s, sample_rate_hz):
     duration_s = float(duration_s)
     sr = float(sample_rate_hz)
@@ -111,7 +90,15 @@ def acquire_fill_mfc_log(duration_s, sample_rate_hz):
 
     with _ai_read_lock:
         with nidaqmx.Task() as ai_task:
-            _add_fill_log_ai_channels(ai_task)
+            # Mod3 gauge + Mod8 ai0:3 (row 0 = gauge, 1–4 = MFC A–D).
+            ai_task.ai_channels.add_ai_voltage_chan(FILL_GAUGE_AI_CHANNEL, min_val=0, max_val=10)
+            for suffix in ("ai0", "ai1", "ai2", "ai3"):
+                ai_task.ai_channels.add_ai_voltage_chan(
+                    f"{MFC8_DEVICE}/{suffix}",
+                    min_val=0.0,
+                    max_val=5.0,
+                    terminal_config=TerminalConfiguration.RSE,
+                )
             ai_task.timing.cfg_samp_clk_timing(
                 sr,
                 sample_mode=AcquisitionType.FINITE,
@@ -157,24 +144,10 @@ def acquire_fill_mfc_log(duration_s, sample_rate_hz):
     }
 
 
-#helper function for acquire_fill_mfc_log: only reads mod8 mfc channels 
-def _add_mod8_mfc_feedback_channels(ai_task):
-    """Mod8 ai0–ai3: MFC A–D 0–5 V feedback (RSE). Same wiring/scaling as fill CSV MFC columns."""
-    for suffix in ("ai0", "ai1", "ai2", "ai3"):
-        ai_task.ai_channels.add_ai_voltage_chan(
-            f"{MFC8_DEVICE}/{suffix}",
-            min_val=0.0,
-            max_val=5.0,
-            terminal_config=TerminalConfiguration.RSE,
-        )
-
-
-#helper function for acquire_fill_mfc_log: combines the mod8 mfc channels with the mod3 channel into 1 task 
-def _add_fill_log_ai_channels(ai_task):
-    # Order must stay: row 0 = gauge, rows 1–4 = MFC A–D (see acquire_fill_mfc_log).
-    ai_task.ai_channels.add_ai_voltage_chan(FILL_GAUGE_AI_CHANNEL, min_val=0, max_val=10)
-    _add_mod8_mfc_feedback_channels(ai_task)
-
+#needed separate function for threading. just calls the acquire_fill_mfc_log function and stores the result in the result_container
+def fill_log_acquisition_thread_target(result_container, duration_s, sample_rate_hz, key="acq"):
+    """Store one continuous Mod3+Mod8 log in result_container[key]. Use as threading.Thread(target=...)."""
+    result_container[key] = acquire_fill_mfc_log(duration_s, sample_rate_hz)
 
 
 #ignites the facility and reads the pressure taps
@@ -288,58 +261,3 @@ def read_vacuum_pressure():
             data = ai_task.read(number_of_samples_per_channel=samples)
             avg = np.mean(data)
     return avg * 0.013332
-
-
-def read_mfcs(testcount, fill_duration):
-    ai_pressure = "cDAQ9188-169338EMod3/ai0:1"
-    ai_flowrate = "cDAQ9188-169338EMod8/ai0:3"
-
-    sample_rate = 1000  # 1 kHz 
-    duration = fill_duration + 2      # seconds
-    samples = int(sample_rate * duration)
- 
-    # with _ai_read_lock:
-    with nidaqmx.Task() as ai_task:
-        ai_task.ai_channels.add_ai_voltage_chan(ai_pressure, min_val=-10, max_val=10)
-        ai_task.ai_channels.add_ai_voltage_chan(ai_flowrate, min_val=-10, max_val=10, terminal_config=TerminalConfiguration.RSE)
-
-        ai_task.timing.cfg_samp_clk_timing(
-            sample_rate, 
-            sample_mode=AcquisitionType.FINITE, 
-            samps_per_chan=samples
-        )
-        data = ai_task.read(number_of_samples_per_channel=samples, timeout=25)
-
- 
-# nidaqmx multi-channel read: shape (n_channels, samples_per_channel) -> PT1..PT8
-    data = np.asarray(data, dtype=np.float64)
-    # if data.ndim == 1:
-    #     pt1 = data
-    #     n_samples = pt1.shape[0]
-    #     pt2 = pt3 = pt4 = pt5 = pt6 = pt7 = pt8 = np.zeros(n_samples)
-    # else:
-    #     n_ch, n_samples = data.shape
-    fill = data[0]
-    vac = data[1]
-    mfc1 = data[2] 
-    mfc2 = data[3] 
-    mfc3 = data[4] 
-    mfc4 = data[5] 
-    n_samples = mfc1.shape[0]
- 
- 
-    # One CSV per test: properties in header, then time and PT1–PT8 columns
-    filename = f"C:\\Users\\dedic-lab\\Documents\\Detonation_Facility_Testing\\MFCTestData{testcount}.csv"
-    time_s = np.arange(n_samples, dtype=np.float64) / sample_rate
- 
-    with open(filename, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["TestNumber", testcount])
-        # writer.writerow(["VacuumPressure_Pa", float(vacuum_pressure)])
-        # writer.writerow(["PostFillPressure_Pa", float(fill_pressure)])
-        writer.writerow(["DateTime", datetime.now().isoformat()])
-        writer.writerow(["SampleRate_Hz", sample_rate])
-        writer.writerow([])
-        writer.writerow(["time_s", "fill", "vac", "MFC1", "MFC2", "MFC3", "MFC4"])
-        for i in range(n_samples):
-            writer.writerow([time_s[i], fill[i], vac[i], mfc1[i], mfc2[i], mfc3[i], mfc4[i]])

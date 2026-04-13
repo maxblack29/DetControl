@@ -46,34 +46,7 @@ def _solenoid_line_seems_open(line_high, invert):
 #         # MoveWindow(handle, x, y, width, height, repaint_boolean)
 #         win32gui.MoveWindow(hwnd, x, y, width, height, True)
         
-# Background MFC readouts: Mod8 analog feedback → SLPM (same scaling as fill CSV), not Alicat serial.
-# class MFCMonitorWorker(QObject):
-#     flows_updated = Signal(float, float, float, float)
-
-#     def __init__(self, interval_ms=1000):
-#         super().__init__()
-#         self.interval_s = interval_ms / 1000.0
-#         self._running = True
-#         self._paused = False
-
-#     def stop(self):
-#         self._running = False
-
-#     def pause(self):
-#         self._paused = True
-
-#     def resume(self):
-#         self._paused = False
-
-#     def run(self):
-#         while self._running:
-#             if not self._paused:
-#                 try:
-#                     a, b, c, d = nicontrol.read_mfc_flows_analog_slpm()
-#                     self.flows_updated.emit(a, b, c, d)
-#                 except Exception:
-#                     pass
-#             time.sleep(self.interval_s)
+#background MFC monitor (Serial)
 class MFCMonitorWorker(QObject):
     flows_updated = Signal(float, float, float)
  
@@ -101,7 +74,6 @@ class MFCMonitorWorker(QObject):
                     b = flows.get("B", 0.0)
                     c = flows.get("C", 0.0)
                     self.flows_updated.emit(a, b, c)
-                    self.flows_updated.emit(b)
  
                 except Exception:
                     pass
@@ -257,19 +229,12 @@ class MyDialog(QDialog):
         self.ui.openS10.clicked.connect(lambda: self.toggle_solenoid(9, True))
         self.ui.closeS10.clicked.connect(lambda: self.toggle_solenoid(9, False))
 
-        #Connects the update setpoints button
-        self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
+        #Connects the update setpoints button (lambda avoids QAbstractButton.clicked(bool) extra arg).
+        self.ui.updatesetpoints.clicked.connect(lambda: self.save_setpoints())
 
         #Connects the reset flow button 
         self.ui.resetmfc.clicked.connect(self.reset_flow) #Might not need this
 
-        #Retrieves the gas setpoints from the GUI 
-        self.ui.mfcAsetpoint.returnPressed.connect(lambda: self.save_setpoints('A', float(self.ui.mfcAsetpoint.text())))
-        self.ui.mfcBsetpoint.returnPressed.connect(lambda: self.save_setpoints('B', float(self.ui.mfcBsetpoint.text())))
-        self.ui.mfcCsetpoint.returnPressed.connect(lambda: self.save_setpoints('C', float(self.ui.mfcCsetpoint.text())))
-        self.ui.mfcDsetpoint.returnPressed.connect(lambda: self.save_setpoints('D', float(self.ui.mfcDsetpoint.text())))
-
-        
         #Retrieves the gas type from the GUI
         self.ui.mfcAgas.currentTextChanged.connect(self.change_gas)
         self.ui.mfcBgas.currentTextChanged.connect(self.change_gas)
@@ -296,7 +261,7 @@ class MyDialog(QDialog):
         except Exception as e:
             print("MFC manager failed to start (check COM3 / Alicat):", e)
 
-        # Background MFC monitor: Mod8 voltage → SLPM at 1 Hz (Alicat serial still used for gas selection only).
+        #background MFC monitor (Serial)
         self.mfc_monitor_worker = MFCMonitorWorker(interval_ms=1000)
         self.mfc_monitor_thread = QThread()
         self.mfc_monitor_worker.moveToThread(self.mfc_monitor_thread)
@@ -330,8 +295,6 @@ class MyDialog(QDialog):
 
         # Set MFC setpoints via analog output (Mod7 ao0:3).
         nicontrol.set_mfc_setpoints_analog(setpointA, setpointB, setpointC, setpointD)
-
-        self.ui.updatesetpoints.clicked.connect(self.save_setpoints)
 
     #This function will reset the flow setpoints to 0.0 SLPM for all gas controllers. 
     def reset_flow(self):
