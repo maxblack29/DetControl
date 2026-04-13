@@ -153,7 +153,17 @@ async def automatic_test(
     print(f"Using fill time input: {fill_time:.2f} s; MFC log rate {FILL_LOG_SAMPLE_RATE_HZ:.0f} Hz")
     
     await _pre_fill_vacuum_shutdown()
+    print("DAQ thread started")
+
+    daq_thread = threading.Thread(
+        target=nicontrol.read_mfcs, 
+        args=(testcount,fill_time,)
+        )
+    daq_thread.start()
+
+    await asyncio.sleep(.5)
     print("Vacuum down complete. Starting fill sequence...")
+
 
 
     nicontrol.set_digital_output(_pad8(FILL_START_DAQ1))
@@ -162,34 +172,38 @@ async def automatic_test(
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(setpointA, setpointB, setpointC, 0.0)
 
-    fill_rows = []
-    t_off = 0.0
-    if fill_time > 0:
-        acq = await asyncio.to_thread(
-            nicontrol.acquire_fill_mfc_log,
-            fill_time,
-            FILL_LOG_SAMPLE_RATE_HZ,
-        )
-        fill_rows.extend(
-            _csv_rows_from_acquisition(
-                acq,
-                t_off,
-                "reactant_fill",
-                "",
-                setpointA,
-                setpointB,
-                setpointC,
-                0.0,
-            )
-        )
+    # asyncio.create_task(nicontrol.read_mfcs(testcount))
 
-    if testcount is not None and len(fill_rows) > 0:
-        os.makedirs(FILL_LOG_DIR, exist_ok=True)
-        path = os.path.join(FILL_LOG_DIR, f"fill_flow_rates_test{testcount}.csv")
-        with open(path, "w", newline="") as f:
-            w = csv.writer(f)
-            w.writerow(CSV_HEADER)
-            w.writerows(fill_rows)
+    await asyncio.sleep(fill_time)
+    
+    # fill_rows = []
+    # t_off = 0.0
+    # if fill_time > 0:
+    #     acq = await asyncio.to_thread(
+    #         nicontrol.acquire_fill_mfc_log,
+    #         fill_time*2,
+    #         FILL_LOG_SAMPLE_RATE_HZ,
+    #     )
+    #     fill_rows.extend(
+    #         _csv_rows_from_acquisition(
+    #             acq,
+    #             t_off,
+    #             "reactant_fill",
+    #             "",
+    #             setpointA,
+    #             setpointB,
+    #             setpointC,
+    #             0.0,
+    #         )
+    #     )
+
+    # if testcount is not None and len(fill_rows) > 0:
+    #     os.makedirs(FILL_LOG_DIR, exist_ok=True)
+    #     path = os.path.join(FILL_LOG_DIR, f"fill_flow_rates_test{testcount}.csv")
+    #     with open(path, "w", newline="") as f:
+    #         w = csv.writer(f)
+    #         w.writerow(CSV_HEADER)
+    #         w.writerows(fill_rows)
 
     if on_fill_complete is not None:
         on_fill_complete()
@@ -199,8 +213,15 @@ async def automatic_test(
     _set_mfc_rates(0.0, 0.0, 0.0, 0.0)
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(0.0, 0.0, 0.0, 0.0)
+    
+        
+    print("Reactant fill complete. Awaiting DAQ")
 
-    print("Reactant fill complete. Ignite when ready; use Purge when done.")
+    daq_thread.join()
+    if on_fill_complete is not None:
+        on_fill_complete()
+    # await nicontrol.read_mfcs()
+    print("DAQ complete. Ignite when ready; use Purge when done.")
 
 
 async def fill_and_driver_sequence(
@@ -219,8 +240,7 @@ async def fill_and_driver_sequence(
 
     await _pre_fill_vacuum_shutdown()
 
-    print("Vacuum down complete. Starting fill sequence...")
-    print("Fill + driver sequence starting (reactant fill, then driver valves).")
+    print("Vacuum down complete")
 
     try:
         threading.Thread(target=klinger_control.move_to_negative_29500, daemon=True).start()
@@ -233,37 +253,53 @@ async def fill_and_driver_sequence(
         f"MFC log rate {FILL_LOG_SAMPLE_RATE_HZ:.0f} Hz"
     )
 
+    print("DAQ thread started")
+
+    daq_thread = threading.Thread(
+        target=nicontrol.read_mfcs, 
+        args=(testcount,fill_time+driver_mix_time_s+4,)
+        )
+    daq_thread.start()
+
+    await asyncio.sleep(.5)
+    print("Fill + driver sequence starting (reactant fill, then driver valves).")
+
+
+
     nicontrol.set_digital_output(_pad8(FILL_START_DAQ1))
     nicontrol.set_digital_output_2(_pad8(FILL_START_DAQ2))
     _set_mfc_rates(setpointA, setpointB, setpointC, 0.0)
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(setpointA, setpointB, setpointC, 0.0)
 
-    fill_rows = []
-    t_off = 0.0
+    # asyncio.create_task(nicontrol.read_mfcs(testcount))
 
-    if fill_time > 0:
-        acq = await asyncio.to_thread(
-            nicontrol.acquire_fill_mfc_log,
-            fill_time,
-            FILL_LOG_SAMPLE_RATE_HZ,
-        )
-        fill_rows.extend(
-            _csv_rows_from_acquisition(
-                acq,
-                t_off,
-                "reactant_fill",
-                "",
-                setpointA,
-                setpointB,
-                setpointC,
-                0.0,
-            )
-        )
-        t_off += acq["duration_s"]
+    await asyncio.sleep(fill_time)
 
-    if on_fill_complete is not None:
-        on_fill_complete()
+    # fill_rows = []
+    # t_off = 0.0
+
+    # if fill_time > 0:
+    #     acq = await asyncio.to_thread(
+    #         nicontrol.acquire_fill_mfc_log,
+    #         fill_time,
+    #         FILL_LOG_SAMPLE_RATE_HZ,
+    #     )
+    #     fill_rows.extend(
+    #         _csv_rows_from_acquisition(
+    #             acq,
+    #             t_off,
+    #             "reactant_fill",
+    #             "",
+    #             setpointA,
+    #             setpointB,
+    #             setpointC,
+    #             0.0,
+    #         )
+    #     )
+    #     t_off += acq["duration_s"]
+
+
 
     nicontrol.set_digital_output(_pad8(POST_FILL_BEFORE_DRIVER_DAQ1))
     nicontrol.set_digital_output_2(_pad8(POST_FILL_BEFORE_DRIVER_DAQ2))
@@ -279,90 +315,106 @@ async def fill_and_driver_sequence(
     d1[D1_S1_FUEL_DRV] = True
     nicontrol.set_digital_output(d1)
     nicontrol.set_digital_output_2(d2)
-    acq = await asyncio.to_thread(
-        nicontrol.acquire_fill_mfc_log,
-        DRIVER_FUEL_OX_S,
-        FILL_LOG_SAMPLE_RATE_HZ,
-    )
-    fill_rows.extend(
-        _csv_rows_from_acquisition(
-            acq,
-            t_off,
-            "driver",
-            "driver_start" if first_driver_segment else "",
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        )
-    )
+
+    await asyncio.sleep(DRIVER_FUEL_OX_S)
+
+    
+    # acq = await asyncio.to_thread(
+    #     nicontrol.acquire_fill_mfc_log,
+    #     DRIVER_FUEL_OX_S,
+    #     FILL_LOG_SAMPLE_RATE_HZ,
+    # )
+    # fill_rows.extend(
+    #     _csv_rows_from_acquisition(
+    #         acq,
+    #         t_off,
+    #         "driver",
+    #         "driver_start" if first_driver_segment else "",
+    #         0.0,
+    #         0.0,
+    #         0.0,
+    #         0.0,
+    #     )
+    # )
+
     first_driver_segment = False
-    t_off += acq["duration_s"]
+    # t_off += acq["duration_s"]
     d1[D1_S1_FUEL_DRV] = False
     nicontrol.set_digital_output(d1)
 
     d1[D1_S3_OX_DRV] = True
     nicontrol.set_digital_output(d1)
-    acq = await asyncio.to_thread(
-        nicontrol.acquire_fill_mfc_log,
-        DRIVER_FUEL_OX_S,
-        FILL_LOG_SAMPLE_RATE_HZ,
-    )
-    fill_rows.extend(
-        _csv_rows_from_acquisition(
-            acq,
-            t_off,
-            "driver",
-            "",
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        )
-    )
-    t_off += acq["duration_s"]
+
+    await asyncio.sleep(DRIVER_FUEL_OX_S)
+
+    # acq = await asyncio.to_thread(
+    #     nicontrol.acquire_fill_mfc_log,
+    #     DRIVER_FUEL_OX_S,
+    #     FILL_LOG_SAMPLE_RATE_HZ,
+    # )
+    # fill_rows.extend(
+    #     _csv_rows_from_acquisition(
+    #         acq,
+    #         t_off,
+    #         "driver",
+    #         "",
+    #         0.0,
+    #         0.0,
+    #         0.0,
+    #         0.0,
+    #     )
+    # )
+    # t_off += acq["duration_s"]
     d1[D1_S3_OX_DRV] = False
     nicontrol.set_digital_output(d1)
 
     d1[D1_S2_FUEL_MIX] = True
     d1[D1_S4_OX_MIX] = True
     nicontrol.set_digital_output(d1)
-    if driver_mix_time_s > 0:
-        acq = await asyncio.to_thread(
-            nicontrol.acquire_fill_mfc_log,
-            driver_mix_time_s,
-            FILL_LOG_SAMPLE_RATE_HZ,
-        )
-        fill_rows.extend(
-            _csv_rows_from_acquisition(
-                acq,
-                t_off,
-                "driver",
-                "",
-                0.0,
-                0.0,
-                0.0,
-                0.0,
-            )
-        )
-        t_off += acq["duration_s"]
+
+    await asyncio.sleep(driver_mix_time_s)
+
+    # if driver_mix_time_s > 0:
+    #     acq = await asyncio.to_thread(
+    #         nicontrol.acquire_fill_mfc_log,
+    #         driver_mix_time_s,
+    #         FILL_LOG_SAMPLE_RATE_HZ,
+    #     )
+    #     fill_rows.extend(
+    #         _csv_rows_from_acquisition(
+    #             acq,
+    #             t_off,
+    #             "driver",
+    #             "",
+    #             0.0,
+    #             0.0,
+    #             0.0,
+    #             0.0,
+    #         )
+    #     )
+    #     t_off += acq["duration_s"]
     d1[D1_S2_FUEL_MIX] = False
     d1[D1_S4_OX_MIX] = False
     nicontrol.set_digital_output(d1)
 
-    if testcount is not None and len(fill_rows) > 0:
-        os.makedirs(FILL_LOG_DIR, exist_ok=True)
-        path = os.path.join(FILL_LOG_DIR, f"fill_flow_rates_test{testcount}.csv")
-        with open(path, "w", newline="") as f:
-            w = csv.writer(f)
-            w.writerow(CSV_HEADER)
-            w.writerows(fill_rows)
+    # if testcount is not None and len(fill_rows) > 0:
+    #     os.makedirs(FILL_LOG_DIR, exist_ok=True)
+    #     path = os.path.join(FILL_LOG_DIR, f"fill_flow_rates_test{testcount}.csv")
+    #     with open(path, "w", newline="") as f:
+    #         w = csv.writer(f)
+    #         w.writerow(CSV_HEADER)
+    #         w.writerows(fill_rows)
 
     nicontrol.set_digital_output(_pad8(END_TEST_DAQ1))
     nicontrol.set_digital_output_2(_pad8(END_TEST_DAQ2))
     _set_mfc_rates(0.0, 0.0, 0.0, 0.0)
     if on_mfc_setpoints_changed is not None:
         on_mfc_setpoints_changed(0.0, 0.0, 0.0, 0.0)
+
+    daq_thread.join()
+
+    if on_fill_complete is not None:
+        on_fill_complete()
 
     print("Reactant fill and driver valve sequence complete. Ignite when ready; use Purge when done.")
 

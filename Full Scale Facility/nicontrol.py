@@ -19,6 +19,7 @@ _daq2_state = [False] * 8
 _ai_read_lock = threading.Lock()
 
 
+#SLPM from voltages, used for the background GUI monitor
 def read_mfc_flows_analog_slpm():
     """Mod8 ai0:3 voltages → A–D SLPM (same formula as acquire_fill_mfc_log). For GUI background monitor."""
     with _ai_read_lock:
@@ -63,6 +64,7 @@ def set_digital_output_2(states):
     _daq2_state = list(states)
 
 
+#used for GUI updating
 def get_daq_states():
     return _daq1_state[:], _daq2_state[:]
 
@@ -286,3 +288,58 @@ def read_vacuum_pressure():
             data = ai_task.read(number_of_samples_per_channel=samples)
             avg = np.mean(data)
     return avg * 0.013332
+
+
+def read_mfcs(testcount, fill_duration):
+    ai_pressure = "cDAQ9188-169338EMod3/ai0:1"
+    ai_flowrate = "cDAQ9188-169338EMod8/ai0:3"
+
+    sample_rate = 1000  # 1 kHz 
+    duration = fill_duration + 2      # seconds
+    samples = int(sample_rate * duration)
+ 
+    # with _ai_read_lock:
+    with nidaqmx.Task() as ai_task:
+        ai_task.ai_channels.add_ai_voltage_chan(ai_pressure, min_val=-10, max_val=10)
+        ai_task.ai_channels.add_ai_voltage_chan(ai_flowrate, min_val=-10, max_val=10, terminal_config=TerminalConfiguration.RSE)
+
+        ai_task.timing.cfg_samp_clk_timing(
+            sample_rate, 
+            sample_mode=AcquisitionType.FINITE, 
+            samps_per_chan=samples
+        )
+        data = ai_task.read(number_of_samples_per_channel=samples, timeout=25)
+
+ 
+# nidaqmx multi-channel read: shape (n_channels, samples_per_channel) -> PT1..PT8
+    data = np.asarray(data, dtype=np.float64)
+    # if data.ndim == 1:
+    #     pt1 = data
+    #     n_samples = pt1.shape[0]
+    #     pt2 = pt3 = pt4 = pt5 = pt6 = pt7 = pt8 = np.zeros(n_samples)
+    # else:
+    #     n_ch, n_samples = data.shape
+    fill = data[0]
+    vac = data[1]
+    mfc1 = data[2] 
+    mfc2 = data[3] 
+    mfc3 = data[4] 
+    mfc4 = data[5] 
+    n_samples = mfc1.shape[0]
+ 
+ 
+    # One CSV per test: properties in header, then time and PT1–PT8 columns
+    filename = f"C:\\Users\\dedic-lab\\Documents\\Detonation_Facility_Testing\\MFCTestData{testcount}.csv"
+    time_s = np.arange(n_samples, dtype=np.float64) / sample_rate
+ 
+    with open(filename, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["TestNumber", testcount])
+        # writer.writerow(["VacuumPressure_Pa", float(vacuum_pressure)])
+        # writer.writerow(["PostFillPressure_Pa", float(fill_pressure)])
+        writer.writerow(["DateTime", datetime.now().isoformat()])
+        writer.writerow(["SampleRate_Hz", sample_rate])
+        writer.writerow([])
+        writer.writerow(["time_s", "fill", "vac", "MFC1", "MFC2", "MFC3", "MFC4"])
+        for i in range(n_samples):
+            writer.writerow([time_s[i], fill[i], vac[i], mfc1[i], mfc2[i], mfc3[i], mfc4[i]])

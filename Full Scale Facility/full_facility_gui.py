@@ -11,6 +11,8 @@ import asyncio
 #import dataacquisition
 import numpy as np
 import time
+# import win32gui
+# import win32console
 
 from ui_full_facility_gui_script import Ui_full_facility_gui
 '''This calls the python file that was created FROM the .ui file (ui_full_facility_gui_script.py). 
@@ -36,36 +38,74 @@ def _solenoid_line_seems_open(line_high, invert):
     """High DAQ line vs logical OPEN for status labels (matches toggle_solenoid)."""
     return (not line_high) if invert else bool(line_high)
 
-
+# def set_console_position(x, y, width, height):
+#     # Get the handle of the current console window
+#     hwnd = win32console.GetConsoleWindow()
+    
+#     if hwnd:
+#         # MoveWindow(handle, x, y, width, height, repaint_boolean)
+#         win32gui.MoveWindow(hwnd, x, y, width, height, True)
+        
 # Background MFC readouts: Mod8 analog feedback → SLPM (same scaling as fill CSV), not Alicat serial.
-class MFCMonitorWorker(QObject):
-    flows_updated = Signal(float, float, float, float)
+# class MFCMonitorWorker(QObject):
+#     flows_updated = Signal(float, float, float, float)
 
-    def __init__(self, interval_ms=1000):
+#     def __init__(self, interval_ms=1000):
+#         super().__init__()
+#         self.interval_s = interval_ms / 1000.0
+#         self._running = True
+#         self._paused = False
+
+#     def stop(self):
+#         self._running = False
+
+#     def pause(self):
+#         self._paused = True
+
+#     def resume(self):
+#         self._paused = False
+
+#     def run(self):
+#         while self._running:
+#             if not self._paused:
+#                 try:
+#                     a, b, c, d = nicontrol.read_mfc_flows_analog_slpm()
+#                     self.flows_updated.emit(a, b, c, d)
+#                 except Exception:
+#                     pass
+#             time.sleep(self.interval_s)
+class MFCMonitorWorker(QObject):
+    flows_updated = Signal(float, float, float)
+ 
+    def __init__(self, interval_ms=100):
         super().__init__()
         self.interval_s = interval_ms / 1000.0
         self._running = True
         self._paused = False
-
+ 
     def stop(self):
         self._running = False
-
+ 
     def pause(self):
         self._paused = True
-
+ 
     def resume(self):
         self._paused = False
-
+ 
     def run(self):
         while self._running:
             if not self._paused:
                 try:
-                    a, b, c, d = nicontrol.read_mfc_flows_analog_slpm()
-                    self.flows_updated.emit(a, b, c, d)
+                    flows = alicatcontrol.get_manager().read_flows()
+                    a = flows.get("A", 0.0)
+                    b = flows.get("B", 0.0)
+                    c = flows.get("C", 0.0)
+                    self.flows_updated.emit(a, b, c)
+                    self.flows_updated.emit(b)
+ 
                 except Exception:
                     pass
             time.sleep(self.interval_s)
-
 
 class AutomationWorker(QObject):
     finished = Signal()
@@ -460,7 +500,7 @@ class MyDialog(QDialog):
         automation_thread.started.connect(automation_worker.runauto)
         automation_worker.finished.connect(automation_thread.quit)
         automation_worker.finished.connect(lambda: self.reenable(button))
-        automation_worker.fill_phase_complete.connect(self.update_pressure)
+        # automation_worker.fill_phase_complete.connect(self.update_pressure)
         automation_worker.mfc_readouts_updated.connect(self.update_mfc_readouts)
 
         self._automation_threads.append((automation_thread, automation_worker))
@@ -653,4 +693,16 @@ if __name__ == "__main__":
     app.setStyleSheet(stylesheet)
     dialog = MyDialog()
     dialog.show()
+    dialog.move(0,0)
+
+    # set_console_position(0, 0, 800, 600)
+    # print("Console window moved to (0,0)")
+    # input("Press Enter to exit...")
+
     sys.exit(app.exec())
+
+
+
+
+
+
