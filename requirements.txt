@@ -1,0 +1,3 @@
+# DetControl / Full Scale Facility — install in the same Python env the IDE uses:
+#   py -m pip install -r requirements.txt
+pyserial>=3.5
