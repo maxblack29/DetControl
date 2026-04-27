@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1737</width>
-    <height>471</height>
+    <width>1688</width>
+    <height>595</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -2677,7 +2677,7 @@ QProgressBar::chunk
      <x>940</x>
      <y>0</y>
      <width>61</width>
-     <height>561</height>
+     <height>601</height>
     </rect>
    </property>
    <property name="orientation">
@@ -2787,10 +2787,10 @@ QProgressBar::chunk
   <widget class="Line" name="line_2">
    <property name="geometry">
     <rect>
-     <x>1420</x>
-     <y>-20</y>
+     <x>1460</x>
+     <y>-10</y>
      <width>41</width>
-     <height>561</height>
+     <height>611</height>
     </rect>
    </property>
    <property name="orientation">
@@ -2800,9 +2800,9 @@ QProgressBar::chunk
   <widget class="QPushButton" name="purgebutton">
    <property name="geometry">
     <rect>
-     <x>1490</x>
-     <y>260</y>
-     <width>151</width>
+     <x>1530</x>
+     <y>360</y>
+     <width>141</width>
      <height>61</height>
     </rect>
    </property>
@@ -2813,9 +2813,9 @@ QProgressBar::chunk
   <widget class="QPushButton" name="testautomation">
    <property name="geometry">
     <rect>
-     <x>1490</x>
-     <y>20</y>
-     <width>151</width>
+     <x>1530</x>
+     <y>120</y>
+     <width>141</width>
      <height>61</height>
     </rect>
    </property>
@@ -2826,9 +2826,9 @@ QProgressBar::chunk
   <widget class="QPushButton" name="igniteButton">
    <property name="geometry">
     <rect>
-     <x>1490</x>
-     <y>180</y>
-     <width>151</width>
+     <x>1530</x>
+     <y>280</y>
+     <width>141</width>
      <height>61</height>
     </rect>
    </property>
@@ -4044,7 +4044,7 @@ QProgressBar::chunk
      <x>540</x>
      <y>0</y>
      <width>61</width>
-     <height>561</height>
+     <height>621</height>
     </rect>
    </property>
    <property name="orientation">
@@ -4360,8 +4360,8 @@ QProgressBar::chunk
   <widget class="QLabel" name="test_num_label">
    <property name="geometry">
     <rect>
-     <x>1500</x>
-     <y>360</y>
+     <x>1530</x>
+     <y>450</y>
      <width>41</width>
      <height>31</height>
     </rect>
@@ -4520,8 +4520,8 @@ QProgressBar::chunk
   <widget class="QLineEdit" name="test_num_readout">
    <property name="geometry">
     <rect>
-     <x>1550</x>
-     <y>360</y>
+     <x>1580</x>
+     <y>450</y>
      <width>71</width>
      <height>31</height>
     </rect>
@@ -4679,9 +4679,9 @@ QProgressBar::chunk
   <widget class="QPushButton" name="driverButton">
    <property name="geometry">
     <rect>
-     <x>1490</x>
-     <y>100</y>
-     <width>151</width>
+     <x>1530</x>
+     <y>200</y>
+     <width>141</width>
      <height>61</height>
     </rect>
    </property>
@@ -4899,6 +4899,158 @@ QProgressBar::chunk
    </property>
    <property name="textFormat">
     <enum>Qt::TextFormat::RichText</enum>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="begin_vacuum">
+   <property name="geometry">
+    <rect>
+     <x>1530</x>
+     <y>40</y>
+     <width>141</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Begin Vacuum</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="bnc_box_control_label">
+   <property name="geometry">
+    <rect>
+     <x>1190</x>
+     <y>460</y>
+     <width>111</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>BNC Box Control:</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="bnc_continuous_mode">
+   <property name="geometry">
+    <rect>
+     <x>1140</x>
+     <y>540</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Continuous</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="bnc_arm_on">
+   <property name="geometry">
+    <rect>
+     <x>1140</x>
+     <y>500</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Arm ON</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="bnc_mode_label">
+   <property name="geometry">
+    <rect>
+     <x>1040</x>
+     <y>540</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>BNC Mode</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="bnc_arm_label">
+   <property name="geometry">
+    <rect>
+     <x>1040</x>
+     <y>500</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>BNC Arm</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="bnc_arm_state">
+   <property name="geometry">
+    <rect>
+     <x>1340</x>
+     <y>500</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>ON</string>
+   </property>
+   <property name="textFormat">
+    <enum>Qt::TextFormat::RichText</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="bnc_mode_state">
+   <property name="geometry">
+    <rect>
+     <x>1340</x>
+     <y>540</y>
+     <width>101</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>CONTINUOUS</string>
+   </property>
+   <property name="textFormat">
+    <enum>Qt::TextFormat::RichText</enum>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="bnc_single_mode">
+   <property name="geometry">
+    <rect>
+     <x>1240</x>
+     <y>540</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Single Shot</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="bnc_arm_off">
+   <property name="geometry">
+    <rect>
+     <x>1240</x>
+     <y>500</y>
+     <width>92</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Arm OFF</string>
+   </property>
+   <property name="default">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>
