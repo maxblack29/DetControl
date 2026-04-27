@@ -163,7 +163,7 @@ def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
     off_states[DAQ2_LINE_TIMING_OUTPUT] = False
 
     bnc_box_control.switch_preset(12) #switches bnc box to triggered single shot for PLIF 
-    bnc_box_control.arm("ON") #arms BNC box 
+    bnc_box_control.arm("ON") #ensures BNC box is armed for trigger signal 
 
     with nidaqmx.Task() as do_task:
         do_task.do_channels.add_do_chan(ignite_port, line_grouping=LineGrouping.CHAN_PER_LINE)
@@ -229,7 +229,8 @@ def set_ignite_read_pressure(testcount, vacuum_pressure, fill_pressure):
                 [time_axis[i], pt1[i], pt2[i], pt3[i], pt4[i], pt5[i], pt6[i], pt7[i], pt8[i]]
             )
     
-
+    bnc_box_control.switch_preset(9) #switches bnc box back to continuous mode 
+    
 
 
 #reads the pressure from the fill gauge
