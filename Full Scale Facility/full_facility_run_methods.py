@@ -59,6 +59,20 @@ purge_daq2 = [False, False, False, False, False, False, False, False]
 PURGE_COMPLETE_DAQ1 = [False, False, False, True, False, False, True, False]
 PURGE_COMPLETE_DAQ2 = [True, True, False, False, False, False, False, False]
 
+# Begin vacuum: S1–S4 closed; S5 open; S6/S7 closed (NO valves); S8 open; S9 open; S10 on.
+# Wire map matches SOLENOID_GUI_MAP / nicontrol Mod1–Mod2 line assignment.
+BEGIN_VACUUM_DAQ1 = [False, False, False, True, False, True, True, False]
+BEGIN_VACUUM_DAQ2 = [True, True, False, True, False, False, False, False]
+
+
+def begin_vacuum_sequence():
+    """S1–S4 closed; S5 open; S6/S7 closed; S8 open; S9 open; S10 on (vacuum valve + pump)."""
+    d1 = list(BEGIN_VACUUM_DAQ1)
+    d2 = list(BEGIN_VACUUM_DAQ2)
+    nicontrol.set_digital_output(d1)
+    nicontrol.set_digital_output_2(d2)
+    return d1, d2
+
 
 async def _pre_fill_vacuum_shutdown():
     """Close vacuum valve (S9), wait 1 s, then turn vacuum pump (S10) off."""

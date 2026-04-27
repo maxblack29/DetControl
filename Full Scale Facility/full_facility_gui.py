@@ -199,10 +199,12 @@ class MyDialog(QDialog):
         nicontrol.set_digital_output_2(self.daq2)
 
 
-        #ensures bnc box is in continuous mode and running on GUI startup 
+        # Ensures BNC box is in continuous mode and armed on GUI startup; labels track last commands.
         try:
-            bnc_box_control.switch_preset(9)  # continuous mode 
+            bnc_box_control.switch_preset(9)
             bnc_box_control.arm("ON")
+            self.ui.bnc_arm_state.setText("ON")
+            self.ui.bnc_mode_state.setText("Continuous (preset 9)")
         except Exception as e:
             print("BNC box startup (preset 9 / arm ON) failed:", e)
 
@@ -255,6 +257,13 @@ class MyDialog(QDialog):
         self.ui.purgebutton.clicked.connect(self.purge)
         self.ui.igniteButton.clicked.connect(self.ignite)
         self.ui.driverButton.clicked.connect(self.begin_driver_sequence)
+
+        self.ui.begin_vacuum.clicked.connect(self.begin_vacuum_down)
+
+        self.ui.bnc_arm_on.clicked.connect(self._bnc_gui_arm_on)
+        self.ui.bnc_arm_off.clicked.connect(self._bnc_gui_arm_off)
+        self.ui.bnc_continuous_mode.clicked.connect(self._bnc_gui_continuous_mode)
+        self.ui.bnc_single_mode.clicked.connect(self._bnc_gui_single_mode)
 
         # Pressure auto-read controls (vacuum phase helper)
         self.ui.start_auto_read.clicked.connect(self.start_auto_read)
@@ -420,6 +429,38 @@ class MyDialog(QDialog):
         ]
         for i, o in enumerate(s_open):
             getattr(self.ui, f"S{i + 1}_state").setText("OPEN" if o else "CLOSED")
+
+    def begin_vacuum_down(self):
+        self.daq1, self.daq2 = full_facility_run_methods.begin_vacuum_sequence()
+        self.update_solenoid_labels()
+
+    def _bnc_gui_arm_on(self):
+        try:
+            bnc_box_control.arm("ON")
+            self.ui.bnc_arm_state.setText("ON")
+        except Exception as e:
+            print("BNC arm ON failed:", e)
+
+    def _bnc_gui_arm_off(self):
+        try:
+            bnc_box_control.arm("OFF")
+            self.ui.bnc_arm_state.setText("OFF")
+        except Exception as e:
+            print("BNC arm OFF failed:", e)
+
+    def _bnc_gui_continuous_mode(self):
+        try:
+            bnc_box_control.switch_preset(9)
+            self.ui.bnc_mode_state.setText("Continuous (preset 9)")
+        except Exception as e:
+            print("BNC continuous mode failed:", e)
+
+    def _bnc_gui_single_mode(self):
+        try:
+            bnc_box_control.switch_preset(12)
+            self.ui.bnc_mode_state.setText("Single shot (preset 12)")
+        except Exception as e:
+            print("BNC single-shot mode failed:", e)
 
   
     stop_test = False
