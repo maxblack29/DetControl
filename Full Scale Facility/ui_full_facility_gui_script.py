@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ui_full_facility_gui_scripttkCbYD.ui'
+## Form generated from reading UI file 'ui_full_facility_gui_scripthunIqP.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -1044,19 +1044,19 @@ class Ui_full_facility_gui(object):
         self.mfcAlabel.setGeometry(QRect(10, 90, 81, 16))
         self.SLPMlabel1 = QLabel(full_facility_gui)
         self.SLPMlabel1.setObjectName(u"SLPMlabel1")
-        self.SLPMlabel1.setGeometry(QRect(340, 90, 49, 16))
+        self.SLPMlabel1.setGeometry(QRect(330, 90, 49, 16))
         self.mfcAsetpoint = QLineEdit(full_facility_gui)
         self.mfcAsetpoint.setObjectName(u"mfcAsetpoint")
         self.mfcAsetpoint.setGeometry(QRect(260, 90, 61, 22))
         self.SLPMlabel3 = QLabel(full_facility_gui)
         self.SLPMlabel3.setObjectName(u"SLPMlabel3")
-        self.SLPMlabel3.setGeometry(QRect(340, 170, 49, 16))
+        self.SLPMlabel3.setGeometry(QRect(330, 170, 49, 16))
         self.mfcClabel = QLabel(full_facility_gui)
         self.mfcClabel.setObjectName(u"mfcClabel")
         self.mfcClabel.setGeometry(QRect(10, 170, 91, 16))
         self.SLPMlabel2 = QLabel(full_facility_gui)
         self.SLPMlabel2.setObjectName(u"SLPMlabel2")
-        self.SLPMlabel2.setGeometry(QRect(340, 130, 49, 16))
+        self.SLPMlabel2.setGeometry(QRect(330, 130, 49, 16))
         self.mfcBsetpoint = QLineEdit(full_facility_gui)
         self.mfcBsetpoint.setObjectName(u"mfcBsetpoint")
         self.mfcBsetpoint.setGeometry(QRect(260, 130, 61, 22))
@@ -3294,16 +3294,16 @@ class Ui_full_facility_gui(object):
         self.driver_label.setGeometry(QRect(750, 30, 91, 31))
         self.mfcAreadout = QLCDNumber(full_facility_gui)
         self.mfcAreadout.setObjectName(u"mfcAreadout")
-        self.mfcAreadout.setGeometry(QRect(440, 90, 64, 23))
+        self.mfcAreadout.setGeometry(QRect(453, 90, 51, 23))
         self.mfcBreadout = QLCDNumber(full_facility_gui)
         self.mfcBreadout.setObjectName(u"mfcBreadout")
-        self.mfcBreadout.setGeometry(QRect(440, 130, 64, 23))
+        self.mfcBreadout.setGeometry(QRect(453, 130, 51, 23))
         self.mfcCreadout = QLCDNumber(full_facility_gui)
         self.mfcCreadout.setObjectName(u"mfcCreadout")
-        self.mfcCreadout.setGeometry(QRect(440, 170, 64, 23))
+        self.mfcCreadout.setGeometry(QRect(453, 170, 51, 23))
         self.mfcreadoutlabel = QLabel(full_facility_gui)
         self.mfcreadoutlabel.setObjectName(u"mfcreadoutlabel")
-        self.mfcreadoutlabel.setGeometry(QRect(440, 30, 111, 31))
+        self.mfcreadoutlabel.setGeometry(QRect(460, 30, 61, 31))
         self.s3_label = QLabel(full_facility_gui)
         self.s3_label.setObjectName(u"s3_label")
         self.s3_label.setGeometry(QRect(1010, 140, 131, 20))
@@ -3515,6 +3515,21 @@ class Ui_full_facility_gui(object):
         self.bnc_arm_off = QPushButton(full_facility_gui)
         self.bnc_arm_off.setObjectName(u"bnc_arm_off")
         self.bnc_arm_off.setGeometry(QRect(1240, 500, 92, 31))
+        self.mfcA_last_setpoint = QLCDNumber(full_facility_gui)
+        self.mfcA_last_setpoint.setObjectName(u"mfcA_last_setpoint")
+        self.mfcA_last_setpoint.setGeometry(QRect(383, 90, 51, 23))
+        self.mfcC_last_setpoint = QLCDNumber(full_facility_gui)
+        self.mfcC_last_setpoint.setObjectName(u"mfcC_last_setpoint")
+        self.mfcC_last_setpoint.setGeometry(QRect(383, 170, 51, 23))
+        self.mfcB_last_setpoint = QLCDNumber(full_facility_gui)
+        self.mfcB_last_setpoint.setObjectName(u"mfcB_last_setpoint")
+        self.mfcB_last_setpoint.setGeometry(QRect(383, 130, 51, 23))
+        self.last_sent_setpoint = QLabel(full_facility_gui)
+        self.last_sent_setpoint.setObjectName(u"last_sent_setpoint")
+        self.last_sent_setpoint.setGeometry(QRect(390, 30, 61, 31))
+        self.last_sent_setpoint_2 = QLabel(full_facility_gui)
+        self.last_sent_setpoint_2.setObjectName(u"last_sent_setpoint_2")
+        self.last_sent_setpoint_2.setGeometry(QRect(390, 50, 51, 31))
 
         self.retranslateUi(full_facility_gui)
 
@@ -3705,7 +3720,7 @@ class Ui_full_facility_gui(object):
         self.s4_label.setText(QCoreApplication.translate("full_facility_gui", u"S4: Driver Ox Mix", None))
         self.pressure_label.setText(QCoreApplication.translate("full_facility_gui", u"Post Fill Pressure (kPa)", None))
         self.pressure_label_2.setText(QCoreApplication.translate("full_facility_gui", u"Vacuum Pressure Reading", None))
-        self.pressure_label_3.setText(QCoreApplication.translate("full_facility_gui", u"(kPa)", None))
+        self.pressure_label_3.setText(QCoreApplication.translate("full_facility_gui", u"(Pa)", None))
         self.s5_label.setText(QCoreApplication.translate("full_facility_gui", u"S5: Reactant Mix", None))
         self.openS5.setText(QCoreApplication.translate("full_facility_gui", u"Open", None))
         self.closeS5.setText(QCoreApplication.translate("full_facility_gui", u"Close", None))
@@ -3750,5 +3765,7 @@ class Ui_full_facility_gui(object):
         self.bnc_mode_state.setText(QCoreApplication.translate("full_facility_gui", u"CONTINUOUS", None))
         self.bnc_single_mode.setText(QCoreApplication.translate("full_facility_gui", u"Single Shot", None))
         self.bnc_arm_off.setText(QCoreApplication.translate("full_facility_gui", u"Arm OFF", None))
+        self.last_sent_setpoint.setText(QCoreApplication.translate("full_facility_gui", u"Last Sent", None))
+        self.last_sent_setpoint_2.setText(QCoreApplication.translate("full_facility_gui", u"Setpoint", None))
     # retranslateUi
 
