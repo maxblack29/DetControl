@@ -268,4 +268,4 @@ def read_vacuum_pressure():
             )
             data = ai_task.read(number_of_samples_per_channel=samples)
             avg = np.mean(data)
-    return avg * 0.013332
+    return avg * 13.332 #returns pascals
