@@ -11,13 +11,20 @@ import klinger_control
 import asyncio
 #import dataacquisition
 import numpy as np
+import threading
 import time
+
+import audio_player
 # import win32gui
 # import win32console
 
 from ui_full_facility_gui_script import Ui_full_facility_gui
 '''This calls the python file that was created FROM the .ui file (ui_full_facility_gui_script.py). 
 When updating gui in qt designer, must update the PYTHON file to see the updates.'''
+
+# Same numeric units as self.vacuum_pressure / vacuum_pressure_readout (see update_vacuum_pressure).
+VACUUM_AUDIO_THRESHOLD_PA = 0.5
+VACUUM_AUDIO_INTERVAL_S = 30.0
 
 
 # GUI S1–S10 → (which_daq: 1=Mod1 / 2=Mod2, channel 0–7, invert_line_for_normally_open).
@@ -213,6 +220,7 @@ class MyDialog(QDialog):
         self.purge_running = False
         self.pressure_timer = None
         self.vacuum_pressure_timer = None
+        self._vacuum_audio_next_mono = None  # next 30 s slot from start_auto_read (wall schedule)
         self._solenoid_threads = []
         self._automation_threads = []
         self._driver_threads = []
@@ -283,7 +291,7 @@ class MyDialog(QDialog):
         self.mfc_monitor_worker = MFCMonitorWorker(interval_ms=1000)
         self.mfc_monitor_thread = QThread()
         self.mfc_monitor_worker.moveToThread(self.mfc_monitor_thread)
-        self.mfc_monitor_worker.flows_updated.connect(self.update_mfc_readouts)
+        self.mfc_monitor_worker.flows_updated.connect(self.update_mfc_flow_readouts)
         self.mfc_monitor_thread.started.connect(self.mfc_monitor_worker.run)
         self.mfc_monitor_thread.start()
 
@@ -292,6 +300,16 @@ class MyDialog(QDialog):
         self.solenoid_label_timer.timeout.connect(self.update_solenoid_labels)
         self.solenoid_label_timer.start(500)
         self.update_solenoid_labels()
+
+        try:
+            self.update_mfc_readouts(
+                float(self.ui.mfcAsetpoint.text()),
+                float(self.ui.mfcBsetpoint.text()),
+                float(self.ui.mfcCsetpoint.text()),
+                float(self.ui.mfcDsetpoint.text()),
+            )
+        except ValueError:
+            pass
 
     
     def save_setpoints(self):
@@ -313,6 +331,7 @@ class MyDialog(QDialog):
 
         # Set MFC setpoints via analog output (Mod7 ao0:3).
         nicontrol.set_mfc_setpoints_analog(setpointA, setpointB, setpointC, setpointD)
+        self.update_mfc_readouts(setpointA, setpointB, setpointC, setpointD)
 
     #This function will reset the flow setpoints to 0.0 SLPM for all gas controllers. 
     def reset_flow(self):
@@ -331,6 +350,7 @@ class MyDialog(QDialog):
         self.ui.mfcCsetpoint_2.setText("0.0")
 
         nicontrol.set_mfc_setpoints_analog(0.0, 0.0, 0.0, 0.0)
+        self.update_mfc_readouts(0.0, 0.0, 0.0, 0.0)
         self.update_vacuum_pressure()
         self.update_pressure()
 
@@ -635,9 +655,25 @@ class MyDialog(QDialog):
     #is run at start of automatic test
     def update_vacuum_pressure(self):
         vacuum_pressure = nicontrol.read_vacuum_pressure() * 1000
-        #print(vacuum_pressure) 
+        #print(vacuum_pressure)
         self.vacuum_pressure = vacuum_pressure
         self.ui.vacuum_pressure_readout.display(vacuum_pressure)
+
+
+        #runs the audio player at designated interval if auto read is on and vacuum pressure is below threshold
+        auto_on = (
+            self.vacuum_pressure_timer is not None
+            and self.vacuum_pressure_timer.isActive()
+            and not self.automation_running
+        )
+        if auto_on and self._vacuum_audio_next_mono is not None:
+            now = time.monotonic()
+            if now >= self._vacuum_audio_next_mono:
+                self._vacuum_audio_next_mono += VACUUM_AUDIO_INTERVAL_S
+                if vacuum_pressure < VACUUM_AUDIO_THRESHOLD_PA:
+                    threading.Thread(
+                        target=audio_player.vacuum_audio_indicator, daemon=True
+                    ).start()
 
 
     #starts auto read during vacuum phase
@@ -653,6 +689,7 @@ class MyDialog(QDialog):
             self.pressure_timer.timeout.connect(self.update_pressure)
         self.vacuum_pressure_timer.start(500)
         self.pressure_timer.start(500)
+        self._vacuum_audio_next_mono = time.monotonic() + VACUUM_AUDIO_INTERVAL_S
         # Take an immediate reading so the user sees it without waiting
         self.update_vacuum_pressure()
         self.update_pressure()
@@ -665,6 +702,7 @@ class MyDialog(QDialog):
             self.vacuum_pressure_timer.stop()
         if self.pressure_timer is not None:
             self.pressure_timer.stop()
+        self._vacuum_audio_next_mono = None
 
     #reenables the pressure auto-read controls after automatic test or purge is finished
     def reenable(self, button):
@@ -686,11 +724,17 @@ class MyDialog(QDialog):
                 self.ui.stop_auto_read.setEnabled(True)
 
 
-    def update_mfc_readouts(self, setpoint_a, setpoint_b, setpoint_c, setpoint_d=0.0):
-        """Update MFC A/B/C readout displays (e.g. when setpoints change in automatic test or purge)."""
-        self.ui.mfcAreadout.display(setpoint_a)
-        self.ui.mfcBreadout.display(setpoint_b)
-        self.ui.mfcCreadout.display(setpoint_c)
+    def update_mfc_flow_readouts(self, flow_a, flow_b, flow_c):
+        """Measured flows from Alicat serial poll → main flow LCDs."""
+        self.ui.mfcAreadout.display(flow_a)
+        self.ui.mfcBreadout.display(flow_b)
+        self.ui.mfcCreadout.display(flow_c)
+
+    def update_mfc_readouts(self, setpoint_a, setpoint_b, setpoint_c, _setpoint_d=0.0):
+        """Last commanded MFC setpoints on mfc*_last_setpoint LCDs (not Alicat flow readouts)."""
+        self.ui.mfcA_last_setpoint.display(setpoint_a)
+        self.ui.mfcB_last_setpoint.display(setpoint_b)
+        self.ui.mfcC_last_setpoint.display(setpoint_c)
 
 
 
