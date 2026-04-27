@@ -2,6 +2,7 @@ import sys
 from PySide6.QtWidgets import QApplication, QDialog
 from PySide6.QtCore import QTimer, QThread, Signal, QObject
 import full_facility_run_methods
+import bnc_box_control
 import nidaqmx  # might not be needed since I imported nicontrol
 import nicontrol
 from nidaqmx.constants import AcquisitionType, READ_ALL_AVAILABLE
@@ -196,6 +197,14 @@ class MyDialog(QDialog):
 
         self.daq2 = list(full_facility_run_methods.PURGE_COMPLETE_DAQ2)
         nicontrol.set_digital_output_2(self.daq2)
+
+
+        #ensures bnc box is in continuous mode and running on GUI startup 
+        try:
+            bnc_box_control.switch_preset(9)  # continuous mode 
+            bnc_box_control.arm("ON")
+        except Exception as e:
+            print("BNC box startup (preset 9 / arm ON) failed:", e)
 
         self.testcount = 0  # zeroes the test count for data acquisition when gui is opened
         self.automation_running = False
