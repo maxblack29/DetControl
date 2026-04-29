@@ -268,4 +268,4 @@ def read_vacuum_pressure():
             )
             data = ai_task.read(number_of_samples_per_channel=samples)
             avg = np.mean(data)
-    return avg * 13.332 #returns pascals
+    return avg * 133.332 / 10 #returns pascals, 1 Torr = 133.322 Pa / 10 V 

@@ -57,11 +57,11 @@ purge_daq1 = [True, False, False, True, True, False, False, False]
 purge_daq2 = [False, False, False, False, False, False, False, False]
 
 PURGE_COMPLETE_DAQ1 = [False, False, False, True, False, False, True, False]
-PURGE_COMPLETE_DAQ2 = [True, True, False, False, False, False, False, False]
+PURGE_COMPLETE_DAQ2 = [True, False, False, False, False, False, False, False]
 
 # Begin vacuum: S1–S4 closed; S5 open; S6/S7 closed (NO valves); S8 open; S9 open; S10 on.
 # Wire map matches SOLENOID_GUI_MAP / nicontrol Mod1–Mod2 line assignment.
-BEGIN_VACUUM_DAQ1 = [False, False, False, True, False, True, True, False]
+BEGIN_VACUUM_DAQ1 = [True, False, False, True, True, True, True, False]
 BEGIN_VACUUM_DAQ2 = [True, True, False, True, False, False, False, False]
 
 

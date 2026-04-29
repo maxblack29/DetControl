@@ -1,7 +1,7 @@
 import serial
 import time
 
-COM_PORT = "COM10"
+COM_PORT = "COM5"
 BAUD = 9600
 READ_TIMEOUT_S = 1.0
 

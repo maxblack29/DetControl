@@ -211,7 +211,7 @@ class MyDialog(QDialog):
             bnc_box_control.switch_preset(9)
             bnc_box_control.arm("ON")
             self.ui.bnc_arm_state.setText("ON")
-            self.ui.bnc_mode_state.setText("Continuous (preset 9)")
+            self.ui.bnc_mode_state.setText("Continuous")
         except Exception as e:
             print("BNC box startup (preset 9 / arm ON) failed:", e)
 
@@ -672,7 +672,7 @@ class MyDialog(QDialog):
                 self._vacuum_audio_next_mono += VACUUM_AUDIO_INTERVAL_S
                 if vacuum_pressure < VACUUM_AUDIO_THRESHOLD_PA:
                     threading.Thread(
-                        target=audio_player.vacuum_audio_indicator, daemon=True
+                        target=audio_player.vacuum_audio_indicator, daemon=True #calls the audio player function for the vacuum in audio_player.py
                     ).start()
 
 
